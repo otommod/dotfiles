@@ -42,6 +42,7 @@ dotfiles=("bashrc"
           "conkyrc"
           "Xresources"
           "gtkrc-2.0"
+          "gitconfig"
          )
 dotdirs=( "vim"
           "mplayer"
