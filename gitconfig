@@ -1,0 +1,5 @@
+[user]
+	email = ottomodinos@gmail.com
+	name = Otto Modinos
+[alias]
+	unstage = reset HEAD --
