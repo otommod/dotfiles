@@ -1,0 +1,95 @@
+! vim:fdm=marker:
+
+/* Colors {{{ */
+    #include "/home/otto/documents/dotfiles/Xresources.d/colors/solarized"
+/* }}} */
+/* XTerm {{{ */
+    /* General {{{ */
+        XTerm.termName: xterm-256color
+        XTerm*charClass: 33:48,36-47:48,58-59:48,61:48,63-64:48,95:48,126:48
+        /* XTerm*on2Clicks: regex [[:alpha:]]+://([[:alnum:]!#+,./=?@_~-]|(%[[:xdigit:]][[:xdigit:]]))+ */
+    /* }}} */
+    /* Encoding {{{ */
+        xterm*utf8: 2
+    /* }}} */
+    /* Fonts {{{ */
+        XTerm.VT100.faceName: Inconsolata
+        XTerm*showMissingGlyphs: true
+    /* }}} */
+    /* Scrolling {{{ */
+        XTerm.VT100.scrollBar:       true
+        XTerm.VT100.rightScrollBar:  true
+        XTerm.VT100.scrollKey:       true
+        XTerm.VT100.scrollLines:     1
+        XTerm.VT100.scrollTtyOutput: false
+        XTerm.VT100.jumpScroll:      true
+        XTerm.VT100.multiScroll:     true
+    /* }}} */
+    /* Misc {{{ */
+        /*XTerm.mainMenu.backgroundPixmap: gradient:vertical?dimension=400&start=gray10&end=gray50
+         *XTerm.backgroundPixmap: xpm:/home/otto/.icons/Faenza/apps/16/terminal.xpm
+         *XTerm.iconPixmap: documents/terminal1.xbm
+         *XTerm.iconMask:   documents/terminal1.xbm
+
+         *xterm*geometry:           80x25
+         *xterm*dynamicColors:      true
+         *xterm*utf8:               2
+         *xterm*eightBitInput:      true
+         *xterm*saveLines:          512
+         *xterm*toolBar:            false
+         */
+
+        XTerm.VT100.translations: #override \
+            <Key>F1:       string("an email address") \n\
+            Ctrl<Key>Left: string(0x1b) string("b")   \n
+
+        XTerm.VT100.Scrollbar.translations: #override \
+            <Btn1Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
+            <Btn1Motion>: MoveThumb() NotifyThumb()                        \n\
+            <Btn2Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
+            <Btn2Motion>: MoveThumb() NotifyThumb()                        \n\
+            <Btn3Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
+            <Btn3Motion>: MoveThumb() NotifyThumb()                        \n\
+            <BtnUp>:      NotifyScroll(Proportional) EndScroll()           \n
+    /* }}} */
+/* }}} */
+/* Xft {{{ 
+    !Xft.dpi:        96
+    !Xft.antialias:  true
+    !Xft.rgba:       rgb
+    !Xft.hinting:    true
+    !Xft.hintstyle:  hintslight
+/* }}} */
+/* xscreensaver {{{ */
+    /* Fonts {{{ */
+        xscreensaver.Dialog.headingFont:        -*-fixed-medium-r-*-*-14-*-*-*-*-*-*-*
+        xscreensaver.Dialog.bodyFont:           -*-fixed-medium-r-*-*-14-*-*-*-*-*-*-*
+        xscreensaver.Dialog.labelFont:          -*-fixed-medium-r-*-*-14-*-*-*-*-*-*-*
+        xscreensaver.Dialog.unameFont:          -*-fixed-medium-r-*-*-14-*-*-*-*-*-*-*
+        xscreensaver.Dialog.buttonFont:         -*-fixed-medium-r-*-*-14-*-*-*-*-*-*-*
+        xscreensaver.Dialog.dateFont:           -*-fixed-medium-r-*-*-12-*-*-*-*-*-*-*
+        xscreensaver.passwd.passwdFont:         -*-fixed-medium-r-*-*-14-*-*-*-*-*-*-*
+    /* }}} */
+    /* General dialog box {{{ */
+        /* affects main hostname, username, password text */
+        xscreensaver.Dialog.foreground:         #101010
+        xscreensaver.Dialog.background:         #D8D8D8
+        xscreensaver.Dialog.topShadowColor:     #D8D8D8
+        xscreensaver.Dialog.bottomShadowColor:  #D8D8D8
+        xscreensaver.Dialog.Button.foreground:  #101010
+        xscreensaver.Dialog.Button.background:  #E5E5E5
+    /* }}} /*
+    /* Input box and date text colour {{{ */
+        xscreensaver.Dialog.text.foreground:    #101010
+        xscreensaver.Dialog.text.background:    #E5E5E5
+        xscreensaver.Dialog.internalBorderWidth:24
+        xscreensaver.Dialog.borderWidth:        0
+        xscreensaver.Dialog.shadowThickness:    2
+    /* }}} */
+    /* Timeout bar {{{ */
+        /* background is actually determined by Dialog.text.background */
+        xscreensaver.passwd.thermometer.foreground:  #101010
+        xscreensaver.passwd.thermometer.background:  #2E2E2E
+        xscreensaver.passwd.thermometer.width:       8
+    /* }}} */
+/* }}} */

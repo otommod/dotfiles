@@ -1,0 +1,16 @@
+[Configuration]
+LastActiveMode=THUNAR_RENAMER_MODE_NAME
+LastActiveRenamer=TagRenamer
+
+[ThunarSbrReplaceRenamer]
+Regexp=FALSE
+Replacement=
+CaseSensitive=FALSE
+Pattern=.
+
+[TagRenamer]
+Lowercase=FALSE
+ReplaceSpaces=FALSE
+Format=TAG_RENAMER_FORMAT_TRACK_TITLE
+Text=
+

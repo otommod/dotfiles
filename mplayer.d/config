@@ -1,0 +1,17 @@
+# vim:fdm=manual:
+# Write your default config options here!
+
+# General {{{
+    nolirc=yes
+    stop-xscreensaver=yes
+# }}}
+# Video {{{
+    vo=xv
+    double=yes
+# }}}
+# Subtitles {{{
+    sub-fuzziness=1
+    subfont-encoding=unicode
+    unicode=yes
+    utf8=yes
+# }}}
