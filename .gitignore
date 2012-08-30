@@ -1,4 +1,7 @@
 bash.d/history
+config.d/transmission/stats.json
+config.d/Thunar/accels.scm
+
+vim.d/
 config.d/transmission/resume/
 config.d/transmission/torrents/
-vim.d/
