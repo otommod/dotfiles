@@ -10,7 +10,8 @@
         /* XTerm*on2Clicks: regex [[:alpha:]]+://([[:alnum:]!#+,./=?@_~-]|(%[[:xdigit:]][[:xdigit:]]))+ */
     /* }}} */
     /* Encoding {{{ */
-        xterm*utf8: 2
+        XTerm*utf8: 2
+        XTerm*utf8Title: true
     /* }}} */
     /* Fonts {{{ */
         XTerm.VT100.faceName: Inconsolata
@@ -24,6 +25,14 @@
         XTerm.VT100.scrollTtyOutput: false
         XTerm.VT100.jumpScroll:      true
         XTerm.VT100.multiScroll:     true
+        XTerm.VT100.Scrollbar.translations: #override \
+            <Btn1Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
+            <Btn1Motion>: MoveThumb() NotifyThumb()                        \n\
+            <Btn2Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
+            <Btn2Motion>: MoveThumb() NotifyThumb()                        \n\
+            <Btn3Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
+            <Btn3Motion>: MoveThumb() NotifyThumb()                        \n\
+            <BtnUp>:      NotifyScroll(Proportional) EndScroll()           \n            
     /* }}} */
     /* Misc {{{ */
         /*XTerm.mainMenu.backgroundPixmap: gradient:vertical?dimension=400&start=gray10&end=gray50
@@ -42,15 +51,6 @@
         XTerm.VT100.translations: #override \
             <Key>F1:       string("an email address") \n\
             Ctrl<Key>Left: string(0x1b) string("b")   \n
-
-        XTerm.VT100.Scrollbar.translations: #override \
-            <Btn1Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
-            <Btn1Motion>: MoveThumb() NotifyThumb()                        \n\
-            <Btn2Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
-            <Btn2Motion>: MoveThumb() NotifyThumb()                        \n\
-            <Btn3Down>:   StartScroll(Continous) MoveThumb() NotifyThumb() \n\
-            <Btn3Motion>: MoveThumb() NotifyThumb()                        \n\
-            <BtnUp>:      NotifyScroll(Proportional) EndScroll()           \n
     /* }}} */
 /* }}} */
 /* Xft {{{ 

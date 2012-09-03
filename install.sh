@@ -31,11 +31,13 @@ install ()
                              "$location/$after_location$file"
         ln -s "$BASE_DIR/$before_file$file$after_file" "$location/$after_location$file"
     done
-} # }}}
+}
+# }}}
 
 BASE_DIR="$HOME/documents/dotfiles"
 
 dotfiles=("bashrc"
+          "zshrc"
           "dircolors"
           "tmux.conf"
           "vimrc"
@@ -56,6 +58,8 @@ configs=( "tint2"
           "viewnior"
         )
 
+# {{{
 install ${#dotfiles[@]} ${dotfiles[@]} "$HOME" "." "" ""
 install ${#dotdirs[@]} ${dotdirs[@]} "$HOME" "." "" ".d"
 install ${#configs[@]} ${configs[@]} "${XDG_CONFIG_HOME:-$HOME/.config}" "" "config.d/" ""
+# }}}

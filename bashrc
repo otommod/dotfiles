@@ -41,7 +41,7 @@
     export BROWSER='chromium' # Set chromium as the default browser
 
     # History {{{
-        #export HISTFILE='~/documents/dotfiles/bash.d/history # The file where history is written
+        export HISTFILE=~/documents/dotfiles/bash.d/history # Where history is written
         export HISTSIZE=1000              # Save up to 1000 commands in history
         export HISTIGNORE='exit'          # Don't append the exit command in history
         export HISTCONTROL='ignoreboth'   # Don't write duplicates and lines staring with spaceblank in history
