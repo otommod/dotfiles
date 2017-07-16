@@ -1,0 +1,36 @@
+#!/bin/sh
+
+focused="%{U#FF277333+u}----------%{U-}"
+active="%{U#FFbbbbbb+u}----------%{U-}"
+normal="%{U#FF1b1b1b+u}----------%{U-}"
+
+linebuf() {
+    stdbuf -oL "$@"
+}
+
+desktops() {
+    IFS=":"
+    for e in $line; do
+        type=${e%"${e#?}"}
+        case "$type" in
+            O) printf '%s ' "$focused" ;;
+            F) printf '%s ' "$focused" ;;
+            o) printf '%s ' "$active"  ;;
+            f) printf '%s ' "$normal"  ;;
+        esac
+    done
+
+    unset IFS
+}
+
+desktops_iter() {
+    while IFS= read -r line; do
+        echo "%{c}$(desktops "$line")%{r}"
+    done
+}
+
+MONITOR=DVI-0
+bspc subscribe report    \
+    | linebuf grep "^WM$MONITOR" \
+    | desktops_iter      \
+    | lemonbar -bp -g "x18" -u 6 -F "#00000000" -B "#00000000"

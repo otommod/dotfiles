@@ -1,0 +1,7 @@
+background no
+
+out_to_x no
+out_to_console yes
+
+TEXT
+Nu${upspeed wlp4s6}:d${downspeed wlp4s6}

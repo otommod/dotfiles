@@ -1,0 +1,68 @@
+[user]
+	email = ottomodinos@gmail.com
+	name = Otto Modinos
+
+	# Use the repo-local user.email/name if set
+	# https://git-scm.com/docs/git-config#git-config-useruseConfigOnly
+	useConfigOnly = true
+
+[credential]
+	helper = cache --socket ~/.cache/git-credential/socket
+
+[status]
+	# When a whole folder is untracked, show each of its files individually.
+	# https://git-scm.com/docs/git-config#git-config-statusshowUntrackedFiles
+	showUntrackedFiles = all
+
+[log]
+	# Always decorate (i.e. put HEAD and master, etc next to the commits) the log.
+	# https://git-scm.com/docs/git-log#git-log---decorateshortfullautono
+	decorate = full
+
+[merge]
+	# Only merge if every merge is fast-forward (ff).
+	# Note: applies to all merges, even git pull
+	# https://git-scm.com/docs/git-merge#git-merge---ff-only
+	ff = only
+
+[push]
+	# https://git-scm.com/docs/git-config#git-config-pushdefault
+	default = simple
+
+	# Also push all the tags associated with the commits.
+	# https://git-scm.com/docs/git-push#git-push---follow-tags
+	followTags = true
+
+[transfer]
+	# When fetching or receiving objects, abort if they are malformed.
+	# Note: this can be overriden by fetch.fsckobjects and receive.fsckobjects
+	# https://git-scm.com/docs/git-config#git-config-transferfsckObjects
+	# via https://groups.google.com/forum/#!topic/binary-transparency/f-BI4o8HZW0
+	fsckobjects = true
+
+
+[pretty]
+	nice = "format:%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%Cblue%an%Creset %Cgreen%cr)%Creset"
+
+[color]
+	ui = auto
+
+[alias]
+	# Deletes any local branch which has been deleted from the remote.
+	# https://git-scm.com/docs/git-fetch#git-fetch--p
+	branch-prune = fetch --prune
+
+	# Also stash untracked files.
+	# https://git-scm.com/docs/git-stash
+	stash-all = stash save --include-untracked
+
+	# via https://coderwall.com/p/euwpig/a-better-git-log
+	# https://git-scm.com/docs/git-log
+	lg = log --graph --abbrev-commit --color --pretty=nice
+
+	# git git git whatever works.
+	git = !git
+
+	# TODO: check out these
+	#   * http://www.gitalias.com/
+	#   * https://github.com/myfreeweb/dotfiles/blob/master/dev-base/gitconfig

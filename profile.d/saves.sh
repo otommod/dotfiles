@@ -1,0 +1,1 @@
+export SAVESDIR=~/.saves

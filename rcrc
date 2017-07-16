@@ -1,0 +1,3 @@
+SYMLINK_DIRS='colors todo profile.d shrc.d'
+
+EXCLUDES='bootstrap'

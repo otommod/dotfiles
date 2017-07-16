@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# ~/.xprofile
+#
+# Sourced by most Display Managers before the window manager
+
+if [ -d ~/Documents/scripts/autostart/ ]; then
+    for f in ~/Documents/scripts/autostart/?*.sh; do
+        [ -x "$f" ] && . "$f"
+    done
+    unset f
+fi

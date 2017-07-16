@@ -1,0 +1,19 @@
+def load_history():
+    import os, atexit, readline
+
+    histdir = os.environ.get("HISTDIR")
+    if histdir is None:
+        return
+    histfile = os.path.join(histdir, "python")
+
+    try:
+        readline.read_history_file(histfile)
+    except IOError:
+        # Let's hope that we didn't reach this, otherwise the dreaded
+        # .python_history file will be created!
+        return
+
+    readline.set_history_length(1000)
+    atexit.register(readline.write_history_file, histfile)
+
+load_history()

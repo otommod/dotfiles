@@ -1,0 +1,97 @@
+#! /bin/sh
+#
+# Example panel for LemonBoy's bar
+
+. ~/.config/bspwm/colors.sh
+
+button() {
+    buttons="$1"; shift
+    [ $# -eq 1 ] && set -- '' "$1"
+    while [ $# -gt 0 ]; do
+        btn=$1; btn_cmd=$2; shift 2
+        buttons="%{A$btn:$btn_cmd:}$buttons%{A}"
+    done
+
+    printf "%s" "$buttons"
+    return 0
+}
+
+color() {
+    eval "foreground=\$COLOR_${1}_FG"
+    eval "background=\$COLOR_${1}_BG"
+    printf "%s" "%{F$foreground}%{B$background}$2%{B-}%{F-}"
+}
+
+underline() {
+    printf "%s" "%{U$COLOR_FOREGROUND}%{+u}$1%{-u}"
+}
+
+
+MONITOR_COUNT=$(bspc query -M | wc -l)
+
+while read -r line; do
+    case $line in
+        C*) # clock output
+            clock="$(color 'STATUS' " ${line#?} ")" ;;
+        T*) # xtitle output
+            title="$(color 'TITLE' " ${line#?} ")" ;;
+        P*) # deadbeef player info
+            player="$(color 'STATUS' " ${line#?} ")" ;;
+        N*) # net info from conky
+            netinfo=""
+            IFS=':'
+            set -- ${line#?}
+            for item; do
+                value=${item#?}
+                case "$item" in
+                    d*) netinfo="$netinfo download:$value" ;;
+                    u*) netinfo="$netinfo upload:$value"   ;;
+                esac
+            done ;;
+        W*) # bspwm internal state
+            monitors=""; desktops=""; layout=""
+            IFS=':'
+            set -- ${line#?}
+            for item; do
+                name=${item#?}
+                case $item in
+                    M*) # active monitor
+                        if [ $MONITOR_COUNT -gt 1 ]; then
+                            monitors="${monitors} $(color 'ACTIVE_MONITOR' " ${name} ")"
+                        fi ;;
+                    m*) # inactive monitor
+                        if [ $MONITOR_COUNT -gt 1 ]; then
+                            monitors="${monitors} $(color 'INACTIVE_MONITOR' " ${name} ")"
+                        fi ;;
+                    O*) # focused occupied desktop
+                        desktops="${desktops}$(button "$(color 'FOCUSED_OCCUPIED' "$(underline " $name ")")" \
+                                                      "bspc desktop -f '$name'")" ;;
+                    F*) # focused free desktop
+                        desktops="${desktops}$(button "$(color 'FOCUSED_FREE' "$(underline " $name ")")"     \
+                                                      "bspc desktop -f '$name'")" ;;
+                    U*) # focused urgent desktop
+                        desktops="${desktops}$(button "$(color 'FOCUSED_URGENT' "$(underline " $name ")")"   \
+                                                      "bspc desktop -f '$name'")" ;;
+                    o*) # occupied desktop
+                        desktops="${desktops}$(button "$(color 'OCCUPIED' " $name ")"\
+                                                      "bspc desktop -f '$name'")"   ;;
+                    f*) # free desktop
+                        desktops="${desktops}$(button "$(color 'FREE' " $name ")"   \
+                                                      "bspc desktop -f '$name'")"   ;;
+                    u*) # urgent desktop
+                        desktops="${desktops}$(button "$(color 'URGENT' " $name ")" \
+                                                      "bspc desktop -f '$name'")"   ;;
+                    L*) # layout
+                        layout="$(button "$(color 'LAYOUT' " $name ")" \
+                                         "bspc desktop -l next")"      ;;
+                esac
+            done ;;
+    esac
+
+    clickable_desktops="$(button "${desktops}"            \
+                       4 'bspc desktop -f next' \
+                       5 'bspc desktop -f prev')"
+    wm="${monitors}${clickable_desktops}${layout}"
+
+    printf "%s\n" "%{l}${wm}${player}%{c}${title}%{r}${netinfo} ${clock}"
+done

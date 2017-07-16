@@ -1,0 +1,13 @@
+# Write your default config options here!
+
+autofit-larger=90%
+
+write-filename-in-watch-later-config=yes
+ignore-path-in-watch-later-config=yes
+
+[anime-gfy]
+ovc = libx264
+ovcopts = profile=high,preset=medium,tune=animation,crf=25
+oac = aac
+oacopts = b=72k
+vf = hqdn3d,lavfi=[scale='if(gt(iw,960),960,iw)':-1]
