@@ -246,6 +246,8 @@ Plug 'editorconfig/editorconfig-vim'
     " TODO: Consider writing a folding plugin
     " Plug 'tmhedberg/SimpylFold'
     " Plug 'vim-scripts/Efficient-python-folding'
+" Elixir                     {{{3
+    " Plug 'slashmili/alchemist.vim', {'for': 'elixir'}
 " OCaml                      {{{3
     " Plug 'vim-scripts/omlet.vim', {'for': 'ocaml'}
 " Clojure                    {{{3

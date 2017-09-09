@@ -1,0 +1,18 @@
+[submodule "colors/dircolors.d/dircolors-solarized"]
+	path = colors/dircolors.d/dircolors-solarized
+	url = https://github.com/seebi/dircolors-solarized
+[submodule "zsh/vendor/pure"]
+	path = zsh/vendor/pure
+	url = https://github.com/sindresorhus/pure
+[submodule "zsh/vendor/zsh-autosuggestions"]
+	path = zsh/vendor/zsh-autosuggestions
+	url = https://github.com/zsh-users/zsh-autosuggestions
+[submodule "zsh/vendor/zsh-history-substring-search"]
+	path = zsh/vendor/zsh-history-substring-search
+	url = https://github.com/zsh-users/zsh-history-substring-search
+[submodule "zsh/vendor/zsh-syntax-highlighting"]
+	path = zsh/vendor/zsh-syntax-highlighting
+	url = https://github.com/zsh-users/zsh-syntax-highlighting
+[submodule "zsh/vendor/zsh-completions"]
+	path = zsh/vendor/zsh-completions
+	url = https://github.com/zsh-users/zsh-completions
