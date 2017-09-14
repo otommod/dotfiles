@@ -1,7 +1,8 @@
 #!/bin/sh
 
 __udm_notify() {
-    if command -v terminal-notifier >/dev/null; then # OS X
+    if command -v terminal-notifier >/dev/null; then # macOS
+        local term_id
         [ "$TERM_PROGRAM" = 'iTerm.app' ] && term_id='com.googlecode.iterm2'
         [ "$TERM_PROGRAM" = 'Apple_Terminal' ] && term_id='com.apple.terminal'
 
@@ -12,7 +13,7 @@ __udm_notify() {
                 -activate "$term_id" -sender "$term_id" >/dev/null
         fi
 
-    elif command -v growlnotify >/dev/null; then # OS X Growl
+    elif command -v growlnotify >/dev/null; then # macOS Growl
         growlnotify -m "$1" "$2"
 
     elif command -v notify-send >/dev/null; then # Linux
@@ -27,29 +28,22 @@ __udm_notify() {
 }
 
 __udm_active_wid() {
-    local oldIFS oldOpts
-
     if command -v osascript >/dev/null; then
         osascript -e 'tell application '                \
             '(path to frontmost application as text) '  \
             'to id of front window' 2>/dev/null || echo None
 
     elif command -v xprop >/dev/null && [ -n "$DISPLAY" ]; then
-        oldIFS=IFS; unset IFS
-        oldOpts=$(set +o); set -f
+        local oldIFS="$IFS"; unset IFS
+        local oldOpts="$(set +o)"; set -f
         set -- $(xprop -root _NET_ACTIVE_WINDOW)
-        IFS=$oldIFS; eval "$oldOpts"
+        IFS="$oldIFS"; eval "$oldOpts"
 
         printf '%s\n' "$5"
 
     else
         echo None
     fi
-}
-
-__udm_parse_cmdname() {
-    # This is *NOT* correct, but it doesn't matter for our use case
-    basename "${1%%[[:space:]]*}"
 }
 
 __udm_humanize_time() {
@@ -77,35 +71,38 @@ __udm_format() {
 }
 
 
+__udm_assign_cmd() {
+    # If the command is in $UDM_IGNORE_LIST, do nothing.
+    unset __udm_notify
+    case "$UDM_IGNORE_LIST" in
+        "$1"|"$1:"*|*":$1"|*":$1:"*) return ;;
+    esac
+
+    __udm_notify=true
+    __udm_cmdname="$1"
+    __udm_cmdline="$2"
+}
+
 __udm_preexec() {
-    __udm_cmd="$1"
     __udm_timestamp=$(date +'%s')
     __udm_wid=$(__udm_active_wid)
+
+    __parse_cmdname "$1" __udm_assign_cmd "$1"
 }
 
 __udm_precmd() {
     local exitstatus=$?
 
-    # if the command took less that UDM_THRESHOLD to complete, do nothing
-    [ -z "$__udm_timestamp" ] && return
+    [ -z "$__udm_notify" ] && return
+
+    # if the command took less that $UDM_THRESHOLD to complete, do nothing
     local elapsed=$(( $(date +'%s') - __udm_timestamp ))
-    [ $elapsed -le "${UDM_THRESHOLD:=10}" ] && return
+    [ $elapsed -le "${UDM_THRESHOLD:-10}" ] && return
 
     # if the current window is the one that started the command, do nothing
     local wid="$(__udm_active_wid)"
     [ "$wid" = None ] && return
     [ "$wid" = "$__udm_wid" ] && return
 
-    # if the command is in the UDM_IGNORE_LIST, do nothing
-    local cmdname="$(__udm_parse_cmdname "$__udm_cmd")"
-    if [ "$cmdname" = sudo ] || [ "$cmdname" = ssh ]; then
-        cmdname="${__udm_cmd#"$cmdname"}"
-        cmdname="$(__udm_parse_cmdname "$cmdname")"
-    fi
-    case "$UDM_IGNORE_LIST" in
-        "$cmdname"|"$cmdname:"*|*":$cmdname"|*":$cmdname:"*) return ;;
-    esac
-
-    __udm_format "$cmdname" "$__udm_cmd" "$exitstatus" "$elapsed"
-    unset __udm_timestamp
+    __udm_format "$__udm_cmdname" "$__udm_cmd" "$exitstatus" "$elapsed"
 }

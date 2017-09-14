@@ -4,7 +4,7 @@
 
 if [ -d ~/.shrc.d ]; then
     for f in ~/.shrc.d/?*.sh; do
-        [ -x "$f" ] && . "$f"
+        [ -x "$f" ] && emulate sh -c '. "$f"'
     done
     unset f
 fi
@@ -12,8 +12,39 @@ fi
 # XXX: perhaps do this in .zprofile or .zshenv ?
 fpath+=( ~/.zsh/functions )
 
-ZCOMPDUMP_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/compdump"
+function __parse_cmdname {
+    emulate -L zsh
 
+    local -a cmd; cmd=( ${(z)1} )
+
+    local c
+    for c in $cmd; do
+        case "$c" in
+            # skip some shell syntax
+            *=*) ;;
+            \;|\&|\|) ;;
+            \!|\&\&|\|\|) ;;
+            \{|\}|\(|\)) ;;
+
+            # skip some commands that take other commands
+            exec) ;;
+            ssh|*/ssh) ;;
+            sudo|*/sudo) ;;
+
+            fg) c="${(z)jobtexts[${(Q)cmd[2]:-%+}]}[1]"; break ;;
+            %*) c="${(z)jobtexts[${(Q)cmd[1]}]}[1]"; break ;;
+
+            *) break ;;
+        esac
+    done
+
+    local callback="$2"
+    if whence "$callback" >/dev/null; then
+        "$callback" "$c" "${argv[3,-1][@]}"
+    fi
+}
+
+ZCOMPDUMP_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/compdump"
 # Shell Options         {{{1
 # Basics                     {{{2
 setopt no_beep                  # don't beep on error

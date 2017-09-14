@@ -25,7 +25,7 @@ alias suspend='systemctl suspend; exit'
 #
 # If that where to happen to our alias, that is, if rlwrap exists and dash
 # exits with a non-zero code it would be executed again!  The sollution is
-# simple, just use a fullblown if.
+# simple, just use an if.
 alias dash='if command -v rlwrap >/dev/null; then rlwrap dash; else dash; fi'
 
 
