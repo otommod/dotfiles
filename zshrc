@@ -12,39 +12,9 @@ fi
 # XXX: perhaps do this in .zprofile or .zshenv ?
 fpath+=( ~/.zsh/functions )
 
-function __parse_cmdname {
-    emulate -L zsh
+ZCACHE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+ZCOMPDUMP_FILE="$ZCACHE/compdump"
 
-    local -a cmd; cmd=( ${(z)1} )
-
-    local c
-    for c in $cmd; do
-        case "$c" in
-            # skip some shell syntax
-            *=*) ;;
-            \;|\&|\|) ;;
-            \!|\&\&|\|\|) ;;
-            \{|\}|\(|\)) ;;
-
-            # skip some commands that take other commands
-            exec) ;;
-            ssh|*/ssh) ;;
-            sudo|*/sudo) ;;
-
-            fg) c="${(z)jobtexts[${(Q)cmd[2]:-%+}]}[1]"; break ;;
-            %*) c="${(z)jobtexts[${(Q)cmd[1]}]}[1]"; break ;;
-
-            *) break ;;
-        esac
-    done
-
-    local callback="$2"
-    if whence "$callback" >/dev/null; then
-        "$callback" "$c" "${argv[3,-1][@]}"
-    fi
-}
-
-ZCOMPDUMP_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/compdump"
 # Shell Options         {{{1
 # Basics                     {{{2
 setopt no_beep                  # don't beep on error
@@ -119,6 +89,9 @@ unsetopt check_jobs             # don't report on jobs when shell exits
 
 # Completion            {{{1
 #
+
+# add additional completions before the "builtin" ones
+fpath=( ~/.zsh/vendor/zsh-completions/src/ $fpath )
 
 # XXX: what does it do?
 # zstyle ':completion:*' completions false
@@ -210,7 +183,15 @@ zstyle ':completion:*:*:rmdir:*' file-sort time
 # order to proxy the list of results (like the list of available debian
 # packages)
 zstyle ':completion:*' use-cache on
-zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/$HOST.cache"
+zstyle ':completion:*' cache-path "$ZCACHE/$HOST.cache"
+
+# Completion caching
+zstyle ':completion::complete:*' use-cache on
+zstyle ':completion::complete:*' cache-path "$ZCACHE/$HOST.cache"
+
+# Use caching to make completion for commands such as dpkg and apt usable.
+zstyle ':completion::complete:*' use-cache on
+zstyle ':completion::complete:*' cache-path "$ZCACHE/$HOST.cache"
 
 
 zmodload -i zsh/complist
@@ -267,16 +248,9 @@ zstyle '*' single-ignored show
 # zstyle ':completion:incremental:*' completer _complete _correct
 # zstyle ':completion:predict:*' completer _complete
 
-# Completion caching
-zstyle ':completion::complete:*' use-cache 1
-zstyle ':completion::complete:*' cache-path ~/.zsh/cache/$HOST
-
 # Expand partial paths
 zstyle ':completion:*' expand 'yes'
 zstyle ':completion:*' squeeze-slashes 'yes'
-
-zstyle ':completion:*' use-cache on
-zstyle ':completion:*' cache-path ~/.zsh/cache
 
 # Include non-hidden directories in globbed file completions
 # for certain commands
@@ -350,10 +324,6 @@ zstyle ':completion:*'  matcher-list \
 #
 # Styles
 #
-
-# Use caching to make completion for commands such as dpkg and apt usable.
-zstyle ':completion::complete:*' use-cache on
-zstyle ':completion::complete:*' cache-path "${ZDOTDIR:-$HOME}/.zcompcache"
 
 # Case-insensitive (all), partial-word, and then substring completion.
 if zstyle -t ':prezto:module:completion:*' case-sensitive; then
@@ -473,6 +443,20 @@ function anime {
 }
 
 
+# https://stackoverflow.com/a/187853
+# URL encode something and print it.
+function url-encode {
+    emulate -L zsh
+    setopt extendedglob
+    echo "${${(j: :)@}//(#b)(?)/%$[[##16]##${match[1]}]}"
+}
+
+# Search google for the given keywords.
+function google {
+    xdg-open "http://www.google.com/search?q=$(url-encode "${(j: :)@}")"
+}
+
+
 function strstrip {
     local original=$1   \
           chars=${2}    \
@@ -577,11 +561,11 @@ autoload -U promptinit && promptinit
 prompt pure
 
 if (( $+commands[pip] )); then
-    pipcomplcache="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/pip.complcache"
+    pipcomplcache="$ZCACHE/pip.complcache"
 
     if [[ ! -s "$pipcomplcache" || "$commands[pip]" -nt "$pipcomplcache" ]]; then
-        # pip is slow; cache its output. And also support 'pip2', 'pip3' variants
-        pip completion --zsh 2>/dev/null | sed -e "/^compctl/s/$/ pip2 pip3/" >! "$pipcomplcache"
+        # pip is slow, cache its output; also support pip2, pip3 variants
+        pip completion --zsh 2>/dev/null | sed -e "/^compctl/s/$/ pip2 pip3/" >!"$pipcomplcache"
     fi
 
     source "$pipcomplcache"
@@ -603,113 +587,152 @@ fi
 zmodload zsh/terminfo
 
 # Terminal title        {{{1
-# XXX: why is there so much code just for this?
+# Set the terminal title
+# SEE ALSO
+#   * http://zshwiki.org/home/examples/hardstatus
+#   * https://github.com/jreese/zsh-titles
 
-# Sets the terminal window title.
-function set-window-title {
-    local title_format="%s" title_formatted
-    zformat -f title_formatted "$title_format" "s:$argv"
-    printf '\e]2;%s\a' "${(V%)title_formatted}"
+function subtitle-set-title {
+    # Given
+    #              BEL (ASCII bell)
+    #     ESC ] is OSC (Operating System Command)
+    #     ESC \ is ST (String Terminator)
+    #
+    # XTerm and most other terminal emulators, even tmux, support these control
+    # codes:
+    #     OSC <n> ; <title> ST
+    #     OSC <n> ; <title> BEL
+    #
+    # n = 2  ->  Set the window title.
+    # n = 1  ->  Set the icon name.  This is not the "app icon"; it's an X11
+    #              thing.  It has been repurposed by some terminals, e.g. in
+    #              iTerm2 it sets the tab title.
+    # n = 0  ->  Set both the window title and the icon name.
+    #
+    # In tmux, the above will set the pane title.  tmux also recognizes
+    #     ESC k <title> ST
+    #
+    # which (if the allow-rename option is set) changes the window name, a
+    # different thing from a title, though the control code won't override a
+    # name set by the user directly.
+    #
+    # SEE ALSO
+    #     tmux(1)
+    #     http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+
+    # the V flag turns special characters (e.g. ASCII control chars) visible
+    print "\e]0;${(V)1}\e\\"
 }
 
-# Sets the terminal tab title.
-function set-tab-title {
-    local title_format="%s" title_formatted
-    zformat -f title_formatted "$title_format" "s:$argv"
-    printf '\e]1;%s\a' "${(V%)title_formatted}"
+function __parse_cmdname {
+    local -a cmd; cmd=( ${(z)1} )
+
+    local -i i=1
+    while true; do
+        case "$cmd[$i]" in
+            # skip some shell syntax
+            *=*) ;;
+            \;|\&|\|) ;;
+            \!|\&\&|\|\|) ;;
+            \{|\}|\(|\)) ;;
+            \[|\]|\[\[|\]\]|\(\(|\)\)) ;;
+
+            # get the actual command out of these
+            exec) ;;
+            ssh|*/ssh) ;;
+            sudo|*/sudo) ;;
+
+            # get the command that is under job control
+            fg) cmd=( ${(z)jobtexts[${(Q)cmd[$i+1]:-%+}]} ); i=1 ;;
+            %+) cmd=( ${(z)jobtexts[${(Q)cmd[$i]}]} );       i=1 ;;
+
+            *) break ;;
+        esac
+
+        (( i >= $#cmd )) && break
+        (( i++ ))
+    done
+
+    typeset -g "$2"="${cmd[$i]:t}"
 }
 
-# Sets the terminal multiplexer tab title.
-function set-multiplexer-title {
-    local title_format="%s" title_formatted
-    zformat -f title_formatted "$title_format" "s:$argv"
-    printf '\ek%s\e\\' "${(V%)title_formatted}"
-}
 
 # Sets the tab and window titles with a given command.
-function _terminal-set-titles-with-command {
-    emulate -L zsh
-    setopt extended_glob
-
-    # Get the command name that is under job control.
-    if [[ "${2[(w)1]}" == (fg|%*)(\;|) ]]; then
-        # Get the job name, and, if missing, set it to the default %+.
-        local job_name="${${2[(wr)%*(\;|)]}:-%+}"
-
-        # Make a local copy for use in the subshell.
-        local -A jobtexts_from_parent_shell
-        jobtexts_from_parent_shell=(${(kv)jobtexts})
-
-        jobs "$job_name" 2>/dev/null | {
-            read index discarded
-            # The index is already surrounded by brackets: [1].
-            _terminal-set-titles-with-command "${(e):-\$jobtexts_from_parent_shell$index}"
-        }
-    else
-        # Set the command name, or in the case of sudo or ssh, the next command.
-        local cmd="${${2[(wr)^(*=*|sudo|ssh|-*)]}:t}"
-        local truncated_cmd="${cmd/(#m)?(#c15,)/${MATCH[1,12]}...}"
-        unset MATCH
-
-        if [[ "$TERM" == screen* ]]; then
-            set-multiplexer-title "$truncated_cmd"
-        fi
-        set-tab-title "$truncated_cmd"
-        set-window-title "$cmd"
-    fi
+function _subtitle-preexec {
+    local title
+    __parse_cmdname "$1" title
+    subtitle-set-title "$title"
 }
 
-# Sets the tab and window titles with a given path.
-function _terminal-set-titles-with-path {
-    emulate -L zsh
-    setopt extended_glob
-
-    local absolute_path="${${1:a}:-$PWD}"
-    local abbreviated_path="${absolute_path/#$HOME/~}"
-    local truncated_path="${abbreviated_path/(#m)?(#c15,)/...${MATCH[-12,-1]}}"
-    unset MATCH
-
-    if [[ "$TERM" == screen* ]]; then
-        set-multiplexer-title "$truncated_path"
-    fi
-    set-tab-title "$truncated_path"
-    set-window-title "$abbreviated_path"
+function _subtitle-precmd {
+    # the D flag substitutes named directories
+    subtitle-set-title "${(D)PWD}"
 }
 
 autoload -Uz add-zsh-hook
-
-# XXX: what do these functions do exactly, what's the deal with the job stuff
-# add-zsh-hook precmd _terminal-set-titles-with-path
-# add-zsh-hook preexec _terminal-set-titles-with-command
+add-zsh-hook precmd _subtitle-precmd
+add-zsh-hook preexec _subtitle-preexec
 
 # Plugins               {{{1
-# undistract-me              {{{2
-autoload -Uz add-zsh-h
+# page-me                    {{{2
+# Print a bell when a long-running command finishes
+#
+# First, I found
+#   * https://github.com/jml/undistract-me
+# It's bash only but I wrote my own version that was more portable.
+# Eventually, I also found some zsh versions,
+#   * the bgnotify plugin in oh-my-zsh
+#   * https://github.com/marzocchi/zsh-notify
+# The second one seems macOS-specific and very, very complex for what it does.
+#
+# Then one day, I stumbled upon
+#   * https://gist.github.com/jpouellet/5278239
+# Instead of desktop notifications, it uses just an ASCII bell; this (at least
+# in X11-lang) marks the window as urgent which shines a bright red (at least
+# in my WM).  And that's everything I need really.  I even removed the "program
+# blacklist" since I don't use.
+zmodload zsh/datetime
 
-add-zsh-hook precmd __udm_precmd
-add-zsh-hook preexec __udm_preexec
+page_me_timestamp=$EPOCHSECONDS
+
+function page_me_preexec {
+    page_me_timestamp=$EPOCHSECONDS
+    page_me_cmd=$1
+}
+
+function page_me_precmd {
+    local elapsed=$(( $EPOCHSECONDS - page_me_timestamp ))
+    if (( elapsed >= ${PAGE_ME_THRESHOLD:-10} )); then
+        print -n '\a'
+    fi
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd page_me_precmd
+add-zsh-hook preexec page_me_preexec
 
 # command-not-found          {{{2
 if [[ -f /etc/zsh_command_not_found ]]; then
-    . /et/zsh_command_not_found
+    source /etc/zsh_command_not_found
 elif [[ -f /usr/share/doc/pkgfile/command-not-found.zsh ]]; then
-    . /usr/share/doc/pkgfile/command-not-found.zsh
+    source /usr/share/doc/pkgfile/command-not-found.zsh
 fi
 
 # syntax-highlighting        {{{2
-. ~/.zsh/vendor/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ~/.zsh/vendor/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern line cursor root)
 
 # ZSH_HIGHLIGHT_STYLES[builtin]='bg=blue'
 # ZSH_HIGHLIGHT_STYLES[command]='bg=blue'
 # ZSH_HIGHLIGHT_STYLES[function]='bg=blue'
+ZSH_HIGHLIGHT_STYLES[comment]='fg=10'
 
 ZSH_HIGHLIGHT_PATTERNS[rm*-rf*]='fg=white,bold,bg=red'
 
 # history-substring-search   {{{2
 # MUST be loaded after syntax-highlighting
-. ~/.zsh/vendor/zsh-history-substring-search/zsh-history-substring-search.zsh
+source ~/.zsh/vendor/zsh-history-substring-search/zsh-history-substring-search.zsh
 
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=green,fg=white,bold'
 HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_NOT_FOUND='bg=red,fg=white,bold'
@@ -721,9 +744,9 @@ bindkey '^[[B' history-substring-search-down
 
 # autosuggestions            {{{2
 # MUST be loaded after syntax-highlighting and history-substring-search
-. ~/.zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.zsh
+source ~/.zsh/vendor/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=10'
 # ZSH_AUTOSUGGEST_STRATEGY='match_prev_cmd'
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=30
 ZSH_AUTOSUGGEST_USE_ASYNC=1
