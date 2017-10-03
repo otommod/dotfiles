@@ -14,6 +14,10 @@
 	# https://git-scm.com/docs/git-config#git-config-statusshowUntrackedFiles
 	showUntrackedFiles = all
 
+	# Show a summary of commits for modified submodules.
+	# https://git-scm.com/docs/git-config#git-config-statussubmoduleSummary
+	submoduleSummary = true
+
 [log]
 	# Always decorate (i.e. put HEAD and master, etc next to the commits) the log.
 	# https://git-scm.com/docs/git-log#git-log---decorateshortfullautono
