@@ -7,66 +7,77 @@
 	useConfigOnly = true
 
 [credential]
-	helper = cache --socket ~/.cache/git-credential/socket
+	# Use git credential-cache to temporarily store passwords
+	# https://git-scm.com/docs/gitcredentials#gitcredentials-helper
+	helper = cache
+
+[alias]
+	# TODO:
+	#   * http://www.gitalias.com/
+	#   * https://github.com/myfreeweb/dotfiles/blob/master/dev-base/gitconfig
+
+	# git git git whatever works
+	git = !git
+
+	# Deletes any local branch which has been deleted from the remote
+	branch-prune = fetch --prune
+
+	# Also stash untracked files
+	stash-all = stash save --include-untracked
+
+	# A prettier log
+	lg = log --graph --pretty='%Cred%h%Creset -%C(yellow)%d%Creset %s (%Cblue%an%Creset %Cgreen%cr%Creset)'
 
 [status]
-	# When a whole folder is untracked, show each of its files individually.
-	# https://git-scm.com/docs/git-config#git-config-statusshowUntrackedFiles
+	# Show a summary of commits for modified submodules
+	submoduleSummary = true
+	# Recursively traverse untracked directories to display all contents
 	showUntrackedFiles = all
 
-	# Show a summary of commits for modified submodules.
-	# https://git-scm.com/docs/git-config#git-config-statussubmoduleSummary
-	submoduleSummary = true
-
-[log]
-	# Always decorate (i.e. put HEAD and master, etc next to the commits) the log.
-	# https://git-scm.com/docs/git-log#git-log---decorateshortfullautono
-	decorate = full
-
-[merge]
-	# Only merge if every merge is fast-forward (ff).
-	# Note: applies to all merges, even git pull
-	# https://git-scm.com/docs/git-merge#git-merge---ff-only
+[pull]
+	# Only allow fast-forward merges when pulling
 	ff = only
 
 [push]
-	# https://git-scm.com/docs/git-config#git-config-pushdefault
-	default = simple
-
-	# Also push all the tags associated with the commits.
+	# Also push all the tags associated with the commits being pushed
 	# https://git-scm.com/docs/git-push#git-push---follow-tags
 	followTags = true
 
 [transfer]
-	# When fetching or receiving objects, abort if they are malformed.
+	# When fetching or receiving objects, abort if they are malformed
 	# Note: this can be overriden by fetch.fsckobjects and receive.fsckobjects
 	# https://git-scm.com/docs/git-config#git-config-transferfsckObjects
 	# via https://groups.google.com/forum/#!topic/binary-transparency/f-BI4o8HZW0
 	fsckobjects = true
 
+[diff]
+	# Use initials for (c)ommit, (i)ndex and (w)work tree instead of a/b
+	mnemonicPrefix = true
 
-[pretty]
-	nice = "format:%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%Cblue%an%Creset %Cgreen%cr)%Creset"
+[merge]
+	# Display common-ancestor blocks in conflict hunks
+	conflictStyle = diff3
+
+[mergetool]
+	# Don't prompt before launching the mergetool
+	prompt = false
+	# Don't keep any of git's backup files after the mergetool exits
+	keepBackup = false
+	# Don't keep any of git's temporary files after the mergetool exits
+	keepTemporaries = false
+	# Put the temporary files in a temporary directory
+	writeToTemp = true
+
+[rerere]
+	# TODO:
+	# enabled = true
 
 [color]
+	# Use color when isatty(stdout)
 	ui = auto
-
-[alias]
-	# Deletes any local branch which has been deleted from the remote.
-	# https://git-scm.com/docs/git-fetch#git-fetch--p
-	branch-prune = fetch --prune
-
-	# Also stash untracked files.
-	# https://git-scm.com/docs/git-stash
-	stash-all = stash save --include-untracked
-
-	# via https://coderwall.com/p/euwpig/a-better-git-log
-	# https://git-scm.com/docs/git-log
-	lg = log --graph --abbrev-commit --color --pretty=nice
-
-	# git git git whatever works.
-	git = !git
-
-	# TODO: check out these
-	#   * http://www.gitalias.com/
-	#   * https://github.com/myfreeweb/dotfiles/blob/master/dev-base/gitconfig
+[log]
+	# Abbreviate commit hashes whenever possible/relevant
+	abbrevCommit = true
+	# Print out the refs of any commits shown in the log
+	# https://git-scm.com/docs/git-log#git-log---decorateshortfullautono
+	decorate = short
