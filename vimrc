@@ -217,15 +217,6 @@ Plug 'editorconfig/editorconfig-vim'
 " Warm and fuzzy        {{{2
     Plug 'junegunn/fzf'
     Plug 'junegunn/fzf.vim'
-" CtrlP                 {{{2
-    " Plug 'ctrlpvim/ctrlp.vim'
-    " " Plug 'nixprime/cpsm', {'do': './install.sh'}
-    " " Plug 'FelikZ/ctrlp-py-matcher'
-    " Plug 'mattn/ctrlp-mark'
-    " Plug 'mattn/ctrlp-register'
-    " Plug 'ivalkeen/vim-ctrlp-tjump'
-    " Plug 'kshenoy/vim-ctrlp-args'
-    " Plug 'fisadev/vim-ctrlp-cmdpalette'
 " Alignment             {{{2
     " Plug 'tommcdo/vim-lion'
     " Plug 'godlygeek/tabular'
@@ -542,43 +533,6 @@ let g:airline#extensions#xkblayout#enabled = 0
 
 " hunks
 let g:airline#extensions#hunks#enabled = 1
-
-" CtrlP                 {{{2
-let g:ctrlp_extensions = ["tag", "quickfix", "tjump"]
-
-let g:ctrlp_tjump_only_silent = 1
-let g:ctrlp_tjump_skip_tag_name = 1
-
-let g:ctrlp_lazy_update = 50
-if s:has_plugin("ctrlp-py-matcher")
-    let g:ctrlp_match_func = {'match': 'pymatcher#PyMatch'}
-endif
-if s:has_plugin("cpsm")
-    let g:ctrlp_match_func = {'match': 'cpsm#CtrlPMatch'}
-endif
-
-let g:ctrlp_user_command = {'types': {}}
-if s:executable('rg')
-    let g:ctrlp_user_command.fallback = 'rg --files %s --color=never --hidden'
-elseif s:executable('ag')
-    let g:ctrlp_user_command.fallback = 'ag --nocolor --hidden -l -g "" %s'
-
-else
-    let g:ctrlp_max_files = 0
-    let g:ctrlp_show_hidden = 1
-    let g:ctrlp_clear_cache_on_exit = 0
-endif
-
-function! s:add_ctrlp_vcs(rootdir, cmd)
-    let n = len(g:ctrlp_user_command.types)
-    if s:executable(a:rootdir[1:])
-        " ensure the vcs exist, otherwise CtrlP kindly would report NO ENTRIES
-        let g:ctrlp_user_command.types[n] = [a:rootdir, a:cmd]
-    endif
-endfunction
-
-call s:add_ctrlp_vcs(".git", "git -C %s ls-files -co --exclude-standard")
-call s:add_ctrlp_vcs(".hg",  "hg --cwd %s locate -I .")
 
 " CtrlSpace             {{{2
 let g:ctrlspace_use_tabline = 1
@@ -1416,13 +1370,6 @@ nnoremap <silent> <leader>K :call UnHighlightAllWords()<CR>
 if s:has_plugin('fzf.vim')
     nnoremap <C-p> :FZF<CR>
     nnoremap gb :Buffers<CR>
-elseif s:has_plugin('ctrlp.vim')
-    nnoremap gb :CtrlPBuffer<CR>
-endif
-
-if s:has_plugin('vim-ctrlp-tjump')
-    nnoremap <C-]> :CtrlPtjump<CR>
-    vnoremap <C-]> :CtrlPtjumpVisual<CR>
 endif
 
 Anoremap <F5>a AirlineToggle
@@ -1657,8 +1604,7 @@ function! SetupLightline(colorscheme)
         \
         \ 'active': {
         \   'left': [ [ 'mode', 'paste' ],
-        \             [ 'fugitive', 'filename', 'modified' ],
-        \             [ 'ctrlpmark' ] ],
+        \             [ 'fugitive', 'filename', 'modified' ] ],
         \   'right': [ [ 'lineinfo' ],
         \              [ 'percent' ],
         \              [ 'linter_warnings', 'linter_errors', 'linter_ok' ],
@@ -1666,6 +1612,9 @@ function! SetupLightline(colorscheme)
         \ },
         \ 'components': {
         \   'modified': '%{&ft=="help"?"":&modified?"+":&modifiable?"":"-"}'
+        \ },
+        \ 'component_function': {
+        \   'fugitive': 'LightlineFugitive',
         \ },
         \ 'component_expand': {
         \   'linter_warnings': 'LightlineAleWarnings',
@@ -1680,10 +1629,15 @@ function! SetupLightline(colorscheme)
         \ }, 'keep')
 endfunction!
 
-" augroup rc_lightline
-"     au!
-"     au User ALELint call lightline#update()
-" augroup END
+function! LightlineFugitive()
+    try
+        if exists('*fugitive#head') && expand('%:t') !~? 'Tagbar\|Gundo\|NERD'
+            return fugitive#head()
+        endif
+    catch
+    endtry
+    return ''
+endfunction
 
 function! LightlineAleCounts() abort
     let counts = ale#statusline#Count(bufnr(''))
@@ -1706,6 +1660,11 @@ function! LightlineAleOK() abort
     let [total; _] = LightlineAleCounts()
     return total == 0 ? '✓' : ''
 endfunction
+
+" augroup rc_lightline
+"     au!
+"     au User ALELint call lightline#update()
+" augroup END
 
 " call SetupLightline('wombat')
 
