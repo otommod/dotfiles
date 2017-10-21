@@ -38,8 +38,8 @@ function! s:executable(...)            " {{{2
     return s:every(map(copy(a:000), 'executable(v:val) > 0'))
 endfunction
 
-function! s:has_plugin(plugname)       " {{{2
-    return has_key(g:plugs, a:plugname)
+function! s:has_plugin(...)            " {{{2
+    return s:every(map(copy(a:000), 'has_key(g:plugs, v:val)'))
 endfunction
 
 function! s:path_exists(path)          " {{{2
@@ -96,6 +96,7 @@ Plug 'editorconfig/editorconfig-vim'
 
 " Sidepanes             {{{2
     Plug 'majutsushi/tagbar'
+    " Plug 'simnalamburt/vim-mundo'
     Plug 'mbbill/undotree'
     Plug 'mtth/scratch.vim'
 " File explorers        {{{2
@@ -120,6 +121,7 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'luochen1990/rainbow'
 " Window management     {{{2
     " Plug 'spolu/dwm.vim'
+    " Plug 'zhamlin/tiler.vim'
     " Plug 'roman/golden-ratio'
     " Plug 't9md/vim-choosewin'
     Plug 'dr-chip-vim-scripts/ZoomWin'
@@ -151,6 +153,7 @@ Plug 'editorconfig/editorconfig-vim'
     " Both {{{3
         Plug 'w0ng/vim-hybrid'
         " Plug 'morhetz/gruvbox'
+        " Plug 'josuegaleas/jay'
         " Plug 'jacoborus/tender.vim'
         " Plug 'junegunn/seoul256.vim'
         " Plug 'chriskempson/base16-vim'
@@ -189,7 +192,6 @@ Plug 'editorconfig/editorconfig-vim'
 " Search enhancements   {{{2
     " Plug 'wincent/ferret'
     " Plug 'idbrii/vim-searchsavvy'
-    Plug 'vasconcelloslf/vim-interestingwords'
     Plug 'henrik/vim-indexed-search'
     " Plug 'haya14busa/incsearch.vim'
 " Statusline            {{{2
@@ -212,18 +214,18 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'adriaanzon/vim-textobj-matchit'
     " Plug 'lucapette/vim-textobj-underscore'
     " Plug 'coderifous/textobj-word-column.vim'
+" Warm and fuzzy        {{{2
+    Plug 'junegunn/fzf'
+    Plug 'junegunn/fzf.vim'
 " CtrlP                 {{{2
-    " Plug 'junegunn/fzf'
-    " Plug 'junegunn/fzf.vim'
-
-    Plug 'ctrlpvim/ctrlp.vim'
-    " Plug 'nixprime/cpsm', {'do': './install.sh'}
-    Plug 'FelikZ/ctrlp-py-matcher'
-    Plug 'ivalkeen/vim-ctrlp-tjump'
+    " Plug 'ctrlpvim/ctrlp.vim'
+    " " Plug 'nixprime/cpsm', {'do': './install.sh'}
+    " " Plug 'FelikZ/ctrlp-py-matcher'
     " Plug 'mattn/ctrlp-mark'
-    Plug 'mattn/ctrlp-register'
+    " Plug 'mattn/ctrlp-register'
+    " Plug 'ivalkeen/vim-ctrlp-tjump'
     " Plug 'kshenoy/vim-ctrlp-args'
-    Plug 'fisadev/vim-ctrlp-cmdpalette'
+    " Plug 'fisadev/vim-ctrlp-cmdpalette'
 " Alignment             {{{2
     " Plug 'tommcdo/vim-lion'
     " Plug 'godlygeek/tabular'
@@ -269,8 +271,6 @@ Plug 'editorconfig/editorconfig-vim'
 
     Plug 'metakirby5/codi.vim'
 
-    Plug 'reedes/vim-thematic'
-    " Plug 'scrooloose/syntastic'
     Plug 'w0rp/ale'
     " Plug 'szw/vim-ctrlspace'
     " Plug 'terryma/vim-multiple-cursors'
@@ -362,8 +362,17 @@ if s:has('wildignore')
     set wildignore+=*.zip,*.rar                  " other archives
 
     " Large directories      {{{3
-    set wildignore+=~/.cache/*
-    set wildignore+=~/.local/share/Steam/*
+    " set wildignore+=~/.cache/*
+    " set wildignore+=~/.local/share/Steam/*
+
+    let g:large_directories = [
+                \ '~/.cache',
+                \ '~/.local/share/Steam',
+                \ ]
+
+    " for dir in g:large_directories
+    "     let &wildignore .= ','.expand(dir).'/*'
+    " endfor
 endif
 " }}}2
 
@@ -374,7 +383,7 @@ set matchtime=5    " tenths of seconds to show the matching paren
 set autoread       " re-read the file when changed outside of vim
 set wrapscan       " searches wrap around the end of file
 set laststatus=2   " always show status line
-set backspace=indent,eol,start                   " backspace over everything!
+set backspace=indent,eol,start         " backspace over everything!
 set equalalways    " make new splits equal size
 set modeline       " allow modeline execution
 set mouse=a        " enable mouse for all modes (Normal, Insert, etc)
@@ -387,12 +396,16 @@ set list           " show nice little characters
 set listchars=eol:¬,tab:»\ ,trail:·,extends:❯,precedes:❮,nbsp:␣
 set scrolloff=5    " always keep the cursor 5 lines from the end of the screen
 
+set nrformats+=alpha    " incr/decr alphabetic characters
+set nrformats-=octal    " numbers starting with zero aren't octal
+set formatoptions+=j    " remove comment leaders when joining lines
+
 " XXX: fix these
 set tabstop=8      " 
+set softtabstop=4  " 
+set expandtab      " 
 set shiftwidth=4   " 
 set shiftround     " use multiple of shiftwidth when indenting with < and >
-set expandtab      " 
-set softtabstop=4  " 
 set autoindent     " 
 
 set lazyredraw     " do not redraw while executing commands
@@ -405,9 +418,12 @@ if $TERM =~ 'st'
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 endif
 
-if s:executable('ag')
-    set grepprg=ag\ --vimgrep\ $*
-    set grepformat=%f:%l:%c:%m
+if s:executable('rg')
+    set grepprg=rg\ --vimgrep
+    set grepformat^=%f:%l:%c:%m
+elseif s:executable('ag')
+    set grepprg=ag\ --vimgrep
+    set grepformat^=%f:%l:%c:%m
 endif
 
 " title            " set the terminal title
@@ -437,10 +453,21 @@ if s:has('insert_expand')    | set completeopt=menu,menuone,longest       | endi
 if s:has('conceal')          | set concealcursor=nc  | endif
 
 " GUI Options      {{{1
+" TODO: move this
+function! ComposeGuifont(fontsize, typeface)
+    if has('gui_macvim')
+        return escape(a:typeface, ',') . ':h' . a:fontsize
+    elseif has('win32') || has('win64') "|| has('gui_win32') || has('gui_win64')
+        return escape(a:typeface, ',') . ':h' . a:fontsize
+    elseif has('gui_gtk') || has('gui_gnome')
+        return escape(a:typeface, ',') . ' ' . a:fontsize
+    endif
+    return ''
+endfunction
+
 function! SetupGUI()
 if s:has('gui_mac')
     set antialias  " antialized goodness
-    set fuoptions=maxvert,maxhorz
 endif
 
 set mousehide      " hide the mouse pointer when typing on the GUI
@@ -449,6 +476,16 @@ set guioptions-=e  " text tabs
 set guioptions-=m  " no menu
 set guioptions-=t  " no tearoff menus
 set guioptions-=T  " no toolbar (the one with the icons)
+
+let &guifont = ComposeGuifont(
+    \   13,
+    \   fontdetect#firstFontFamily(['Inconsolata',
+    \                               'Anonymous Pro',
+    \                               'Fantasque Sans Mono',
+    \                               'Cousine',
+    \                               'monofur',
+    \                               'Monaco',
+    \                               'Consolas' ]))
 endfunction
 
 " Plugin Options   {{{1
@@ -478,6 +515,9 @@ let g:airline_mode_map = {
     \ '' : '^s',
 \ }
 
+let g:airline#parts#ffenc#skip_expected_string = 'utf-8[unix]'
+
+
 " Extensions
 let g:airline#extensions#whitespace#enabled = 1
 
@@ -504,48 +544,41 @@ let g:airline#extensions#xkblayout#enabled = 0
 let g:airline#extensions#hunks#enabled = 1
 
 " CtrlP                 {{{2
-" s:add_ctrlp_vcs -- adds a vcs in g:ctrlp_user_command    {{{3
-function! s:add_ctrlp_vcs(rootdir, cmd, ...)
-    let prog = get(a:000, 0, a:rootdir[1:])
-    let n = len(g:ctrlp_user_command.types)
-    if s:executable(prog)
-        " ensure the vcs exist, otherwise CtrlP kindly would report NO ENTRIES
-        let g:ctrlp_user_command.types[n] = [a:rootdir, a:cmd]
-    endif
-endfunction
-" }}}3
-
-let g:ctrlp_lazy_update = 100  " refresh the results every 100ms
-
-let g:ctrlp_max_files = 0
-let g:ctrlp_show_hidden = 1
-let g:ctrlp_use_caching = 1
-let g:ctrlp_clear_cache_on_exit = 0
-
-if s:has_plugin("ctrlp-py-matcher")
-    let g:ctrlp_match_func = {'match': 'pymatcher#PyMatch'}
-endif
-
-let g:ctrlp_user_command = {'types': {}}
-if s:executable('ag')
-    " https://robots.thoughtbot.com/faster-grepping-in-vim
-    let g:ctrlp_user_command.fallback = 'ag --nocolor -l -g "" %s'
-    " let g:ctrlp_use_caching = 0          " no need to cache, ag is fast
-    let g:ctrlp_clear_cache_on_exit = 1
-
-    " XXX:
-    " let g:ctrlp_user_command = "ag %s -i --nocolor --nogroup "
-    "     \ . "--ignore '.git' --ignore '.DS_Store' --ignore 'node_modules' "
-    "     \ . "--hidden -g ''"
-endif
-
-call s:add_ctrlp_vcs(".git", "cd %s && git ls-files -co --exclude-standard")
-call s:add_ctrlp_vcs(".hg",  "hg --cwd %s locate -I .")
-
 let g:ctrlp_extensions = ["tag", "quickfix", "tjump"]
 
 let g:ctrlp_tjump_only_silent = 1
 let g:ctrlp_tjump_skip_tag_name = 1
+
+let g:ctrlp_lazy_update = 50
+if s:has_plugin("ctrlp-py-matcher")
+    let g:ctrlp_match_func = {'match': 'pymatcher#PyMatch'}
+endif
+if s:has_plugin("cpsm")
+    let g:ctrlp_match_func = {'match': 'cpsm#CtrlPMatch'}
+endif
+
+let g:ctrlp_user_command = {'types': {}}
+if s:executable('rg')
+    let g:ctrlp_user_command.fallback = 'rg --files %s --color=never --hidden'
+elseif s:executable('ag')
+    let g:ctrlp_user_command.fallback = 'ag --nocolor --hidden -l -g "" %s'
+
+else
+    let g:ctrlp_max_files = 0
+    let g:ctrlp_show_hidden = 1
+    let g:ctrlp_clear_cache_on_exit = 0
+endif
+
+function! s:add_ctrlp_vcs(rootdir, cmd)
+    let n = len(g:ctrlp_user_command.types)
+    if s:executable(a:rootdir[1:])
+        " ensure the vcs exist, otherwise CtrlP kindly would report NO ENTRIES
+        let g:ctrlp_user_command.types[n] = [a:rootdir, a:cmd]
+    endif
+endfunction
+
+call s:add_ctrlp_vcs(".git", "git -C %s ls-files -co --exclude-standard")
+call s:add_ctrlp_vcs(".hg",  "hg --cwd %s locate -I .")
 
 " CtrlSpace             {{{2
 let g:ctrlspace_use_tabline = 1
@@ -571,14 +604,15 @@ let g:indexed_search_center = 1
 let g:better_whitespace_filetypes_blacklist = ['help', 'vim-plug']
 
 " interestingWords      {{{2
-let g:interestingWordsRandomiseColors = 1
+let g:interestingWordsRandomiseColors = 0
 
 " indentLine            {{{2
+let g:indentLine_faster = 1
 let g:indentLine_char = '┊'
 let g:indentLine_concealcursor = 'nc'  " XXX: this sets 'concealcursor'
 
 " cursorword            {{{2
-" let g:cursorword = 1
+let g:cursorword = 1
 
 " Matchmaker            {{{2
 let g:matchmaker_enable_startup = 1
@@ -648,6 +682,14 @@ function! RelativeTo(path, ...)        " {{{2
     endwhile
 
     return rel_path
+endfunction
+
+
+function! AskMakeDirs(dir)             " {{{2
+    let msg = "Some directories in the filepath don't exist.  Create them?"
+    if !s:path_exists(a:dir) && confirm(msg, "&Yes\n&No") == 1
+        call s:makedirs(a:dir)
+    endif
 endfunction
 
 
@@ -777,7 +819,7 @@ function! ToggleQuickFix(list, ...)
     if last_winnr != winnr('$') | return | endif
 
     let current_winnr = winnr()
-    if a:list == 'l' && !len(getloclist(0))
+    if a:list == 'l' && empty(getloclist(0))
         call s:echohl('WarningMsg', "Location List is empty")
         return
     endif
@@ -808,17 +850,17 @@ function! s:get_bufnrs()
         ft_exclude[ft] = 1
     endfor
 
-    return filter(range(1,bufnr('$')),
+    return filter(range(1, bufnr('$')),
                 \ 'buflisted(v:val) && !get(ft_exclude, getbufvar(v:val, "&ft"), 0)')
 endfunction
 
 function! s:get_buffer_info(bufnr)
-    let has_view = bufwinnr(a:bufnr) > 0
+    let has_window = bufwinnr(a:bufnr) > 0
     let is_current = a:bufnr == bufnr('%')
     return {
-        \ "name": bufname(a:bufnr),
-        \ "state": has_view + is_current,
-        \ "modified": getbufvar(a:bufnr, '&mod')
+        \ 'name': bufname(a:bufnr),
+        \ 'state': has_window + is_current,
+        \ 'modified': getbufvar(a:bufnr, '&mod')
     \ }
 endfunction
 
@@ -919,7 +961,7 @@ endfunction
 
 function! s:get_next_words(motion, maxwords)
     let winview = winsaveview()
-    let line = winview["lnum"]
+    let line = winview['lnum']
 
     let words = []
     let word = s:get_next_word(a:motion, line)
@@ -1003,6 +1045,76 @@ function! MoveLine(direction, visual)
 endfunction
 
 
+" wordhl                {{{2
+" Simple plugin to highlight specific words or sentences
+function! s:get_visual_selection()
+    let [lnum1, col1] = getpos("'<")[1:2]
+    let [lnum2, col2] = getpos("'>")[1:2]
+    let lines = getline(lnum1, lnum2)
+    let lines[-1] = lines[-1][: col2 - (&selection == 'inclusive' ? 1 : 2)]
+    let lines[0] = lines[0][col1 - 1:]
+    return join(lines, "\n")
+endfunction
+
+function! s:wordhl_groups()
+    redir => hls
+    silent! highlight
+    redir END
+    let wordhls = map(split(hls, "\n"), 'matchstr(v:val, "^WordHL\\S*")')
+    return filter(wordhls, '!empty(v:val)')
+endfunction
+
+function! s:next_wordhl_group()
+    let matchgroups = map(getmatches(), 'v:val.group')
+    let wordhls = filter(s:wordhl_groups(), 'index(matchgroups, v:val) < 0')
+    return get(wordhls, 0, '')
+endfunction
+
+function! HighlightPattern(pattern, group)
+    let matches = filter(getmatches(),
+                \ 'has_key(v:val, "pattern") && v:val.pattern == a:pattern')
+    if empty(matches) && !empty(a:pattern) && !empty(a:group)
+        call matchadd(a:group, a:pattern)
+    else
+        call map(matches, 'matchdelete(v:val.id)')
+    endif
+endfunction
+
+function! HighlightWord(mode)
+    let word = a:mode == 'v' ? s:get_visual_selection() : expand('<cword>')
+    let ic = (&ic && (!&scs || match(word, '\u') < 0)) ? '\c' : ''
+    let pattern = a:mode == 'v' ?
+                \ ic.'\V\zs'.escape(word, '\').'\ze' :
+                \ ic.'\V\<'.escape(word, '\').'\>'
+    call HighlightPattern(pattern, s:next_wordhl_group())
+endfunction
+
+function! UnHighlightAllWords()
+    call map(getmatches(), 'v:val.group =~ "^WordHL\\S*" && matchdelete(v:val.id)')
+endfunction
+
+
+" hi! def WordHL1  ctermbg=154  guibg=#aeee00  ctermfg=black  guifg=black
+" hi! def WordHL2  ctermbg=121  guibg=#ff0000  ctermfg=black  guifg=black
+" hi! def WordHL3  ctermbg=211  guibg=#0000ff  ctermfg=black  guifg=black
+" hi! def WordHL4  ctermbg=137  guibg=#b88823  ctermfg=black  guifg=black
+" hi! def WordHL5  ctermbg=214  guibg=#ffa724  ctermfg=black  guifg=black
+" hi! def WordHL6  ctermbg=222  guibg=#ff2c4b  ctermfg=black  guifg=black
+
+hi! def WordHL1  cterm=bold ctermfg=16 ctermbg=153 gui=bold guibg=#0a7383 guifg=white
+hi! def WordHL2  cterm=bold ctermfg=7  ctermbg=1   gui=bold guibg=#a07040 guifg=white
+hi! def WordHL3  cterm=bold ctermfg=7  ctermbg=2   gui=bold guibg=#4070a0 guifg=white
+hi! def WordHL4  cterm=bold ctermfg=7  ctermbg=3   gui=bold guibg=#40a070 guifg=white
+hi! def WordHL5  cterm=bold ctermfg=7  ctermbg=4   gui=bold guibg=#70a040 guifg=white
+hi! def WordHL6  cterm=bold ctermfg=7  ctermbg=5   gui=bold guibg=#0070e0 guifg=white
+hi! def WordHL7  cterm=bold ctermfg=7  ctermbg=6   gui=bold guibg=#007020 guifg=white
+hi! def WordHL8  cterm=bold ctermfg=7  ctermbg=21  gui=bold guibg=#d4a00d guifg=white
+hi! def WordHL9  cterm=bold ctermfg=7  ctermbg=22  gui=bold guibg=#06287e guifg=white
+hi! def WordHL10 cterm=bold ctermfg=7  ctermbg=45  gui=bold guibg=#5b3674 guifg=white
+hi! def WordHL11 cterm=bold ctermfg=7  ctermbg=16  gui=bold guibg=#4c8f2f guifg=white
+hi! def WordHL12 cterm=bold ctermfg=7  ctermbg=50  gui=bold guibg=#1060a0 guifg=white
+hi! def WordHL13 cterm=bold ctermfg=7  ctermbg=56  gui=bold guibg=#a0b0c0 guifg=black
+
 " Autocomplete     {{{1
 set complete-=i    " don't use included files for completion, too slow
 
@@ -1051,51 +1163,21 @@ let g:neocomplete#force_omni_input_patterns.python =
 " let &t_ZH = Terminfo('sitm', 1)
 " let &t_ZR = Terminfo('ritm', 1)
 
+colorscheme badwolf
+let g:airline_theme = 'bubblegum'
+
 let g:molokai_original = 1
-
-let g:thematic#defaults = {
-    \   'typeface':
-    \       fontdetect#firstFontFamily([ "Anonymous Pro",
-    \                                    "monofur",
-    \                                    "Fantasque Sans Mono",
-    \                                    "Inconsolata",
-    \                                    "Consolas",
-    \                                    "Monaco" ]),
-    \   'font-size': 13,
-    \   'linespace': 0,
-    \
-    \   'fullscreen': 0,
-    \   'laststatus': 2,
-    \   'ruler': 0,
-    \   'airline-theme': 'bubblegum',
-    \ }
-
-let g:thematic#themes = {
-    \ 'badwolf': {'airline-theme': 'bubblegum'},
-    \
-    \ 'solarized': {'background':  'light',
-    \               'airline-theme': 'solarized'},
-    \
-    \ 'hemisu': {'background': 'light'},
-    \
-    \ 'iawriter': {
-    \     'colorscheme': 'pencil',
-    \     'background': 'light',
-    \     'columns': 90,
-    \     'font-size': 14,
-    \     'fullscreen': 1,
-    \     'laststatus': 0,
-    \     'linespace': 8,
-    \     'typeface': 'Cousine',
-    \ },
-    \ }
-let g:thematic#theme_name = 'badwolf'
 
 function! Highlights()
 " Diff                  {{{2
 highlight DiffAdd     cterm=bold ctermbg=none ctermfg=119
 highlight DiffDelete  cterm=bold ctermbg=none ctermfg=167
 highlight DiffChange  cterm=bold ctermbg=none ctermfg=227
+
+" hi! DiffAdd    ctermfg=DarkGreen  guifg=DarkGreen  guibg=bg
+" hi! DiffDelete ctermfg=DarkRed    guifg=DarkRed    guibg=bg
+" hi! DiffChange ctermfg=DarkYellow guifg=DarkYellow guibg=bg
+" hi! DiffText   ctermfg=DarkCyan   guifg=DarkCyan   guibg=bg
 
 " Matchmaker            {{{2
 highlight Matchmaker  term=underline cterm=underline gui=underline
@@ -1113,9 +1195,9 @@ call Highlights()
 
 augroup rc_colors
     au!
-    " TODO: consider using OptionSet event to check for options like
-    " termguicolors and reset the colorscheme
     au ColorScheme * call Highlights()
+    " TODO: consider using OptionSet event to check for options like
+    "       termguicolors and reset the colorscheme
 augroup END
 
 " Autocommands     {{{1
@@ -1127,15 +1209,17 @@ augroup general    "    {{{2
     " au VimLeave * call Tput('rmm', 1)
 
     au GUIEnter * nested call SetupGUI()
-    " au GUIEnter * nested call thematic#init(g:thematic#theme_name)
 
     " Don't highlight the line of the cursor in other windows
-    au WinEnter * set   cursorline
-    au WinLeave * set nocursorline
+    " au WinEnter * set   cursorline
+    " au WinLeave * set nocursorline
 
     " Turn off the relative numbering in other windows
     " au WinEnter * call RestoreRelNum()
     " au WinLeave * call OffRelNumPreserve()
+
+    " Automake directory
+    au BufNewFile * call AskMakeDirs(expand('%:h'))
 
     " Automaticaly destroy fugitive buffers when hidden
     au BufReadPost fugitive://* set bufhidden=delete
@@ -1209,10 +1293,10 @@ function! s:try_cmd(cmd, default)      " {{{2
         let tick = b:changedtick
         exec a:cmd
         if tick == b:changedtick
-            exec join(['normal!', a:default])
+            exec 'normal!' a:default
         endif
     else
-        exec join(['normal! ', v:count, a:default], '')
+        exec 'normal!' v:count.a:default
     endif
 endfunction
 
@@ -1236,18 +1320,25 @@ endfunction
 command! -nargs=+ OperatorMap call s:operator_map(<f-args>)
 " }}}2
 
+" fixes
 noremap j gj
 noremap k gk
-noremap H ^
-noremap L $
-noremap Y y$
 noremap gj j
 noremap gk k
-noremap gV `[v`]
+noremap Y y$
 vnoremap < <gv
 vnoremap > >gv
+
+noremap H ^
+noremap L $
+noremap gV `[v`]
 nnoremap <BS> <C-^>
 nnoremap gb :ls<CR>:b<Space>
+
+" Use :tjump instead of :tag
+nnoremap <C-]> g<C-]>
+vnoremap <C-]> g<C-]>
+nnoremap <C-W><C-]> <C-W>g<C-]>
 
 " TODO: put this somewhere proper
 function! SyntaxInfo()
@@ -1292,10 +1383,6 @@ if s:has_plugin('ShowMotion')
 endif
 
 if s:has_plugin('vim-sneak')
-    " call Omap('f', '<Plug>Sneak_f')
-    " call Omap('F', '<Plug>Sneak_F')
-    " call Omap('t', '<Plug>Sneak_t')
-    " call Omap('T', '<Plug>Sneak_T')
     OperatorMap f <Plug>Sneak_f
     OperatorMap F <Plug>Sneak_F
     OperatorMap t <Plug>Sneak_t
@@ -1305,7 +1392,7 @@ endif
 if s:has_plugin('SplitJoin')
     " TODO: use SplitJoin plugin
     nnoremap <silent> J :<C-u>call <SID>try_cmd('SplitjoinJoin',  'J')<CR>
-    nnoremap <silent> S :<C-u>call <SID>try_cmd('SplitjoinSplit', "r\015")<CR>
+    nnoremap <silent> S :<C-u>call <SID>try_cmd('SplitjoinSplit', "a\n")<CR>
 endif
 
 " can't use Anoremap because there's no way to get the current mode
@@ -1322,23 +1409,20 @@ vnoremap <silent> <A-k> :<C-u>call MoveLine('k', 1)<CR>
 nnoremap <silent> <leader>l :call ToggleQuickFix('l')<CR>
 nnoremap <silent> <leader>e :call ToggleQuickFix('c')<CR>
 
-if s:has_plugin('ctrlp.vim')
+nnoremap <silent> <leader>k :call HighlightWord('n')<CR>
+vnoremap <silent> <leader>k :call HighlightWord('v')<CR>
+nnoremap <silent> <leader>K :call UnHighlightAllWords()<CR>
+
+if s:has_plugin('fzf.vim')
+    nnoremap <C-p> :FZF<CR>
+    nnoremap gb :Buffers<CR>
+elseif s:has_plugin('ctrlp.vim')
     nnoremap gb :CtrlPBuffer<CR>
 endif
 
 if s:has_plugin('vim-ctrlp-tjump')
     nnoremap <C-]> :CtrlPtjump<CR>
     vnoremap <C-]> :CtrlPtjumpVisual<CR>
-endif
-
-if s:executable('fzy', 'ag')
-    " nnoremap <C-p> :call FzyDo(":e",  "ag -l -g ''")<CR>
-    " nnoremap <C-s> :call FzyDo(":vs", "ag -l -g ''")<CR>
-    " nnoremap <C-S-v> :call FzyDo(":sp", "ag -l -g ''")<CR>
-elseif s:executable('fzy')
-    " nnoremap <C-p> :call FzyDo(":e",  "find -type f")<CR>
-    " nnoremap <C-s> :call FzyDo(":sp", "find -type f")<CR>
-    " nnoremap <C-S-v> :call FzyDo(":vs", "find -type f")<CR>
 endif
 
 Anoremap <F5>a AirlineToggle
@@ -1357,6 +1441,145 @@ Anoremap <F6>u UndotreeToggle
 
 
 " Misc             {{{1
+function! s:zip(...)  " {{{2
+    let lists = a:000
+    let length = min(map(copy(lists), 'len(v:val)'))
+
+    let i = 0
+    let zipped = []
+    while i < length
+        " map(copy()) is faster than a loop; hardly a surprise.  However, a
+        " map() without a copy() is far far slower; weird.
+        call add(zipped, map(copy(lists), 'v:val[i]'))
+        let i += 1
+    endwhile
+
+    return zipped
+endfunction
+
+
+function! s:_Random()                  " {{{2
+    let this = {}
+
+    " random({expr} [, {max}])
+    " Returns a random number in the range:
+    " - If only {expr} is specified: [0, 1, ..., {expr} - 1]
+    " - If {max} is specified: [{expr}, {expr} + 1, ..., {max}]
+    " This mimics the |range()| function.
+    "
+    " Based on the implementation in the python standard library.
+    function! this.random(a, ...)
+        if a:0 > 1 | throw 'too many arguments' | endif
+        let a = a:0 ? a:a : 0
+        let n = a:0 ? a:1 - a:a + 1 : a:a
+
+        if n >= self.max
+            " FIXME: This may overflow.  How can I avoid it?
+            return a + n*y / self.max
+        endif
+        let y = self.next()
+        while y >= self.max - (self.max % n)
+            let y = self.next()
+        endwhile
+        return a + (y % n)
+    endfunction
+
+    " shuffle({list})
+    " Shuffles the items in {list} in-place.  Returns {list}.
+    " Uses a standard Fisher-Yates/Knuth shuffle.
+    function! this.shuffle(arr)
+        let i = len(a:arr) - 1
+        while i > 0
+            let j = self.random(i + 1)
+            let [a:arr[i], a:arr[j]] = [a:arr[j], a:arr[i]]
+            let i -= 1
+        endwhile
+        return a:arr
+    endfunction
+
+    return this
+endfunction
+
+function! s:xorshift16(seed)           " {{{2
+    " A simple 16bit xorshift RNG.
+    " I used 16bits because 32bit Vim builds use, obviously, signed integers.
+    " So instead of trying to implement unsigned shifts in vimscript, I just
+    " use parts of the number.
+    "
+    " https://en.wikipedia.org/wiki/Xorshift
+    " http://xoroshiro.di.unimi.it/
+    " http://www.arklyffe.com/main/2010/08/29/xorshift-pseudorandom-number-generator/
+    if a:seed == 0 || a:seed > 0xffff
+        throw a:seed ? 'too large seed value' : 'seed 0'
+    endif
+
+    let this = s:_Random()
+    call extend(this, {'max': 0xffff, 'state': a:seed})
+
+    function! this.next()
+        let y = self.state
+        let y = xor(y, (y * 0x2000) % 0x10000)  " 2^13
+        let y = xor(y, (y / 0x200)  % 0x10000)  " 2^9
+        let y = xor(y, (y * 0x80)   % 0x10000)  " 2^7
+        let self.state = y
+        return y
+    endfunction
+
+    return this
+endfunction
+
+
+function! TimeIt(start) " {{{2
+    " Use it like this:
+    "   :let s = reltime()
+    "   :sleep 100m
+    "   :let time_passed = TimeIt(s)
+    " This would result in a Float which represents the milliseconds passed.
+
+    let rel_time = reltimestr(reltime(a:start))
+    let [sec, milli] = map(split(rel_time, '\ze\.'), 'str2float(v:val)')
+    return (sec + milli) * 1000
+endfunction
+
+
+" Colors                {{{2
+function! s:read_rgb_txt(fname)
+    silent! let rgbfile = readfile(a:fname)
+
+    let table = {}
+    for line in rgbfile
+        let colr = matchlist(line, '^\s*\(\d\+\)\s\+\(\d\+\)\s\+\(\d\+\)\s\+\(.*\)')
+        if !empty(colr)
+            let [r, g, b, name] = colr[1:4]
+            let table[tolower(name)] = [str2nr(r), str2nr(g), str2nr(b)]
+        endif
+    endfor
+
+    return table
+endfunction
+
+let s:named_colors = s:read_rgb_txt(expand('$VIMRUNTIME/rgb.txt'))
+
+function! Hex2rgb(hex)
+    return map(matchlist(a:hex, '\v\#(..)(..)(..)')[1:3], '0 + ("0x".v:val)')
+endfunction!
+
+function! Namedcolor2rgb(name)
+    return get(s:named_colors, tolower(a:name), [])
+endfunction
+
+function! Color2rgb(color)
+    let rgb = Hex2rgb(a:color)
+    if empty(rgb) | let rgb = Namedcolor2rgb(a:color) | endif
+    if empty(rgb) | throw printf("NotAColor: %s", a:color) | endif
+    return rgb
+endfunction
+
+function! Rgb2hex(rgb)
+    return printf('#%02x%02x%02x', a:rgb[0], a:rgb[1], a:rgb[2])
+endfunction
+
+
 " " Multiple change     {{{2
 " let g:mc = "y/\\V\<C-r>=escape(@\", '/')\<CR>\<CR>"
 
@@ -1376,65 +1599,30 @@ Anoremap <F6>u UndotreeToggle
 " vnoremap <expr> cq ":\<C-u>call SetupCR()\<CR>" . "gv" . g:mc . "``qz"
 " vnoremap <expr> cQ ":\<C-u>call SetupCR()\<CR>" . "gv" . substitute(g:mc, '/', '?', 'g') . "``qz"
 
-" s:zip                 {{{2
-function! s:zip(...)
-    let lists = a:000
-    let length = min(map(copy(lists), 'len(v:val)'))
-
-    let i = 0
-    let zipped = []
-    while i < length
-        let tuple = []
-
-        let j = 0
-        while j < len(lists)
-            call add(tuple, lists[j][i])
-            let j += 1
-        endwhile
-
-        call add(zipped, tuple)
-        let i += 1
-    endwhile
-
-    return zipped
-endfunction
-
 " FzyDo                 {{{2
-function! FzyDo(choice_command, vim_command)
+function! FzyDo(vimcmd, listing)
     try
-        let output = system(a:choice_command . " | fzy ")
+        let output = system(a:listing . " | fzy ")
     catch /Vim:Interrupt/
         " Swallow errors from ^C, allow redraw! below
     endtry
     redraw!
     if v:shell_error == 0 && !empty(output)
-        exec a:vim_command output
+        exec a:vimcmd output
     endif
 endfunction
 
-" Colors                {{{2
-function! Hex2rgb(hex)
-    return map(matchlist(a:hex, '\v\#(..)(..)(..)')[1:3], '0 + ("0x".v:val)')
-endfunction!
-
-function! Namedcolor2rgb(name)
-    return lightline#colortable#name_to_rgb(a:name)
-endfunction
-
-function! Color2rgb(color)
-    let rgb = Hex2rgb(a:color)
-    if !len(rgb) | let rgb = Namedcolor2rgb(a:color) | endif
-    if !len(rgb) | throw printf("NotAColor: %s", a:color) | endif
-    return rgb
-endfunction
-
-function! Rgb2hex(rgb)
-    return printf('#%02x%02x%02x', a:rgb[0], a:rgb[1], a:rgb[2])
-endfunction
-
+if s:executable('fzy', 'ag')
+    " nnoremap <C-p> :call FzyDo(":e",  "ag -l -g ''")<CR>
+    " nnoremap <C-s> :call FzyDo(":vs", "ag -l -g ''")<CR>
+    " nnoremap <C-S-v> :call FzyDo(":sp", "ag -l -g ''")<CR>
+elseif s:executable('fzy')
+    " nnoremap <C-p> :call FzyDo(":e",  "find -type f")<CR>
+    " nnoremap <C-s> :call FzyDo(":sp", "find -type f")<CR>
+    " nnoremap <C-S-v> :call FzyDo(":vs", "find -type f")<CR>
+endif
 
 " Lightline             {{{2
-" TODO: move this to the Appearance section
 function! SetupLightline(colorscheme)
     let mode_map = {
         \ "n":      'n',
@@ -1468,51 +1656,58 @@ function! SetupLightline(colorscheme)
         \ 'subseparator': symbols.subseparators,
         \
         \ 'active': {
-        \     'left': [ [ 'mode', 'paste' ],
-        \               [ 'fugitive', 'filename', 'modified' ],
-        \               [ 'ctrlpmark' ] ],
-        \     'right': [ [ 'syntastic', 'lineinfo' ],
-        \                [ 'percent' ],
-        \                [ 'fileformat', 'fileencoding', 'filetype' ] ],
+        \   'left': [ [ 'mode', 'paste' ],
+        \             [ 'fugitive', 'filename', 'modified' ],
+        \             [ 'ctrlpmark' ] ],
+        \   'right': [ [ 'lineinfo' ],
+        \              [ 'percent' ],
+        \              [ 'linter_warnings', 'linter_errors', 'linter_ok' ],
+        \              [ 'fileformat', 'fileencoding', 'filetype' ] ],
         \ },
         \ 'components': {
-        \   'modified': '%{&filetype=="help"?"":&modified?"+":&modifiable?"":"-"}'
+        \   'modified': '%{&ft=="help"?"":&modified?"+":&modifiable?"":"-"}'
         \ },
         \ 'component_expand': {
-        \   'syntastic': 'SyntasticStatuslineFlag',
+        \   'linter_warnings': 'LightlineAleWarnings',
+        \   'linter_errors': 'LightlineAleErrors',
+        \   'linter_ok': 'LightlineAleOK'
         \ },
         \ 'component_type': {
-        \   'syntastic': 'error',
+        \   'linter_warnings': 'warning',
+        \   'linter_errors': 'error',
+        \   'linter_ok': 'ok'
         \ },
         \ }, 'keep')
 endfunction!
 
-" function! SyntasticCheckHook(errors)
-"     " Needed to make 'component_expand' work
-"     if !exists('g:lightline_loaded') | return | endif
-"     call lightline#update_once()
-" endfunction
+" augroup rc_lightline
+"     au!
+"     au User ALELint call lightline#update()
+" augroup END
 
-" call SetupLightline('wombat')
-
-function! AirlineCustom()    " {{{3
-    function! Fenc()
-        if &fenc !=# 'utf-8'
-            return &fenc
-        endif
-        return ''
-    endfunction
-
-    call airline#parts#define_raw('filename', '%<%f%{&modified ? " +" : ""}')
-    call airline#parts#define_function('fenc', 'Fenc')
-
-    let g:airline_section_b = airline#section#create_left(['filename', 'branch'])
-    let g:airline_section_c = 0
-    let g:airline_section_x = airline#section#create_right(['fenc', 'tagbar'])
-    let g:airline_section_y = airline#section#create_right(['filetype'])
-    let g:airline_section_z = airline#section#create_right(['%p%%', ' %l:%c'])
+function! LightlineAleCounts() abort
+    let counts = ale#statusline#Count(bufnr(''))
+    let errors = counts.error + counts.style_error
+    let warnings = counts.total - all_errors
+    return [counts.total, errors, warnings]
 endfunction
 
+function! LightlineAleWarnings() abort
+    let [total, _, warnings] = LightlineAleCounts()
+    return total == 0 ? '' : printf('%d ◆', warnings)
+endfunction
+
+function! LightlineAleErrors() abort
+    let [total, errors, _] = LightlineAleCounts()
+    return total == 0 ? '' : printf('%d ✗', errors)
+endfunction
+
+function! LightlineAleOK() abort
+    let [total; _] = LightlineAleCounts()
+    return total == 0 ? '✓' : ''
+endfunction
+
+" call SetupLightline('wombat')
 
 " Airline               {{{2
 " TODO: move this to the Appearance section
@@ -1521,13 +1716,10 @@ function! Airline_GetFileInfo()
         \ .(&fenc !=# 'utf-8' ? &fenc : '')
         \ .(&ff !=# 'unix' ? '['.&ff.']' : '')
 endfunction
+call airline#parts#define_function('finfo', 'Airline_GetFileInfo')
+let g:airline_section_y = airline#section#create(['finfo'])
 
-function! AirlineCustom()    " {{{3
-    call airline#parts#define_function('finfo', 'Airline_GetFileInfo')
-
-    let g:airline_section_y = airline#section#create(['finfo'])
-endfunction
-
+let g:airline_theme_patch_func = 'AirlineCustomTheme'
 function! AirlineCustomTheme(palette)  " {{{3
     " colors are [guifg, guibg, ctermfg, ctermbg, styles]
 
@@ -1537,10 +1729,10 @@ function! AirlineCustomTheme(palette)  " {{{3
     let darkestpurple = 55
 
     " Use the style for CtrlP that powerline used
-    let a:palette.ctrlp = airline#extensions#ctrlp#generate_color_map(
-        \ ['', '', brightpurple, darkestpurple, ''],
-        \ ['', '', white, mediumpurple, ''],
-        \ ['', '', darkestpurple, white, 'bold'])
+    " let a:palette.ctrlp = airline#extensions#ctrlp#generate_color_map(
+    "     \ ['', '', brightpurple, darkestpurple, ''],
+    "     \ ['', '', white, mediumpurple, ''],
+    "     \ ['', '', darkestpurple, white, 'bold'])
 
     " Give the right side the same style as the left in replace mode.  This
     " may just be a bug in the bubblegum theme but whatever.
@@ -1548,10 +1740,6 @@ function! AirlineCustomTheme(palette)  " {{{3
     let a:palette.replace.airline_x = a:palette.replace.airline_c
 endfunction
 " }}}3
-
-" au VimEnter * call AirlineCustom()
-call AirlineCustom()
-let g:airline_theme_patch_func = 'AirlineCustomTheme'
 
 " Mode-aware cursor     {{{2
 " TODO: move this to the Appearance section
@@ -1571,35 +1759,6 @@ hi InsertCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=37  guibg=#2aa198
 hi VisualCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=125 guibg=#d33682
 hi ReplaceCursor ctermfg=15 guifg=#fdf6e3 ctermbg=65  guibg=#dc322f
 hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
-
-" Automake directory    {{{2
-function! EnsureDirExists()
-    let basedir = expand("%:h")
-    if !s:path_exists(basedir)
-        if confirm("Some directories in the filepath don't exist.",
-                 \ "&Create them?")
-            call s:makedirs(basedir)
-        endif
-    endif
-endfunction
-
-augroup AutoMkdir
-    autocmd!
-    autocmd  BufNewFile * :call EnsureDirExists()
-augroup END
-
-" TimeIt                {{{2
-function! TimeIt(start)
-    " Use it like this:
-    "   :let s = reltime()
-    "   :sleep 100m
-    "   :let time_passed = s:milli_since(s)
-    " This would result in a Float which represents the milliseconds passed.
-
-    let rel_time = reltimestr(reltime(a:start))
-    let [sec, milli] = map(split(rel_time, '\ze\.'), 'str2float(v:val)')
-    return (sec + milli) * 1000
-endfunction
 
 " TODO             {{{1
 " Finalize on some TODO file format                                        {{{2
@@ -1680,7 +1839,7 @@ endfunction
 
 " Consider switching to fzf                                                {{{2
 " Ctrl-P is awesome but fzf is more general, can be used in the shell as well.
-" If it's not installed though, it can't be used (think Wndows).  fzf can be
+" If it's not installed though, it can't be used (think Windows).  fzf can be
 " combined with ripgrep as shown here
 "   * https://www.reddit.com/r/linux/comments/5rrpyy/turbo_charge_bash_with_fzf_ripgrep/
 
@@ -1695,9 +1854,6 @@ endfunction
 " and stuff, I could look into that.  One of this days I should also try
 " PyCharm, to see what a real IDE offers and get some ideas.
 
-" Replace/rewrite thematic                                                 {{{2
-"   * reedes/vim-thematic
-
 " Consider Unite/Denite again                                              {{{2
 "   * Shougo/unite.vim
 "   * Shougo/denite.nvim
@@ -1706,4 +1862,8 @@ endfunction
 " Checkout http://howivim.com/2016/tyru/ for ideas                         {{{2
 " Has some stuff about visualstar and mappings and whatnot.
 
+" Replace/rewrite thematic                                                 {{{2
 " diffopt                                                                  {{{2
+" fzf-tjump                                                                {{{2
+" Right now I'm using Vim's own tjump mappings and these may be enough.
+"   * ivalkeen/vim-ctrlp-tjump
