@@ -47,7 +47,7 @@ function! s:path_exists(path)          " {{{2
 endfunction
 
 function! s:makedirs(path)             " {{{2
-    if !exists("*mkdir")
+    if !exists('*mkdir')
         echoerr "This ViM doesn't support '*mkdir'" | return
     endif
 
@@ -58,8 +58,8 @@ function! s:makedirs(path)             " {{{2
     catch /E739/
         let [_, exc, errmsg; rest] = split(v:exception, ': ')
         let excpath = join(rest, ': ')
-        let [path, excpath] = [substitute(path, "/*$", "", ""),
-                             \ substitute(excpath, "/*$", "", "")]
+        let [path, excpath] = [substitute(path, '/*$', '', ''),
+                             \ substitute(excpath, '/*$', '', '')]
 
         " If the exception was raised for the path we are trying to create
         " that means it exists but it is not a directory.  If it was not, that
@@ -100,26 +100,18 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'mbbill/undotree'
     Plug 'mtth/scratch.vim'
 " File explorers        {{{2
-    " Plug 'idbrii/renamer.vim'
     " Plug 'tpope/vim-vinegar'
     " Plug 'jeetsukumaran/vim-filebeagle'
     Plug 'justinmk/vim-dirvish'
     " Plug 'Shougo/vimfiler.vim'
     " Plug 'scrooloose/nerdtree'
     " Plug 'jistr/vim-nerdtree-tabs'
-" Eye candy             {{{2
-    Plug 'myusuf3/numbers.vim'
-    Plug 'ntpeters/vim-better-whitespace'
-    Plug 'Yggdroot/indentLine'
-    " Plug 'itchyny/vim-cursorword'
-    " Plug 'qstrahl/vim-matchmaker'
-    Plug 'chrisbra/Colorizer'
-    " Plug 'boucherm/ShowMotion'
 " Rainbow parentheses   {{{2
     " Plug 'kien/rainbow_parentheses.vim'
     " Plug 'amdt/vim-niji'
     Plug 'luochen1990/rainbow'
 " Window management     {{{2
+    " Plug 'szw/vim-ctrlspace'
     " Plug 'spolu/dwm.vim'
     " Plug 'zhamlin/tiler.vim'
     " Plug 'roman/golden-ratio'
@@ -128,13 +120,23 @@ Plug 'editorconfig/editorconfig-vim'
 " Buffer management     {{{2
     Plug 'moll/vim-bbye'
 " Fixes                 {{{2
-    Plug 'Konfekt/FastFold'
+    " Plug 'tpope/vim-rsi'
+    " Plug 'Konfekt/FastFold'
+    " Plug 'justinmk/vim-ipmotion'
+    " Plug 'drmikehenry/vim-fixkey'
     Plug 'ConradIrwin/vim-bracketed-paste'
     " Plug 'ap/vim-you-keep-using-that-word'
-    " Plug 'drmikehenry/vim-fixkey'
 " Distraction-free      {{{2
     " Plug 'junegunn/goyo.vim'
     " Plug 'junegunn/limelight.vim'
+" Eye candy             {{{2
+    Plug 'myusuf3/numbers.vim'
+    Plug 'ntpeters/vim-better-whitespace'
+    Plug 'Yggdroot/indentLine'
+    " Plug 'itchyny/vim-cursorword'
+    " Plug 'qstrahl/vim-matchmaker'
+    Plug 'chrisbra/Colorizer'
+    " Plug 'boucherm/ShowMotion'
 " Colorschemes          {{{2
     " Light {{{3
         " Plug 'daddye/soda.vim'
@@ -182,6 +184,7 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'honza/snipmate-snippets'
 " VCSs                  {{{2
     Plug 'tpope/vim-fugitive'
+    Plug 'tpope/vim-rhubarb'
     " Plug 'jreybert/vimagit'
     " Plug 'lambdalisue/vim-gita'
     " Plug 'junegunn/gv.vim'
@@ -190,9 +193,11 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'mhinz/vim-signify'
     Plug 'airblade/vim-gitgutter'
 " Search enhancements   {{{2
+    " Plug 'ramele/agrep'
     " Plug 'wincent/ferret'
-    " Plug 'idbrii/vim-searchsavvy'
+    " Plug 'mhinz/vim-grepper'
     Plug 'henrik/vim-indexed-search'
+    " Plug 'junegunn/vim-slash'
     " Plug 'haya14busa/incsearch.vim'
 " Statusline            {{{2
     " Plug 'ap/vim-buftabline'
@@ -201,8 +206,8 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'vim-airline/vim-airline-themes'
     " Plug 'powerline/powerline', {'rtp': 'powerline/bindings/vim'}
 " Text Objects          {{{2
+    " XXX: I like the 'next' object stuff, dunno about the rest
     " Plug 'wellle/targets.vim'
-    " TODO: I like the 'next' object stuff, dunno about the rest
 
     " Plug 'kana/vim-textobj-user'
     " Plug 'kana/vim-textobj-indent'
@@ -217,6 +222,7 @@ Plug 'editorconfig/editorconfig-vim'
 " Warm and fuzzy        {{{2
     Plug 'junegunn/fzf'
     Plug 'junegunn/fzf.vim'
+    " Plug 'Shougo/denite.nvim'
 " Alignment             {{{2
     " Plug 'tommcdo/vim-lion'
     " Plug 'godlygeek/tabular'
@@ -235,7 +241,6 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'davidhalter/jedi-vim',         {'for': 'python'}
     " Plug 'python-rope/ropevim',          {'for': 'python'}
     " Plug 'tweekmonster/django-plus.vim'
-    Plug 'vim-scripts/python_match.vim', {'for': 'python'}
     " TODO: Consider writing a folding plugin
     " Plug 'tmhedberg/SimpylFold'
     " Plug 'vim-scripts/Efficient-python-folding'
@@ -262,15 +267,17 @@ Plug 'editorconfig/editorconfig-vim'
 
     Plug 'metakirby5/codi.vim'
 
-    Plug 'w0rp/ale'
-    " Plug 'szw/vim-ctrlspace'
     " Plug 'terryma/vim-multiple-cursors'
-    " Plug 'Shougo/denite.nvim'
+    Plug 'tpope/vim-unimpaired'
+
+    " Plug 'tpope/vim-dispatch/'
+    " Plug 'skywind3000/asyncrun.vim'
+    " Plug 'neomake/neomake'
+    Plug 'w0rp/ale'
 
     runtime macros/matchit.vim
     " Plug 'benjifisher/matchit.zip'
 
-    Plug 'tpope/vim-unimpaired'
     Plug 'tpope/vim-repeat'
     Plug 'tpope/vim-surround'
     Plug 'tpope/vim-commentary'
@@ -284,9 +291,10 @@ Plug 'editorconfig/editorconfig-vim'
     " TODO: check if needed and make mappings
     " Plug 'zirrostig/vim-schlepp'
     " Plig 'fisadev/dragvisuals.vim'
-    " XXX: Plug 'atweiden/vim-dragvisuals'
+    " Plug 'atweiden/vim-dragvisuals'
 
     " Plug 'bruno-/vim-man'
+    " Plug 'fmoralesc/vim-pad'
     " Plug 'freitass/todo.txt-vim'
     " Plug 'vim-pandoc/vim-pandoc'
     " Plug 'dhruvasagar/vim-table-mode'
@@ -298,8 +306,9 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'lyokha/vim-xkbswitch'
     Plug 'drmikehenry/vim-fontdetect'
 
-    " TODO: I could leverage this
+    " Vimscript libraries
     " Plug 'romgrk/lib.kom'
+    " Plug 'prabirshrestha/async.vim'
 
 " Preamble         {{{1
 call plug#end()
@@ -411,10 +420,10 @@ endif
 
 if s:executable('rg')
     set grepprg=rg\ --vimgrep
-    set grepformat^=%f:%l:%c:%m
+    set grepformat=%f:%l:%c:%m,%f:%l:%m
 elseif s:executable('ag')
     set grepprg=ag\ --vimgrep
-    set grepformat^=%f:%l:%c:%m
+    set grepformat=%f:%l:%c:%m,%f:%l:%m
 endif
 
 " title            " set the terminal title
@@ -480,15 +489,15 @@ let &guifont = ComposeGuifont(
 endfunction
 
 " Plugin Options   {{{1
+" bufline               {{{2
+let g:bufline_separator = '  '
+" let g:bufline_fnamemodify = ':p:~:.:gs#\v/(.)[^/]*\ze/#/\1#'
+
 " buftabline            {{{2
 let g:buftabline_show = 1
 let g:buftabline_numbers = 1
 let g:buftabline_indicators = 1
 let g:buftabline_separators = 1
-
-" bufline               {{{2
-let g:bufline_separator = '  '
-" let g:bufline_fnamemodify = ':p:~:.:gs#\v/(.)[^/]*\ze/#/\1#'
 
 " airline               {{{2
 let g:airline_powerline_fonts = 1
@@ -571,7 +580,13 @@ let g:cursorword = 1
 " Matchmaker            {{{2
 let g:matchmaker_enable_startup = 1
 
-" Python.vim            {{{2
+" gitgutter             {{{2
+let g:gitgutter_sign_added = '∙'
+let g:gitgutter_sign_modified = '∙'
+let g:gitgutter_sign_removed = '∙'
+let g:gitgutter_sign_modified_removed = '∙'
+
+" python-syntax         {{{2
 let python_highlight_all = 1
 
 " vim-javascript        {{{2
@@ -774,7 +789,7 @@ function! ToggleQuickFix(list, ...)
 
     let current_winnr = winnr()
     if a:list == 'l' && empty(getloclist(0))
-        call s:echohl('WarningMsg', "Location List is empty")
+        call s:echohl('WarningMsg', 'Location List is empty')
         return
     endif
     exec a:list.'open'
@@ -1155,7 +1170,7 @@ augroup rc_colors
 augroup END
 
 " Autocommands     {{{1
-augroup general    "    {{{2
+augroup rc_general      " {{{2
     au!
 
     " Make Alt work in terminal
@@ -1165,12 +1180,8 @@ augroup general    "    {{{2
     au GUIEnter * nested call SetupGUI()
 
     " Don't highlight the line of the cursor in other windows
-    " au WinEnter * set   cursorline
-    " au WinLeave * set nocursorline
-
-    " Turn off the relative numbering in other windows
-    " au WinEnter * call RestoreRelNum()
-    " au WinLeave * call OffRelNumPreserve()
+    au WinEnter * set   cursorline
+    au WinLeave * set nocursorline
 
     " Automake directory
     au BufNewFile * call AskMakeDirs(expand('%:h'))
@@ -1186,21 +1197,26 @@ augroup general    "    {{{2
     au BufWritePost $MYVIMRC nested source $MYVIMRC
 augroup END
 
-augroup ft_vim     "    {{{2
+augroup ft_vim          " {{{2
     au!
     au FileType vim setlocal keywordprg=:help
 augroup END
 
-augroup ft_python  "    {{{2
+augroup ft_python       " {{{2
     au!
 
     au FileType python setlocal suffixesadd=.py
     au FileType python setlocal includeexpr=PythonIncludeExpr(v:fname)
+    " au FileType python let &l:isfname = '_,@,48-57,.'
     au FileType python let &l:path = join(['.', PythonPath(3), PythonPath(2)], ',')
     au FileType python let &l:include = join([
                 \ '^\s*import\s\+\zs[_.[:alnum:]]\+\ze',
                 \ '^\s*from\s\+\zs[_.[:alnum:]]\+\ze\s\+import'], '\|')
-    " au FileType python let &l:isfname = '_,@,48-57,.'
+    au FileType python let b:match_words = join([
+                \ '\<def\>:\<return\>',
+                \ '\<\(while\|for\)\>:\<break\>:\<continue\>',
+                \ '\<if\>:\<elif\>:\<else\>',
+                \ '\<try\>:\<except\>:\<finally\>', ','])
 
     " This next pattern, courtesy of wushee on #vim on freenode, can find
     " multi-import lines, matching each package separately, i.e. in:
@@ -1222,7 +1238,7 @@ augroup ft_python  "    {{{2
         \ fileformat=unix
 augroup END
 
-augroup ft_cpt  "       {{{2
+augroup ft_cpt          " {{{2
     au!
 
     au BufReadPre *.cpt set bin
@@ -1631,7 +1647,7 @@ endfunction!
 
 function! LightlineFugitive()
     try
-        if exists('*fugitive#head') && expand('%:t') !~? 'Tagbar\|Gundo\|NERD'
+        if exists('*fugitive#head') && buflisted('.')
             return fugitive#head()
         endif
     catch
@@ -1642,7 +1658,7 @@ endfunction
 function! LightlineAleCounts() abort
     let counts = ale#statusline#Count(bufnr(''))
     let errors = counts.error + counts.style_error
-    let warnings = counts.total - all_errors
+    let warnings = counts.total - errors
     return [counts.total, errors, warnings]
 endfunction
 
@@ -1821,8 +1837,9 @@ hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
 " Checkout http://howivim.com/2016/tyru/ for ideas                         {{{2
 " Has some stuff about visualstar and mappings and whatnot.
 
-" Replace/rewrite thematic                                                 {{{2
 " diffopt                                                                  {{{2
+" cscope                                                                   {{{2
 " fzf-tjump                                                                {{{2
 " Right now I'm using Vim's own tjump mappings and these may be enough.
 "   * ivalkeen/vim-ctrlp-tjump
+" Replace/rewrite thematic                                                 {{{2
