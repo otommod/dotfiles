@@ -1,18 +1,26 @@
 def load_history():
-    import os, atexit, readline
-
-    histdir = os.environ.get("HISTDIR")
-    if histdir is None:
+    import os, atexit
+    try:
+        import readline, rlcompleter
+    except ImportError:
         return
-    histfile = os.path.join(histdir, "python")
+
+    histfile = os.getenv("PYTHONHISTORY")
+    if histfile is None:
+        return
 
     try:
         readline.read_history_file(histfile)
     except IOError:
-        # Let's hope that we didn't reach this, otherwise the dreaded
-        # .python_history file will be created!
-        return
+        pass
 
+    if readline.get_current_history_length() == 0:
+        # We absolutely don't want to see ~/.python_history be created, which
+        # python3 will do if the history is empty.  So we create some fake
+        # history.
+        readline.add_history("# I hate ~/.python_history with a passion")
+
+    # default history len is -1 (infinite), which may grow unruly
     readline.set_history_length(1000)
     atexit.register(readline.write_history_file, histfile)
 
