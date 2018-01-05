@@ -116,7 +116,7 @@ shopt -s checkwinsize
 if command -v pip >/dev/null; then
     pipcomplcache="${XDG_CACHE_HOME:-$HOME/.cache}/bash/pip.complcache"
     if [ ! -s "$pipcomplcache" ] || [ "$(command -v pip)" -nt "$pipcomplcache" ]; then
-        pip completion --bash 2>/dev/null | sed -e '/^complete/s/$/ pip2 pip3/' >"$pipcomplcache"
+        PIP_REQUIRE_VIRTUALENV= pip completion --bash 2>/dev/null | sed -e '/^complete/s/$/ pip2 pip3/' >"$pipcomplcache"
     fi
     . "$pipcomplcache"
 fi
