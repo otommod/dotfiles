@@ -10,7 +10,7 @@ theme.name          = "base16_dark"
 theme.path          = theme.confdir .. "/themes/" .. theme.name
 
 theme.font          = "Anonymous Pro 10"
-theme.iconFont      = "Ionicons 10"
+theme.iconFont      = "Font Awesome 10"
 
 -- Base16 colors
 theme.base16_base00 = "#151515"

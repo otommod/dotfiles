@@ -53,11 +53,10 @@ do
 end
 
 -- Options              {{{1
-local config = gears.filesystem.get_dir("config")
+local config_dir = gears.filesystem.get_dir("config")
 
 -- Themes define colours, icons, font and wallpapers.
--- beautiful.init(awful.util.get_themes_dir() .. "default/theme.lua")
-beautiful.init(config .. "themes/base16_dark/theme.lua")
+beautiful.init(config_dir .. "themes/base16_dark/theme.lua")
 beautiful.wallpaper = "/home/otto/Pictures/Gare_de_Lyon_TGV_Sud-Est.jpg"
 
 -- This is used later as the default terminal and editor to run.
@@ -148,7 +147,7 @@ powermenu = awful.menu({ items = {
 -- Memory usage              {{{2
 memory = lain.widget.mem {
     settings = function()
-        local text = lain.util.markup.font(beautiful.iconFont, "")
+        local text = lain.util.markup.font(beautiful.iconFont, "")
         local mempercent = (mem_now.used / mem_now.total) * 100
         if mempercent < 10 then
             text = text .. (" %dMiB"):format(mem_now.used)
@@ -189,7 +188,7 @@ volume = lain.widget.alsa {
     timeout = 2,
     settings = function()
         local icons = {
-            [100] = "", [80] = "", [40] = "", [0] = "",
+            [100] = "", [50] = "", [0] = ""
         }
 
         local seen = true, icon
@@ -199,12 +198,10 @@ volume = lain.widget.alsa {
         elseif volnum == 100 then
             -- if volume is 100% no need to show it
             seen = false
-        elseif volnum > 80 then
+        elseif volnum > 50 then
             icon = lain.util.markup.font(beautiful.iconFont, icons[100])
-        elseif volnum > 40 then
-            icon = lain.util.markup.font(beautiful.iconFont, icons[80])
         elseif volnum > 0 then
-            icon = lain.util.markup.font(beautiful.iconFont, icons[40])
+            icon = lain.util.markup.font(beautiful.iconFont, icons[50])
         end
 
         if seen then
@@ -217,9 +214,9 @@ volume = lain.widget.alsa {
 }
 
 volume.widget:buttons(awful.util.table.join(
-    awful.button({ }, 3, function() awful.util.spawn_with_shell("amixer -q set Master toggle"); volume:update() end),
-    awful.button({ }, 4, function() awful.util.spawn_with_shell("amixer -q set Master 5%+ unmute"); volume:update() end),
-    awful.button({ }, 5, function() awful.util.spawn_with_shell("amixer -q set Master 5%- unmute"); volume:update() end)
+    awful.button({ }, 3, function() awful.spawn("amixer -q set Master toggle"); volume:update() end),
+    awful.button({ }, 4, function() awful.spawn("amixer -q set Master 5%+ unmute"); volume:update() end),
+    awful.button({ }, 5, function() awful.spawn("amixer -q set Master 5%- unmute"); volume:update() end)
 ))
 
 -- Music                     {{{2
@@ -267,7 +264,7 @@ wifi = lain.widget.net {
 
         if net_now.carrier:match("0") then
             widget:set_markup(lain.util.markup.fontfg(
-                beautiful.iconFont, beautiful.widget_wifi_fg, "") .. "  ")
+                beautiful.iconFont, beautiful.widget_wifi_fg, "") .. "  ")
         elseif net_now.carrier:match("1") then
             widget:set_markup("")
         end
@@ -275,7 +272,7 @@ wifi = lain.widget.net {
 }
 
 -- Date and time             {{{2
-dateicon = wibox.widget.textbox(("<span font='%s'></span> "):format(beautiful.iconFont))
+dateicon = wibox.widget.textbox(("<span font='%s'></span> "):format(beautiful.iconFont))
 datewidget = wibox.widget.textclock("%a %d %b  %R ")
 lain.widget.calendar {
     attach_to = { datewidget }
@@ -286,54 +283,6 @@ lain.widget.calendar {
 
 -- Keyboard map indicator and switcher
 mykeyboardlayout = awful.widget.keyboardlayout()
-
--- Create a textclock widget
-mytextclock = wibox.widget.textclock()
-
--- Create a wibox for each screen and add it
-local taglist_buttons = gears.table.join(
-                    awful.button({ }, 1, function(t) t:view_only() end),
-                    awful.button({ modkey }, 1, function(t)
-                                              if client.focus then
-                                                  client.focus:move_to_tag(t)
-                                              end
-                                          end),
-                    awful.button({ }, 3, awful.tag.viewtoggle),
-                    awful.button({ modkey }, 3, function(t)
-                                              if client.focus then
-                                                  client.focus:toggle_tag(t)
-                                              end
-                                          end),
-                    awful.button({ }, 4, function(t) awful.tag.viewnext(t.screen) end),
-                    awful.button({ }, 5, function(t) awful.tag.viewprev(t.screen) end)
-                )
-
-local tasklist_buttons = gears.table.join(
-                     awful.button({ }, 1, function (c)
-                                              if c == client.focus then
-                                                  c.minimized = true
-                                              else
-                                                  -- Without this, the following
-                                                  -- :isvisible() makes no sense
-                                                  c.minimized = false
-                                                  if not c:isvisible() and c.first_tag then
-                                                      c.first_tag:view_only()
-                                                  end
-                                                  -- This will also un-minimize
-                                                  -- the client, if needed
-                                                  client.focus = c
-                                                  c:raise()
-                                              end
-                                          end),
-                     awful.button({ }, 3, client_menu_toggle_fn()),
-                     awful.button({ }, 4, function ()
-                                              awful.client.focus.byidx(1)
-                                              -- if client.focus then client.focus:raise() end
-                                          end),
-                     awful.button({ }, 5, function ()
-                                              awful.client.focus.byidx(-1)
-                                              -- if client.focus then client.focus:raise() end
-                                          end))
 
 local function set_wallpaper(s)
     -- Wallpaper
@@ -367,53 +316,70 @@ awful.screen.connect_for_each_screen(function(s)
                            awful.button({ }, 3, function () awful.layout.inc(-1) end),
                            awful.button({ }, 4, function () awful.layout.inc( 1) end),
                            awful.button({ }, 5, function () awful.layout.inc(-1) end)))
+
     -- Create a taglist widget
+    local taglist_buttons = gears.table.join(
+                    awful.button({ }, 1, function(t) t:view_only() end),
+                    awful.button({ modkey }, 1, function(t)
+                                              if client.focus then
+                                                  client.focus:move_to_tag(t)
+                                              end
+                                          end),
+                    awful.button({ }, 3, awful.tag.viewtoggle),
+                    awful.button({ modkey }, 3, function(t)
+                                              if client.focus then
+                                                  client.focus:toggle_tag(t)
+                                              end
+                                          end),
+                    awful.button({ }, 4, function(t) awful.tag.viewnext(t.screen) end),
+                    awful.button({ }, 5, function(t) awful.tag.viewprev(t.screen) end)
+                )
     s.mytaglist = awful.widget.taglist(s, awful.widget.taglist.filter.all, taglist_buttons)
 
     -- Create a tasklist widget
+    local tasklist_buttons = gears.table.join(
+                     awful.button({ }, 1, function (c)
+                                              if c == client.focus then
+                                                  c.minimized = true
+                                              else
+                                                  -- Without this, the following
+                                                  -- :isvisible() makes no sense
+                                                  c.minimized = false
+                                                  if not c:isvisible() and c.first_tag then
+                                                      c.first_tag:view_only()
+                                                  end
+                                                  -- This will also un-minimize
+                                                  -- the client, if needed
+                                                  client.focus = c
+                                                  c:raise()
+                                              end
+                                          end),
+                     awful.button({ }, 3, client_menu_toggle_fn()),
+                     awful.button({ }, 4, function ()
+                                              awful.client.focus.byidx(1)
+                                              -- if client.focus then client.focus:raise() end
+                                          end),
+                     awful.button({ }, 5, function ()
+                                              awful.client.focus.byidx(-1)
+                                              -- if client.focus then client.focus:raise() end
+                                          end))
     s.mytasklist = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, tasklist_buttons)
 
-    -- Create the wibox
-    -- s.mywibox = awful.wibar({ position = "top", screen = s })
-
-    -- Add widgets to the wibox
-    -- s.mywibox:setup {
-    --     layout = wibox.layout.align.horizontal,
-    --     { -- Left widgets
-    --         layout = wibox.layout.fixed.horizontal,
-    --         -- mylauncher,
-    --         s.mytaglist,
-    --         s.mypromptbox,
-    --     },
-    --     s.mytasklist, -- Middle widget
-    --     { -- Right widgets
-    --         layout = wibox.layout.fixed.horizontal,
-    --         mykeyboardlayout,
-    --         wibox.widget.systray(),
-    --         mytextclock,
-    --         s.mylayoutbox,
-    --     },
-    -- }
-
-
-    -- Create a tasklist widget
-    -- s.mytasklist = awful.widget.tasklist(s, awful.widget.tasklist.filter.focused, tasklist_buttons)
-    -- theme.tasklist_disable_icon = true
 
     -- Create the wibox
     s.mywibox = awful.wibar({ position = "top", height = "20", screen = s })
 
     s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
-        { -- wrong widgets
+        { -- left side widgets
             layout = wibox.layout.fixed.horizontal,
             s.mytaglist,
             spacer,
             s.mylayoutbox,
             s.mypromptbox
         },
-        s.mytasklist, -- grey widgets
-        { -- right widgets
+        s.mytasklist, -- center widget
+        { -- right side widgets
             layout = wibox.layout.fixed.horizontal,
             wibox.widget.systray(),
             -- spacer,
@@ -440,6 +406,12 @@ root.buttons(gears.table.join(
     awful.button({ }, 4, awful.tag.viewnext),
     awful.button({ }, 5, awful.tag.viewprev)
 ))
+
+-- These are set from the rules
+clientbuttons = gears.table.join(
+    awful.button({ }, 1, function (c) client.focus = c; c:raise() end),
+    awful.button({ modkey }, 1, awful.mouse.client.move),
+    awful.button({ modkey }, 3, awful.mouse.client.resize))
 
 -- Key bindings         {{{1
 globalkeys = gears.table.join(
@@ -548,6 +520,7 @@ globalkeys = gears.table.join(
     awful.key({}, "XF86AudioPrev", function() awful.spawn("playerctl previous") end, {description = ""})
 )
 
+-- These are set from the rules
 clientkeys = gears.table.join(
     awful.key({ modkey,           }, "f",
         function (c)
@@ -642,11 +615,6 @@ for i = 1, 9 do
     )
 end
 
-clientbuttons = gears.table.join(
-    awful.button({ }, 1, function (c) client.focus = c; c:raise() end),
-    awful.button({ modkey }, 1, awful.mouse.client.move),
-    awful.button({ modkey }, 3, awful.mouse.client.resize))
-
 -- Set keys
 root.keys(globalkeys)
 
@@ -663,7 +631,7 @@ awful.rules.rules = {
                      buttons = clientbuttons,
                      screen = awful.screen.preferred,
                      placement = awful.placement.no_overlap+awful.placement.no_offscreen
-     }
+                 }
     },
 
     -- Floating clients.
@@ -692,16 +660,12 @@ awful.rules.rules = {
         role = {
           "AlarmWindow",  -- Thunderbird's calendar.
           "pop-up",       -- e.g. Google Chrome's (detached) Developer Tools.
-        }
+        },
+        type = {
+            "dialog",
+        },
       }, properties = { floating = true }},
 
-    -- Add titlebars to normal clients and dialogs
-    -- { rule_any = {type = { "normal", "dialog" }
-    --   }, properties = { titlebars_enabled = true }
-    -- },
-
-    { rule = { type = "dialog"
-      }, properties = { floating = true } },
     -- Set Firefox to always map on the tag named "2" on screen 1.
     -- { rule = { class = "Firefox" },
     --   properties = { screen = 1, tag = "2" } },
