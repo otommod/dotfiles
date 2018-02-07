@@ -14,9 +14,6 @@ local naughty = require("naughty")
 -- Theme handling library
 local beautiful = require("beautiful")
 
-local lain = require("lain")
-lain.helpers = require("lain.helpers")
-
 -- Widget and layout library
 local wibox = require("wibox")
 local menubar = require("menubar")
@@ -27,6 +24,9 @@ local hotkeys_popup = require("awful.hotkeys_popup.widget")
 -- the afforemention definition.  Currently, there's only one for vim.
 --
 -- require("awful.hotkeys_popup.keys.vim")
+
+local lain = require("lain")
+lain.helpers = require("lain.helpers")
 
 -- Error handling       {{{1
 -- Check if awesome encountered an error during startup and fell back to
@@ -53,10 +53,8 @@ do
 end
 
 -- Options              {{{1
-local config_dir = gears.filesystem.get_dir("config")
-
 -- Themes define colours, icons, font and wallpapers.
-beautiful.init(config_dir .. "themes/base16_dark/theme.lua")
+beautiful.init(gears.filesystem.get_dir("config") .. "themes/pastel/theme.lua")
 beautiful.wallpaper = "/home/otto/Pictures/Gare_de_Lyon_TGV_Sud-Est.jpg"
 
 -- This is used later as the default terminal and editor to run.
@@ -69,6 +67,8 @@ editor_cmd = terminal .. " -e " .. editor
 -- You can use another modifier like Mod1, but it may mess with other programs.
 modkey = "Mod4"
 
+tagnames = { "1", "2", "3", "4", "5", "6", "7", "8", "9" }
+
 -- Table of layouts to cover with awful.layout.inc, order matters.
 awful.layout.layouts = {
     awful.layout.suit.floating,
@@ -76,20 +76,50 @@ awful.layout.layouts = {
     awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
     awful.layout.suit.tile.top,
-    awful.layout.suit.fair,
-    awful.layout.suit.fair.horizontal,
-    awful.layout.suit.spiral,
-    awful.layout.suit.spiral.dwindle,
+    -- awful.layout.suit.fair,
+    -- awful.layout.suit.fair.horizontal,
+    -- awful.layout.suit.spiral,
+    -- awful.layout.suit.spiral.dwindle,
     awful.layout.suit.max,
-    awful.layout.suit.max.fullscreen,
-    awful.layout.suit.magnifier,
-    awful.layout.suit.corner.nw,
+    -- awful.layout.suit.max.fullscreen,
+    -- awful.layout.suit.magnifier,
+    -- awful.layout.suit.corner.nw,
     -- awful.layout.suit.corner.ne,
     -- awful.layout.suit.corner.sw,
     -- awful.layout.suit.corner.se,
+    -- lain.layout.cascade,
+    -- lain.layout.cascade.tile,
+    -- lain.layout.centerwork,
+    -- lain.layout.centerwork.horizontal,
+    -- lain.layout.termfair,
+    -- lain.layout.termfair.center,
 }
 
+-- lain.layout.termfair.nmaster           = 3
+-- lain.layout.termfair.ncol              = 1
+-- lain.layout.termfair.center.nmaster    = 3
+-- lain.layout.termfair.center.ncol       = 1
+-- lain.layout.cascade.tile.offset_x      = 2
+-- lain.layout.cascade.tile.offset_y      = 32
+-- lain.layout.cascade.tile.extra_padding = 5
+-- lain.layout.cascade.tile.nmaster       = 5
+-- lain.layout.cascade.tile.ncol          = 2
+
 -- Helper functions     {{{1
+local markup = lain.util.markup
+
+local function set_wallpaper(s)
+    -- Wallpaper
+    if beautiful.wallpaper then
+        local wallpaper = beautiful.wallpaper
+        -- If wallpaper is a function, call it with the screen
+        if type(wallpaper) == "function" then
+            wallpaper = wallpaper(s)
+        end
+        gears.wallpaper.maximized(wallpaper, s, true)
+    end
+end
+
 local function client_menu_toggle_fn()
     local instance = nil
 
@@ -124,178 +154,399 @@ mylauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
 -- Menubar configuration
 menubar.utils.terminal = terminal -- Set the terminal for applications that require it
 
--- Wibar                {{{1
--- Separators                {{{2
-spacer    = wibox.widget.textbox("  ")
-separator = wibox.widget.textbox(" | ")
+-- Conky                {{{1
+local lgi       = require("lgi")
+local gio       = lgi.Gio
+local gdk       = lgi.Gdk
+local gdkpixbuf = lgi.GdkPixbuf
+local cairo     = lgi.cairo
 
--- Power menu                {{{2
-powermenu = awful.menu({ items = {
-    { "lock", "slock" },
-    { "suspend", "systemctl suspend" },
-    { "reboot", "reboot" },
-    { "shutdown", "poweroff" }
-  }
-})
+local conky = wibox.widget {
+    layout = wibox.layout.stack,
+    {
+        id = "cover",
+        widget = wibox.widget.imagebox,
+    },
+    {
+        widget = wibox.container.place,
+        valign = "bottom",
+        content_fill_horizontal = true,
+        {
+            widget = wibox.container.background,
+            bg = "#000000cc",
+            {
+                widget = wibox.container.margin,
+                margins = 10,
+                {
+                    layout = wibox.layout.fixed.vertical,
+                    -- spacing = 15,
+                    {
+                        id = "title",
+                        widget = wibox.widget.textbox,
+                        align = "center",
+                    },
+                    {
+                        id = "artist",
+                        widget = wibox.widget.textbox,
+                        align = "center",
+                    },
+                },
+            },
+        },
+    },
+}
 
--- powerwidget = wibox.widget.textbox()
--- powerwidget:set_markup(lain.util.markup.fontfg(beautiful.iconFont, beautiful.fg_focus, ""))
--- powerwidget:buttons(awful.util.table.join(
---     awful.button({ }, 1, function (c) powermenu:toggle() end)
--- ))
-
--- Memory usage              {{{2
-memory = lain.widget.mem {
+local conkyprevcover = nil
+local conkyinfo = require("mpris") {
     settings = function()
-        local text = lain.util.markup.font(beautiful.iconFont, "")
-        local mempercent = (mem_now.used / mem_now.total) * 100
-        if mempercent < 10 then
-            text = text .. (" %dMiB"):format(mem_now.used)
+        conky.visible = mpris_now.state ~= "Stopped"
+        if not conky.visible then return end
+
+        local titlewidget = conky:get_children_by_id("title")[1]
+        local artistwidget = conky:get_children_by_id("artist")[1]
+        local coverwidget = conky.cover
+
+        titlewidget:set_markup(("<span font='%s' weight='%s'>%s</span>"):format(
+            "OpenSans 15", "black", gears.string.xml_escape(mpris_now.title)))
+        artistwidget:set_markup(("<span font='%s' weight='%s'>%s</span>"):format(
+            "OpenSans 10", "book", gears.string.xml_escape(mpris_now.artist .. " - " .. mpris_now.album)))
+
+        coverwidget.visible = false
+        if mpris_now.cover == "" then return end
+        if mpris_now.cover == conkyprevcover then
+            coverwidget.visible = true
+            return
+        end
+        conkyprevcover = mpris_now.cover
+
+        -- in case of file URL just decode it
+        -- FIXME: use gears.string.startswith when awesome is updated
+        if mpris_now.cover:sub(1, #"file://") == "file://" then
+            local cover = mpris_now.cover
+            cover = cover:sub(#"file://")
+            cover = cover:gsub("%%(%x%x)", function(x)
+                return string.char(tonumber(x, 16))
+            end)
+            coverwidget:set_image(cover)
+            coverwidget.visible = true
+
         else
-            text = text .. (" %.0f%%"):format(mempercent)
-        end
-        text = lain.util.markup(beautiful.widget_mem_ram_fg, text)
+            gio.Async.start(function()
+                gears.debug.print_warning("downloading cover")
 
-        if mem_now.swap ~= 0 then
-            text = text .. " " .. lain.util.markup(
-                beautiful.widget_mem_swap_fg,
-                ("%.0f%%"):format(100 * mem_now.swapused / mem_now.swap))
-        end
+                local gfile = gio.File.new_for_uri(mpris_now.cover)
+                if not gfile then return end
+                local stream = gfile:async_read()
+                if not stream then return end
+                local pb = gdkpixbuf.Pixbuf.async_new_from_stream(stream)
+                if not pb then return end
+                -- stream:async_close()
 
-        widget:set_markup(text)
+                local format = cairo.Format.ARGB32
+                if pb.n_channels == 3 then
+                    format = cairo.Format.RGB24
+                end
+
+                -- We create a cairo.Context then use the Gdk-cairo integration to turn
+                -- the Pixbuf into a cairo.Surface.  This function was introduced in
+                -- Gdk-3.10.  Also see https://github.com/awesomeWM/awesome/pull/2160
+                local surface = cairo.ImageSurface(format, pb.width, pb.height)
+                local cr = cairo.Context(surface)
+                gdk.cairo_set_source_pixbuf(cr, pb, 0, 0)
+                cr:paint()
+
+                coverwidget:set_image(surface)
+                coverwidget.visible = true
+            end)()
+        end
     end
 }
 
-local memnotification
-memory.widget:connect_signal("mouse::enter", function()
-    memnotification = naughty.notify({
-        text = ("RAM: %s MB (%s / %s MB)\nSwap: %s MB (%s / %s MB)"):format(
-            mem_now.free, mem_now.used, mem_now.total,
-            mem_now.swapf, mem_now.swapused, mem_now.swap),
-        position = "top_right",
-        timeout = 0
-    })
-end)
-memory.widget:connect_signal("mouse::leave", function()
-    if (memnotification ~= nil) then
-        naughty.destroy(memnotification)
-        memnotification = nil
+
+local awfulconky = wibox {
+    widget = conky,
+    type = "desktop",
+    visible = true,
+    height = 400,
+    width = 400,
+    bg = gears.color.transparent,
+}
+
+awful.placement.bottom_left(awfulconky, {
+    offset = { x = 120, y = -60 },
+    attach = true,
+})
+awful.placement.no_offscreen(awfulconky)
+
+-- Widgets              {{{1
+-- Separators                {{{2
+local spacer = wibox.widget {
+    widget = wibox.widget.base.empty_widget,
+    forced_width = 8,
+}
+
+local separator = wibox.widget {
+    widget = wibox.widget.textbox,
+    markup = markup("#333333", "|"),
+    forced_width = 10,
+    align = "center",
+}
+
+-- Mail                      {{{2
+-- TODO: use a password manager
+local mailicon = wibox.widget.imagebox(beautiful.widget_mail)
+local mail = lain.widget.imap {
+    timeout  = 180,
+    server   = "imap.gmail.com",
+    mail     = "ottomodinos@gmail.com",
+    password = {"cat", os.getenv("HOME") .. "/.my_mail_password"},
+    settings = function()
+        if mailcount == 0 then
+            mailicon.visible = false
+            widget:set_text("")
+            return
+        end
+
+        mailicon.visible = true
+        widget:set_markup(markup(beautiful.widget_mail_fg, mailcount))
     end
-end)
+}
+
+-- -- Battery                   {{{2
+-- local baticon = wibox.widget.imagebox(beautiful.widget_bat)
+-- local battery = lain.widget.bat {
+--     settings = function()
+--         local perc = bat_now.perc == "N/A" and "N/A" or bat_now.perc .. "%"
+
+--         if bat_now.ac_status == 1 then
+--             perc = perc .. " plug"
+--         end
+
+--         widget:set_markup(markup(beautiful.widget_bat_fg, perc))
+--     end
+-- }
 
 -- Volume                    {{{2
-volume = lain.widget.alsa {
-    timeout = 2,
+local volicon = wibox.widget.imagebox(beautiful.widget_vol)
+local volume = lain.widget.alsa {
     settings = function()
-        local icons = {
-            [100] = "", [50] = "", [0] = ""
-        }
-
-        local seen = true, icon
-        local volnum = tonumber(volume_now.level) or 0
-        if volnum == 0 or volume_now.status == 'off' then
-            icon = lain.util.markup.font(beautiful.iconFont, icons[0])
-        elseif volnum == 100 then
-            -- if volume is 100% no need to show it
-            seen = false
-        elseif volnum > 50 then
-            icon = lain.util.markup.font(beautiful.iconFont, icons[100])
-        elseif volnum > 0 then
-            icon = lain.util.markup.font(beautiful.iconFont, icons[50])
+        if volume_now.status == "off" then
+            volume_now.level = "M" .. volume_now.level
         end
 
-        if seen then
-            widget:set_markup(lain.util.markup(
-                beautiful.widget_vol_fg, icon .. " " .. volume_now.level .. "%  "))
-        else
-            widget:set_markup("")
-        end
+        widget:set_markup(markup(beautiful.widget_vol_fg, volume_now.level .. "%"))
     end
 }
 
+-- We call `volume.update()` as a callback so that it runs after the volume has changed.
 volume.widget:buttons(awful.util.table.join(
-    awful.button({ }, 3, function() awful.spawn("amixer -q set Master toggle"); volume:update() end),
-    awful.button({ }, 4, function() awful.spawn("amixer -q set Master 5%+ unmute"); volume:update() end),
-    awful.button({ }, 5, function() awful.spawn("amixer -q set Master 5%- unmute"); volume:update() end)
+    awful.button({ }, 1, function() awful.spawn("pavucontrol") end),
+    awful.button({ }, 3, function() awful.spawn.easy_async("amixer -q set Master toggle",     volume.update) end),
+    awful.button({ }, 4, function() awful.spawn.easy_async("amixer -q set Master 5%+ unmute", volume.update) end),
+    awful.button({ }, 5, function() awful.spawn.easy_async("amixer -q set Master 5%- unmute", volume.update) end)
 ))
 
--- Music                     {{{2
--- musicwidget = lain.widget.abase({
---     timeout = 2,
---     cmd = "cat /tmp/music-info",
---     settings = function()
---         local icons = {
---             playing = "", paused = "", stopped = "",
---         }
---         icons = map(function(i)
---             return ('<span font="%s" color="%s">%s</span>'):format(
---                 beautiful.iconFont, beautiful.widget_music_title_fg, i)
---         end, icons)
 
---         local state = output:match("(%w*) ")
---         if not state then
---             return
---         end
+-- Net                       {{{2
+local net = wibox.widget {
+    layout = wibox.layout.fixed.horizontal,
+    {
+        id = "wifi",
+        widget = wibox.widget.imagebox,
+        image = beautiful.widget_wifi,
+        visible = false,
+    },
+    {
+        widget = wibox.widget.imagebox,
+        image = beautiful.widget_net_down,
+    },
+    {
+        widget = wibox.container.constraint,
+        strategy = "min",
+        width = 32,
+        {
+            widget = wibox.container.background,
+            fg = beautiful.widget_net_down_fg,
+            {
+                id = "down",
+                widget = wibox.widget.textbox,
+                align = "right",
+            },
+        },
+    },
+    {
+        widget = wibox.widget.imagebox,
+        image = beautiful.widget_net_up,
+    },
+    {
+        widget = wibox.container.constraint,
+        strategy = "min",
+        width = 16,
+        {
+            widget = wibox.container.background,
+            fg = beautiful.widget_net_up_fg,
+            {
+                id = "up",
+                widget = wibox.widget.textbox,
+                align = "right",
+            },
+        },
+    },
+}
 
---         local artist, title = output:match("([^-]*) %- (.*)$", state:len() + 2)
-
---         if not title then
---             title = output:sub(state:len() + 2)
---         end
---         title = lain.util.markup.fg.color(beautiful.widget_music_title_fg,
---                                           awful.util.escape(title))
-
---         if artist then
---             artist = lain.util.markup.fg.color(beautiful.widget_music_artist_fg,
---                                                awful.util.escape(artist)) .. " "
---         end
-
---         state = (icons[state] or "") .. " "
---         widget:set_markup(state .. (artist or "") .. title)
---     end
--- })
-
--- Wireless                  {{{2
-wifi = lain.widget.net {
+local netinfo = lain.widget.net {
     iface = { "wlp4s6" },
     settings = function()
+        -- if iface == "network off" then
+        -- end
+
+        local downwidget = net:get_children_by_id("down")[1]
+        local upwidget = net:get_children_by_id("up")[1]
+        local wifiwidget = net.wifi
+
         -- TODO: perhaps also try to detect if we have an IP too rather than
         -- just be connected to the network
-
         if net_now.carrier:match("0") then
-            widget:set_markup(lain.util.markup.fontfg(
-                beautiful.iconFont, beautiful.widget_wifi_fg, "") .. "  ")
+            wifiwidget.visible = true
         elseif net_now.carrier:match("1") then
-            widget:set_markup("")
+            wifiwidget.visible = false
         end
+
+        downwidget:set_text(("%.0f"):format(net_now.received))
+        upwidget:set_text(("%.0f"):format(net_now.sent))
+    end
+}
+
+-- Memory                    {{{2
+local memory = wibox.widget {
+    layout = wibox.layout.fixed.horizontal,
+    {
+        widget = wibox.widget.imagebox,
+        image = beautiful.widget_mem,
+    },
+    {
+        id = "ram",
+        widget = wibox.container.background,
+        fg = beautiful.widget_mem_ram_fg,
+        {
+            widget = wibox.widget.textbox,
+        },
+    },
+    {
+        id = "swap",
+        widget = wibox.container.background,
+        fg = beautiful.widget_mem_swap_fg,
+        {
+            widget = wibox.widget.textbox,
+        },
+    },
+}
+
+local mem_tt = awful.tooltip {
+    objects = { memory }
+}
+
+local meminfo = lain.widget.mem {
+    settings = function()
+        local mempercent = (mem_now.used / mem_now.total) * 100
+        if mempercent < 10 then
+            memory.ram.widget:set_text(("%dMiB"):format(mem_now.used))
+        else
+            memory.ram.widget:set_text(("%.0f%%"):format(mempercent))
+        end
+
+        if mem_now.swap > 0 then
+            memory.swap.widget:set_text(
+                (" %.0f%%"):format(100 * mem_now.swapused / mem_now.swap))
+        end
+
+        mem_tt:set_text(
+            ("RAM: %s MB (%s / %s MB)\nSwap: %s MB (%s / %s MB)"):format(
+                mem_now.free, mem_now.used, mem_now.total,
+                mem_now.swapf, mem_now.swapused, mem_now.swap))
+    end
+}
+
+-- Music                     {{{2
+local music = wibox.widget {
+    layout = wibox.layout.fixed.horizontal,
+    {
+        widget = wibox.widget.imagebox,
+        image = beautiful.widget_mus,
+    },
+    {
+        widget = wibox.container.background,
+        fg = beautiful.widget_mus_artist_fg,
+        {
+            id = "artist",
+            widget = wibox.widget.textbox,
+        },
+    },
+    {
+        widget = wibox.container.background,
+        fg = beautiful.widget_mus_title_fg,
+        {
+            id = "title",
+            widget = wibox.widget.textbox,
+        },
+    },
+}
+
+local musicinfo = require("mpris") {
+    settings = function()
+        music.visible = mpris_now.state ~= "Stopped"
+        if not music.visible then return end
+
+        local artistwidget = music:get_children_by_id("artist")[1]
+        local titlewidget = music:get_children_by_id("title")[1]
+
+        artistwidget.visible = false
+        if mpris_now.artist ~= "" then
+            artistwidget.visible = true
+            artistwidget:set_text(mpris_now.artist .. " ")
+        end
+        titlewidget:set_text(mpris_now.title)
     end
 }
 
 -- Date and time             {{{2
-dateicon = wibox.widget.textbox(("<span font='%s'></span> "):format(beautiful.iconFont))
-datewidget = wibox.widget.textclock("%a %d %b  %R ")
-lain.widget.calendar {
-    attach_to = { datewidget }
+os.setlocale(os.getenv("LANG")) -- to localize the clock
+
+local clock = wibox.widget {
+    layout = wibox.layout.fixed.horizontal,
+    {
+        widget = wibox.widget.imagebox,
+        image = beautiful.widget_clock,
+    },
+    -- FIXME: write as declerative when awesome is updated
+    wibox.widget.textclock(
+        markup("#7788af", "%a %d %b")
+        .. markup("#de5e1e", " %H:%M ")),
 }
--- lain.widget.calendar:attach(datewidget, { icons = '', font = beautiful.font, font_size = 10 })
 
--- }}}2
+-- Calendar                  {{{2
+local calendar = lain.widget.calendar {
+    attach_to = { clock },
+}
 
--- Keyboard map indicator and switcher
-mykeyboardlayout = awful.widget.keyboardlayout()
+-- -- Keyboard layout           {{{2
+-- mykeyboardlayout = awful.widget.keyboardlayout()
 
-local function set_wallpaper(s)
-    -- Wallpaper
-    if beautiful.wallpaper then
-        local wallpaper = beautiful.wallpaper
-        -- If wallpaper is a function, call it with the screen
-        if type(wallpaper) == "function" then
-            wallpaper = wallpaper(s)
-        end
-        gears.wallpaper.maximized(wallpaper, s, true)
-    end
-end
+-- -- Power menu                {{{2
+-- powermenu = awful.menu { items = {
+--         { "lock", "slock" },
+--         { "suspend", "systemctl suspend" },
+--         { "reboot", "reboot" },
+--         { "shutdown", "poweroff" },
+--     }
+-- }
 
+-- powerwidget = wibox.widget.imagebox(beautiful.widget_power)
+-- powerwidget:buttons(awful.util.table.join(
+--     awful.button({ }, 1, function (c) powermenu:toggle() end)
+-- ))
+
+-- Wibar                {{{1
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
 screen.connect_signal("property::geometry", set_wallpaper)
 
@@ -303,13 +554,17 @@ awful.screen.connect_for_each_screen(function(s)
     -- Wallpaper
     set_wallpaper(s)
 
+    -- Dropdown terminal
+    s.quake = lain.util.quake { app = terminal, argname = "-n %s" }
+
     -- Each screen has its own tag table.
-    awful.tag({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }, s, awful.layout.layouts[1])
+    awful.tag(tagnames, s, awful.layout.layouts[1])
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
-    -- Create an imagebox widget which will contains an icon indicating which layout we're using.
-    -- We need one layoutbox per screen.
+
+    -- Create a layoutbox which will contains an icon indicating which layout
+    -- we're using.  We need one per screen.
     s.mylayoutbox = awful.widget.layoutbox(s)
     s.mylayoutbox:buttons(gears.table.join(
                            awful.button({ }, 1, function () awful.layout.inc( 1) end),
@@ -374,27 +629,24 @@ awful.screen.connect_for_each_screen(function(s)
         { -- left side widgets
             layout = wibox.layout.fixed.horizontal,
             s.mytaglist,
-            spacer,
             s.mylayoutbox,
+            music,
+            separator,
             s.mypromptbox
         },
         s.mytasklist, -- center widget
         { -- right side widgets
             layout = wibox.layout.fixed.horizontal,
+            separator,
             wibox.widget.systray(),
-            -- spacer,
-            -- musicwidget,
-            spacer,
+            separator,
+            mailicon,
+            mail,
+            volicon,
             volume,
-            -- spacer,
-            wifi,
-            -- spacer,
+            net,
             memory,
-            spacer,
-            dateicon,
-            datewidget,
-            -- spacer,
-            -- powerwidget,
+            clock,
         },
     }
 
@@ -423,6 +675,12 @@ globalkeys = gears.table.join(
               {description = "view next", group = "tag"}),
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore,
               {description = "go back", group = "tag"}),
+
+    -- Non-empty tag browsing
+    awful.key({ modkey, "Shift"   }, "Left",  function () lain.util.tag_view_nonempty(-1) end,
+              {description = "view  previous nonempty", group = "tag"}),
+    awful.key({ modkey, "Shift"   }, "Right", function () lain.util.tag_view_nonempty( 1) end,
+              {description = "view  next nonempty", group = "tag"}),
 
     awful.key({ modkey,           }, "j",
         function ()
@@ -459,6 +717,24 @@ globalkeys = gears.table.join(
         end,
         {description = "go back", group = "client"}),
 
+    -- Change gap size
+    awful.key({ modkey, "Control" }, "=", function () lain.util.useless_gaps_resize( 1) end,
+              {description = "increment useless gaps", group = "tag"}),
+    awful.key({ modkey, "Control" }, "-", function () lain.util.useless_gaps_resize(-1) end,
+              {description = "decrement useless gaps", group = "tag"}),
+
+    -- Dynamic tagging
+    awful.key({ modkey, "Shift"   }, "n",     function () lain.util.add_tag() end,
+              {description = "add new tag", group = "tag"}),
+    awful.key({ modkey, "Shift"   }, "r",     function () lain.util.rename_tag() end,
+              {description = "rename tag", group = "tag"}),
+    -- awful.key({ modkey, "Shift"   }, "Left",  function () lain.util.move_tag(-1) end,
+    --           {description = "move tag to the left", group = "tag"}),
+    -- awful.key({ modkey, "Shift"   }, "Right", function () lain.util.move_tag( 1) end,
+    --           {description = "move tag to the right", group = "tag"}),
+    awful.key({ modkey, "Shift"   }, "d",     function () lain.util.delete_tag() end,
+              {description = "delete tag", group = "tag"}),
+
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.spawn(terminal) end,
               {description = "open a terminal", group = "launcher"}),
@@ -466,6 +742,10 @@ globalkeys = gears.table.join(
               {description = "reload awesome", group = "awesome"}),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit,
               {description = "quit awesome", group = "awesome"}),
+
+    -- Dropdown application
+    awful.key({ modkey, }, "z", function () awful.screen.focused().quake:toggle() end,
+              {description = "dropdown application", group = "launcher"}),
 
     awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)          end,
               {description = "increase master width factor", group = "layout"}),
@@ -495,6 +775,40 @@ globalkeys = gears.table.join(
               end,
               {description = "restore minimized", group = "client"}),
 
+    -- Brightness
+    -- awful.key({ }, "XF86MonBrightnessUp",   function () awful.util.spawn("xbacklight -inc 10") end,
+    --           {description = "brightness +10%", group = "hotkeys"}),
+    -- awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("xbacklight -dec 10") end,
+    --           {description = "brightness -10%", group = "hotkeys"}),
+
+    -- Media keys
+    awful.key({ }, "XF86AudioPlay", function() awful.spawn("playerctl play-pause") end,
+        {description = "music toggle", group = "media"}),
+    awful.key({ }, "XF86AudioStop", function() awful.spawn("playerctl stop") end,
+        {description = "music stop", group = "media"}),
+    awful.key({ }, "XF86AudioNext", function() awful.spawn("playerctl next") end,
+        {description = "music next", group = "media"}),
+    awful.key({ }, "XF86AudioPrev", function() awful.spawn("playerctl previous") end,
+        {description = "music previous", group = "media"}),
+
+    -- Volume control
+    -- TODO: consider some keys to +/-10% volume or such
+    awful.key({ }, "XF86AudioMute",
+        function () awful.spawn.easy_async("amixer -q set Master toggle",      volume.update) end,
+        {description = "toggle mute", group = "media"}),
+    awful.key({ }, "XF86AudioRaiseVolume",
+        function () awful.spawn.easy_async("amixer -q set Master 1%+ unmute",  volume.update) end,
+        {description = "volume up", group = "media"}),
+    awful.key({ }, "XF86AudioLowerVolume",
+        function () awful.spawn.easy_async("amixer -q set Master 1%- unmute",  volume.update) end,
+        {description = "volume down", group = "media"}),
+    awful.key({ "Control" }, "XF86AudioRaiseVolume",
+        function () awful.spawn.easy_async("amixer -q set Master 100% unmute", volume.update) end,
+        {description = "volume 100%", group = "media"}),
+    awful.key({ "Control" }, "XF86AudioLowerVolume",
+        function () awful.spawn.easy_async("amixer -q set Master 0% unmute",   volume.update) end,
+        {description = "volume 0%", group = "media"}),
+
     -- Prompt
     awful.key({ modkey },            "r",     function () awful.screen.focused().mypromptbox:run() end,
               {description = "run prompt", group = "launcher"}),
@@ -511,13 +825,7 @@ globalkeys = gears.table.join(
               {description = "lua execute prompt", group = "awesome"}),
     -- Menubar
     awful.key({ modkey }, "p", function() menubar.show() end,
-              {description = "show the menubar", group = "launcher"}),
-
-    -- Media keys
-    awful.key({}, "XF86AudioPlay", function() awful.spawn("playerctl play-pause") end, {description = ""}),
-    awful.key({}, "XF86AudioStop", function() awful.spawn("playerctl stop") end, {description = ""}),
-    awful.key({}, "XF86AudioNext", function() awful.spawn("playerctl next") end, {description = ""}),
-    awful.key({}, "XF86AudioPrev", function() awful.spawn("playerctl previous") end, {description = ""})
+              {description = "show the menubar", group = "launcher"})
 )
 
 -- These are set from the rules
@@ -579,7 +887,7 @@ for i = 1, 9 do
                            tag:view_only()
                         end
                   end,
-                  {description = "view tag #"..i, group = "tag"}),
+                  {description = "view tag #", group = "tag"}),
         -- Toggle tag display.
         awful.key({ modkey, "Control" }, "#" .. i + 9,
                   function ()
@@ -589,7 +897,7 @@ for i = 1, 9 do
                          awful.tag.viewtoggle(tag)
                       end
                   end,
-                  {description = "toggle tag #" .. i, group = "tag"}),
+                  {description = "toggle tag #", group = "tag"}),
         -- Move client to tag.
         awful.key({ modkey, "Shift" }, "#" .. i + 9,
                   function ()
@@ -600,7 +908,7 @@ for i = 1, 9 do
                           end
                      end
                   end,
-                  {description = "move focused client to tag #"..i, group = "tag"}),
+                  {description = "move focused client to tag #", group = "tag"}),
         -- Toggle tag on focused client.
         awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
                   function ()
@@ -611,7 +919,7 @@ for i = 1, 9 do
                           end
                       end
                   end,
-                  {description = "toggle focused client on tag #" .. i, group = "tag"})
+                  {description = "toggle focused client on tag #", group = "tag"})
     )
 end
 
@@ -636,10 +944,6 @@ awful.rules.rules = {
 
     -- Floating clients.
     { rule_any = {
-        instance = {
-          "DTA",  -- Firefox addon DownThemAll.
-          "copyq",  -- Includes session name in class.
-        },
         class = {
           "Arandr",
           "Gpick",
@@ -665,10 +969,6 @@ awful.rules.rules = {
             "dialog",
         },
       }, properties = { floating = true }},
-
-    -- Set Firefox to always map on the tag named "2" on screen 1.
-    -- { rule = { class = "Firefox" },
-    --   properties = { screen = 1, tag = "2" } },
 }
 
 -- Signals              {{{1
@@ -736,7 +1036,16 @@ client.connect_signal("mouse::enter", function(c)
     end
 end)
 
-client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
+-- No border for maximized clients
+-- FIXME: it's kind of buggy since it only updates on focus
+client.connect_signal("focus", function(c)
+    if c.maximized then
+        c.border_width = 0
+    else
+        c.border_width = beautiful.border_width
+        c.border_color = beautiful.border_focus
+    end
+end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}1
 
