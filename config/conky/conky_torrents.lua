@@ -56,7 +56,7 @@ function conky_torrents()
 
     local out = { }
     for _, t in ipairs(torrents) do
-        if t.status ~= "seed" and t.status ~= "seed-wait" then
+        if t.status == "download" or t.status == "download-wait" then
             local percent = math.floor(100 * t.percentDone)
 
             table.insert(out, (""

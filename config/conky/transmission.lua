@@ -36,7 +36,7 @@ function Transmission.call(self, method, ...)
         ["url"] = self.url,
         ["method"] = "POST",
         ["headers"] = headers,
-        ["source"] = ltn12.source.string(jsonRequest)
+        ["source"] = ltn12.source.string(jsonRequest),
         ["sink"] = ltn12.sink.table(resultChunks),
     }
     local response = table.concat(resultChunks)
