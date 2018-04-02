@@ -116,6 +116,7 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'zhamlin/tiler.vim'
     " Plug 'roman/golden-ratio'
     " Plug 't9md/vim-choosewin'
+    " Plug 'troydm/zoomwintab.vim'
     Plug 'dr-chip-vim-scripts/ZoomWin'
 " Buffer management     {{{2
     Plug 'moll/vim-bbye'
@@ -145,8 +146,10 @@ Plug 'editorconfig/editorconfig-vim'
         Plug 'sjl/badwolf'
         Plug 'fneu/breezy'
         " Plug 'tomasr/molokai'
+        Plug 'gregsexton/Muon'
         " Plug 'sstallion/vim-wtf'
         " Plug 'abra/vim-obsidian'
+        " Plug 'dikiaap/minimalist'
         " Plug 'notpratheek/vim-luna'
         " Plug 'kabbamine/yowish.vim'
         " Plug 'joshdick/onedark.vim'
@@ -163,6 +166,7 @@ Plug 'editorconfig/editorconfig-vim'
         " Plug 'reedes/vim-colors-pencil'
         " Plug 'NLKNguyen/papercolor-theme'
         Plug 'chriskempson/vim-tomorrow-theme'
+        " Plug 'owickstrom/vim-colors-paramount'
         Plug 'altercation/vim-colors-solarized'
 " Syntax                {{{2
     Plug 'justinmk/vim-syntax-extra'
@@ -196,7 +200,10 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'ramele/agrep'
     " Plug 'wincent/ferret'
     " Plug 'mhinz/vim-grepper'
+    " Plug 'pelodelfuego/vim-swoop'
+    " Plug 'google/vim-searchindex'
     Plug 'henrik/vim-indexed-search'
+    " Plug 'romainl/vim-cool'
     " Plug 'junegunn/vim-slash'
     " Plug 'haya14busa/incsearch.vim'
 " Statusline            {{{2
@@ -228,14 +235,11 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'godlygeek/tabular'
     " Plug 'junegunn/vim-easy-align'
 " Autocompletion        {{{2
-    Plug 'ajh17/VimCompletesMe'
-    " Plug 'ervandew/supertab'
-    " Plug 'Shougo/neocomplete.vim'
+    " Plug 'ajh17/VimCompletesMe'
+    Plug 'lifepillar/vim-mucomplete'
     " Plug 'Shougo/deoplete.nvim'
     " Plug 'Valloric/YouCompleteMe'
 " Filetype Specific     {{{2
-" C/C++                      {{{3
-    Plug 'Rip-Rip/clang_complete', {'for': ['c', 'cpp']}
 " Python                     {{{3
     Plug 'fisadev/vim-isort',            {'for': 'python'}
     Plug 'davidhalter/jedi-vim',         {'for': 'python'}
@@ -244,6 +248,10 @@ Plug 'editorconfig/editorconfig-vim'
     " TODO: Consider writing a folding plugin
     " Plug 'tmhedberg/SimpylFold'
     " Plug 'vim-scripts/Efficient-python-folding'
+" Go                         {{{3
+    Plug 'fatih/vim-go'
+" C/C++                      {{{3
+    Plug 'Rip-Rip/clang_complete', {'for': ['c', 'cpp']}
 " Elixir                     {{{3
     " Plug 'slashmili/alchemist.vim', {'for': 'elixir'}
 " OCaml                      {{{3
@@ -267,6 +275,7 @@ Plug 'editorconfig/editorconfig-vim'
 
     Plug 'metakirby5/codi.vim'
 
+    " Plug 'tpope/vim-projectionist'
     " Plug 'terryma/vim-multiple-cursors'
     Plug 'tpope/vim-unimpaired'
 
@@ -290,15 +299,23 @@ Plug 'editorconfig/editorconfig-vim'
 
     " TODO: check if needed and make mappings
     " Plug 'zirrostig/vim-schlepp'
-    " Plig 'fisadev/dragvisuals.vim'
+    " Plug 'fisadev/dragvisuals.vim'
     " Plug 'atweiden/vim-dragvisuals'
 
     " Plug 'bruno-/vim-man'
     " Plug 'fmoralesc/vim-pad'
+    " Plug 'mivok/vimtodo'
     " Plug 'freitass/todo.txt-vim'
+    " Plug 'lukaszkorecki/workflowish'
+    " Plug 'irrationalistic/vim-tasks'
     " Plug 'vim-pandoc/vim-pandoc'
+    " Plug 'jceb/vim-orgmode'
+    " Plug 'vimwiki/vimwiki'
+    " Plug 'plasticboy/vim-markdown'
+    " Plug 'vimoutliner/vimoutliner'
     " Plug 'dhruvasagar/vim-table-mode'
 
+    " Plug 'LucHermitte/lh-tags'
     " Plug 'xuhdev/SingleCompile'
     Plug 'ludovicchabant/vim-gutentags'
 
@@ -414,8 +431,16 @@ set ttyfast        " I have a fast connection to my tty
 " FIXME:
 if $TERM =~ 'st'
     set ttymouse=xterm
+
+    " termguicolors
+    " set termguicolors
     let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+
+    " guicursor-like
+    " let &t_EI = "\<Esc>[0 q"
+    " let &t_SI = "\<Esc>[5 q"
+    " let &t_SR = "\<Esc>[3 q"
 endif
 
 if s:executable('rg')
@@ -424,6 +449,12 @@ if s:executable('rg')
 elseif s:executable('ag')
     set grepprg=ag\ --vimgrep
     set grepformat=%f:%l:%c:%m,%f:%l:%m
+elseif s:executable('grep')
+    call system('grep --version')
+    if !v:shell_error   " GNU grep
+        set grepprg=grep\ -nH\ -r
+        set grepformat=%f:%l:%m
+    endif
 endif
 
 " title            " set the terminal title
@@ -471,6 +502,7 @@ if s:has('gui_mac')
 endif
 
 set mousehide      " hide the mouse pointer when typing on the GUI
+set guicursor+=n-v-c:blinkon0          " un-blink the cursor in some modes
 set guioptions+=c  " use console dialogs
 set guioptions-=e  " text tabs
 set guioptions-=m  " no menu
@@ -558,9 +590,13 @@ let g:tagbar_iconchars = ['▸', '▾']
 let NERDTreeMinimalUI = 1
 let g:nerdtree_tabs_open_on_gui_startup = 0
 
+" fzf                   {{{2
+if s:executable('rg')
+    let $FZF_DEFAULT_COMMAND = "rg --files --hidden --glob '!.git'"
+endif
+
 " indexed-search        {{{2
 let g:indexed_search_dont_move = 1
-let g:indexed_search_unfold = 1
 let g:indexed_search_center = 1
 
 " better-whitespace     {{{2
@@ -588,6 +624,18 @@ let g:gitgutter_sign_modified_removed = '∙'
 
 " python-syntax         {{{2
 let python_highlight_all = 1
+
+" go-mode               {{{2
+let g:go_highlight_extra_types = 1
+let g:go_highlight_types = 1
+let g:go_highlight_operators = 1
+let g:go_highlight_functions = 1
+let g:go_highlight_fields = 1
+let g:go_highlight_methods = 1
+let g:go_highlight_build_constraints = 1
+
+let g:go_auto_sameids = 1
+let g:go_auto_type_info = 1
 
 " vim-javascript        {{{2
 let g:javascript_plugin_jsdoc = 1
@@ -662,35 +710,19 @@ function! AskMakeDirs(dir)             " {{{2
 endfunction
 
 
-function! ToggleBackground()           " {{{2
-    let &background = ( &background == 'dark' ? 'light' : 'dark' )
-    if exists('g:colors_name')
-        exec 'colorscheme' g:colors_name
-    endif
-endfunction
-
-
 function! FoldText()                   " {{{2
 " https://coderwall.com/p/usd_cw
 
-    function! s:unicode_len(s)              " {{{3
-        return strlen(substitute(a:s, '.', 'x', 'g'))
-    endfunction
-
     function! s:real_numberwidth()          " {{{3
-        let width = 0
-
         if (&number || &relativenumber)
             if (&number)
                 let lnum = line('$')
             elseif (&relativenumber && ! &number)
                 let lnum = winheight(0)
             endif
-
-            let width += max([&numberwidth, strlen(lnum) + 1])
+            return max([&numberwidth, strlen(lnum) + 1])
         endif
-
-        return width
+        return 0
     endfunction
 
     function! s:expand_tabs(str)            " {{{3
@@ -711,15 +743,12 @@ function! FoldText()                   " {{{2
     let end = substitute(s:expand_tabs(getline(v:foldend)), '^\s*', '', 'g')
 
     let lines_num = '('.(v:foldend - v:foldstart).')'
-    let width = min([80, winwidth(0) - lpadding - s:unicode_len(lines_num)])
+    let width = min([80, winwidth(0) - lpadding - strwidth(lines_num)])
 
-    let start = strpart(start, 0, width - s:unicode_len(end)
-                                      \ - s:unicode_len(' … '))
+    let start = strpart(start, 0, width - strwidth(end) - strwidth(' … '))
     let text = start . ' … ' . end
 
-    return text
-         \ . repeat(' ', width - s:unicode_len(text))
-         \ . lines_num
+    return text . repeat(' ', width - strwidth(text)) . lines_num
 endfunction
 
 
@@ -779,20 +808,16 @@ command! -range ExecRange call ExecRange(<line1>, <line2>)
 " A simple plugin for toggling the quickfix and location list
 " http://vim.wikia.com/wiki/Toggle_to_open_or_close_the_quickfix_window
 function! ToggleQuickFix(list, ...)
-    " There can be multiple lists open at the same time: at most one quickfix
-    " and many loclists, each one associated with a window.  ViM provides no
-    " means to tell which is which.  We do the following: try and close the
-    " requested list and see if the total number of windows changed.
+    " The only way to identify if any list windows are open is through the
+    " functions `getqflist()` and `getloclist()`, specifically the `winid`
+    " property.  We don't do that though, we just try and close the requested
+    " list and see if the total number of windows changed.
     let last_winnr = winnr('$')
     exec a:list.'close'
     if last_winnr != winnr('$') | return | endif
 
     let current_winnr = winnr()
-    if a:list == 'l' && empty(getloclist(0))
-        call s:echohl('WarningMsg', 'Location List is empty')
-        return
-    endif
-    exec a:list.'open'
+    exec a:list.'window'
 
     let go_back = get(a:000, 0, 0)
     if go_back && winnr() != current_winnr | wincmd p | endif
@@ -814,28 +839,13 @@ call s:def_option('g:bufline_active_fmt', '[%s:%s%s]')
 
 
 function! s:get_bufnrs()
-    let ft_exclude = {}
-    for ft in g:bufline_ft_exclude
-        ft_exclude[ft] = 1
-    endfor
-
+    let ft_exclude = g:bufline_ft_exclude
     return filter(range(1, bufnr('$')),
-                \ 'buflisted(v:val) && !get(ft_exclude, getbufvar(v:val, "&ft"), 0)')
-endfunction
-
-function! s:get_buffer_info(bufnr)
-    let has_window = bufwinnr(a:bufnr) > 0
-    let is_current = a:bufnr == bufnr('%')
-    return {
-        \ 'name': bufname(a:bufnr),
-        \ 'state': has_window + is_current,
-        \ 'modified': getbufvar(a:bufnr, '&mod')
-    \ }
+                \ 'buflisted(v:val) && index(ft_exclude, getbufvar(v:val, "&ft")) < 0')
 endfunction
 
 function! s:generate_buffer_labels(bufnrs)
-    return map(copy(a:bufnrs),
-             \ g:bufline_formatter.'(v:val, s:get_buffer_info(v:val))')
+    return map(copy(a:bufnrs), 'call(g:bufline_formatter, [v:val])')
 endfunction
 
 function! s:echo_bufline()
@@ -862,11 +872,16 @@ function! s:echo_bufline()
 endfunction
 
 
-function! s:default_formatter(bufnr, info)
-    return printf(a:info.state == 2 ? g:bufline_active_fmt : g:bufline_fmt,
+function! s:default_formatter(bufnr)
+    let name = bufname(a:bufnr)
+    let modified = getbufvar(a:bufnr, '&mod')
+    let has_window = bufwinnr(a:bufnr) > 0
+    let is_current = a:bufnr == bufnr('%')
+
+    return printf(has_window && is_current ? g:bufline_active_fmt : g:bufline_fmt,
                 \ a:bufnr,
-                \ fnamemodify(a:info.name, g:bufline_fnamemodify),
-                \ a:info.modified ? g:bufline_modified : '')
+                \ fnamemodify(name, g:bufline_fnamemodify),
+                \ modified ? g:bufline_modified : '')
 endfunction
 
 function! s:default_positioner(buffers, max_width)
@@ -886,22 +901,21 @@ function! s:default_positioner(buffers, max_width)
 endfunction!
 
 
-function! s:delayed_echo_bufline(millis)
+function! s:delayed_echo_bufline(delay)
     if exists('s:save_ut') | return | endif
     let s:save_ut = &ut
-    let &ut = a:millis
 
-    augroup bufline_delayed_autocmds
-        autocmd!
+    let &ut = a:delay
+    augroup bufline_delayed
         autocmd CursorHold *
             \ let &ut = s:save_ut    |
             \ unlet s:save_ut        |
             \ call s:echo_bufline()  |
-            \ autocmd! bufline_delayed_autocmds
+            \ autocmd! bufline_delayed
     augroup END
 endfunction
 
-augroup bufline_autocmds
+augroup bufline
     autocmd!
 
     autocmd CursorHold * call s:echo_bufline()
@@ -944,9 +958,7 @@ function! s:get_next_words(motion, maxwords)
 endfunction
 
 function! s:clear_motion_counts()
-    for id in s:matchids
-        call matchdelete(id)
-    endfor
+    call map(s:matchids, 'matchdelete(v:val)')
     let s:matchids = []
 endfunction
 
@@ -1017,6 +1029,7 @@ endfunction
 " wordhl                {{{2
 " Simple plugin to highlight specific words or sentences
 function! s:get_visual_selection()
+    " FIXME: does not work for multibyte; consider registers
     let [lnum1, col1] = getpos("'<")[1:2]
     let [lnum2, col2] = getpos("'>")[1:2]
     let lines = getline(lnum1, lnum2)
@@ -1087,6 +1100,12 @@ hi! def WordHL13 cterm=bold ctermfg=7  ctermbg=56  gui=bold guibg=#a0b0c0 guifg=
 " Autocomplete     {{{1
 set complete-=i    " don't use included files for completion, too slow
 
+" let g:mucomplete#can_complete.python = {
+"             \ 'omni': { t -> t =~# '\%([^. \t]\.\|^\s*@\|^\s*from\s.\+import \|^\s*from \|^\s*import \)\w*' },
+"             \ }
+" alternative pattern: '\h\w*\|[^. \t]\.\w*'
+
+
 " Jedi-Vim              {{{2
 " let g:jedi#auto_initialization = 0
 let g:jedi#auto_vim_configuration = 0
@@ -1099,34 +1118,6 @@ au FileType python setlocal omnifunc=jedi#completions
 
 " Eclim                 {{{2
 let g:EclimCompletionMethod = 'omnifunc'
-
-" SuperTab              {{{2
-" XXX: This NEEDS to be last in the autocomplete section, since it needs to
-" know the omnifunc that the previous filetype-specific sections set.
-
-" let g:SuperTabCrMapping = 1         " <CR> puts the word, ends the completion
-let g:SuperTabLongestEnhanced = 1
-" let g:SuperTabLongestHighlight = 1  " preselect the first entry
-let g:SuperTabDefaultCompletionType = "context"
-" let g:SuperTabRetainCompletionDuration = "completion"  " immidately forget the completion type
-
-" autocmd FileType *
-"     \ if &omnifunc != '' | call SuperTabChain(&omnifunc, "<c-n>") | endif
-
-" or perhaps
-" autocmd FileType *
-"     \ if &omnifunc != '' |
-"     \   call SuperTabChain(&omnifunc, "<c-p>") |
-"     \   call SuperTabSetDefaultCompletionType("<c-x><c-u>") |
-"     \ endif
-
-" Neocomplete           {{{2
-if !exists('g:neocomplete#force_omni_input_patterns')
-    let g:neocomplete#force_omni_input_patterns = {}
-endif
-let g:neocomplete#force_omni_input_patterns.python =
-    \ '\%([^. \t]\.\|^\s*@\|^\s*from\s.\+import \|^\s*from \|^\s*import \)\w*'
-" alternative pattern: '\h\w*\|[^. \t]\.\w*'
 
 " Appearance       {{{1
 " let &t_ZH = Terminfo('sitm', 1)
@@ -1169,6 +1160,166 @@ augroup rc_colors
     "       termguicolors and reset the colorscheme
 augroup END
 
+" Lightline             {{{2
+function! SetupLightline(colorscheme)
+    let mode_map = {
+        \ "n":      'n',
+        \ "i":      'i',
+        \ "R":      'R',
+        \ "c":      'c',
+        \ "v":      'v',
+        \ "V":      'V',
+        \ "\<C-v>": '^v',
+        \ "s":      's',
+        \ "S":      'S',
+        \ "\<C-s>": '^s',
+        \ }
+
+    let symbols = {
+        \    'linenr':     '',
+        \    'paste':      'PASTE',
+        \    'readonly':   '',
+        \    'modified':   '+',
+        \    'space':      ' ',
+        \    'whitespace': '✹',
+        \    'branch':     '',
+        \    'separators':    { 'left': '', 'right': '' },
+        \    'subseparators': { 'left': '', 'right': '' },
+        \ }
+
+    let g:lightline = extend(get(g:, 'lightline', {}), {
+        \ 'colorscheme': a:colorscheme,
+        \ 'mode_map':  mode_map,
+        \ 'separator':    symbols.separators,
+        \ 'subseparator': symbols.subseparators,
+        \
+        \ 'active': {
+        \   'left': [ [ 'mode', 'paste' ],
+        \             [ 'fugitive', 'filename', 'modified' ] ],
+        \   'right': [ [ 'lineinfo' ],
+        \              [ 'percent' ],
+        \              [ 'linter_warnings', 'linter_errors', 'linter_ok' ],
+        \              [ 'fileformat', 'fileencoding', 'filetype' ] ],
+        \ },
+        \ 'components': {
+        \   'modified': '%{&ft=="help"?"":&modified?"+":&modifiable?"":"-"}'
+        \ },
+        \ 'component_function': {
+        \   'fugitive': 'LightlineFugitive',
+        \ },
+        \ 'component_expand': {
+        \   'linter_warnings': 'LightlineAleWarnings',
+        \   'linter_errors': 'LightlineAleErrors',
+        \   'linter_ok': 'LightlineAleOK'
+        \ },
+        \ 'component_type': {
+        \   'linter_warnings': 'warning',
+        \   'linter_errors': 'error',
+        \   'linter_ok': 'ok'
+        \ },
+        \ }, 'keep')
+endfunction!
+
+function! LightlineFugitive()
+    try
+        if exists('*fugitive#head') && buflisted('.')
+            return fugitive#head()
+        endif
+    catch
+    endtry
+    return ''
+endfunction
+
+function! LightlineAleCounts() abort
+    let counts = ale#statusline#Count(bufnr(''))
+    let errors = counts.error + counts.style_error
+    let warnings = counts.total - errors
+    return [counts.total, errors, warnings]
+endfunction
+
+function! LightlineAleWarnings() abort
+    let [total, _, warnings] = LightlineAleCounts()
+    return total == 0 ? '' : printf('%d ◆', warnings)
+endfunction
+
+function! LightlineAleErrors() abort
+    let [total, errors, _] = LightlineAleCounts()
+    return total == 0 ? '' : printf('%d ✗', errors)
+endfunction
+
+function! LightlineAleOK() abort
+    let [total; _] = LightlineAleCounts()
+    return total == 0 ? '✓' : ''
+endfunction
+
+" augroup rc_lightline
+"     au!
+"     au User ALELint call lightline#update()
+" augroup END
+
+" call SetupLightline('wombat')
+
+" Airline               {{{2
+" TODO: move this to the Appearance section
+function! Airline_GetFileInfo()
+    return (&l:bomb ? '[BOM]' : '')
+        \ .(&fenc !=# 'utf-8' ? &fenc : '')
+        \ .(&ff !=# 'unix' ? '['.&ff.']' : '')
+endfunction
+
+function! IsQfWindow(win)
+    return getwinvar(a:win, '&filetype') == 'qf' && empty(getloclist(a:win))
+endfunction
+
+function! IsQfWindowOpen()
+    return s:some(map(range(1, winnr('$')), 'IsQfWindow(v:val)'))
+endfunction
+
+function! Airline_QfPending()
+    return get(g:, 'qf_pending') ? '[Q] ' : ''
+endfunction
+
+function! AirlineCustom()              " {{{3
+    call airline#parts#define_function('finfo', 'Airline_GetFileInfo')
+
+    augroup rc_qf
+        au!
+        au QuickFixCmdPost [^l]*    let g:qf_pending = !IsQfWindowOpen()
+        au Filetype qf              let g:qf_pending = 0
+    augroup END
+    call airline#parts#define_function('qf_pending', 'Airline_QfPending')
+
+    let g:airline_section_y = airline#section#create(['finfo'])
+    let g:airline_section_warning = airline#section#create(['qf_pending', 'ale_warning_count', 'whitespace'])
+endfunction
+
+function! AirlineCustomTheme(palette)  " {{{3
+    " colors are [guifg, guibg, ctermfg, ctermbg, styles]
+
+    let white = 231
+    let brightpurple = 189
+    let mediumpurple = 98
+    let darkestpurple = 55
+
+    " Use the style for CtrlP that powerline used
+    " let a:palette.ctrlp = airline#extensions#ctrlp#generate_color_map(
+    "     \ ['', '', brightpurple, darkestpurple, ''],
+    "     \ ['', '', white, mediumpurple, ''],
+    "     \ ['', '', darkestpurple, white, 'bold'])
+
+    " Give the right side the same style as the left in replace mode.  This
+    " may just be a bug in the bubblegum theme but whatever.
+    let a:palette.replace.airline_z = a:palette.replace.airline_a
+    let a:palette.replace.airline_x = a:palette.replace.airline_c
+endfunction
+" }}}3
+
+let g:airline_theme_patch_func = 'AirlineCustomTheme'
+augroup rc_airline
+    au!
+    au User AirlineAfterInit call AirlineCustom()
+augroup END
+
 " Autocommands     {{{1
 augroup rc_general      " {{{2
     au!
@@ -1195,6 +1346,16 @@ augroup rc_general      " {{{2
 
     " Re-source .vimrc on save
     au BufWritePost $MYVIMRC nested source $MYVIMRC
+augroup END
+
+augroup ft_help         " {{{2
+    au!
+    au FileType help setlocal keywordprg=:help
+
+    " These ones are only meant for help windows
+    au FileType help if &buftype == 'help'
+                \ | nnoremap <buffer> q :close<CR>
+                \ | endif
 augroup END
 
 augroup ft_vim          " {{{2
@@ -1238,6 +1399,14 @@ augroup ft_python       " {{{2
         \ fileformat=unix
 augroup END
 
+augroup ft_go           " {{{2
+    au!
+
+    au FileType go setlocal noexpandtab
+    au FileType go setlocal shiftwidth=4
+    au FileType go setlocal softtabstop=4
+    au FileType go setlocal tabstop=4
+augroup END
 augroup ft_cpt          " {{{2
     au!
 
@@ -1312,10 +1481,8 @@ nnoremap <C-W><C-]> <C-W>g<C-]>
 
 " TODO: put this somewhere proper
 function! SyntaxInfo()
-    return printf('hi<%s> trans<%s> lo<%s>',
-        \ synIDattr(synID(line("."),col("."),1),"name"),
-        \ synIDattr(synID(line("."),col("."),0),"name"),
-        \ synIDattr(synIDtrans(synID(line("."),col("."),1)),"name"))
+    let names = map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
+    return join(names, ' : ')
 endfunction
 
 nnoremap Q :ExecRange<CR>
@@ -1377,7 +1544,7 @@ vnoremap <silent> <A-k> :<C-u>call MoveLine('k', 1)<CR>
 " Anoremap <A-k> call MoveLine('k', mode() =~ 'v')
 
 nnoremap <silent> <leader>l :call ToggleQuickFix('l')<CR>
-nnoremap <silent> <leader>e :call ToggleQuickFix('c')<CR>
+nnoremap <silent> <leader>q :call ToggleQuickFix('c')<CR>
 
 nnoremap <silent> <leader>k :call HighlightWord('n')<CR>
 vnoremap <silent> <leader>k :call HighlightWord('v')<CR>
@@ -1388,8 +1555,14 @@ if s:has_plugin('fzf.vim')
     nnoremap gb :Buffers<CR>
 endif
 
+if s:has_plugin('ale')
+    nmap <silent> [w <Plug>(ale_previous)
+    nmap <silent> ]w <Plug>(ale_next)
+    nmap <silent> [W <Plug>(ale_first)
+    nmap <silent> ]W <Plug>(ale_last)
+endif
+
 Anoremap <F5>a AirlineToggle
-Anoremap <F5>b call ToggleBackground()
 Anoremap <F5>i IndentLinesToggle
 if s:has_plugin("vim-matchmaker")
     Anoremap <F5>m MatchmakerToggle
@@ -1562,178 +1735,28 @@ endfunction
 " vnoremap <expr> cq ":\<C-u>call SetupCR()\<CR>" . "gv" . g:mc . "``qz"
 " vnoremap <expr> cQ ":\<C-u>call SetupCR()\<CR>" . "gv" . substitute(g:mc, '/', '?', 'g') . "``qz"
 
-" FzyDo                 {{{2
-function! FzyDo(vimcmd, listing)
-    try
-        let output = system(a:listing . " | fzy ")
-    catch /Vim:Interrupt/
-        " Swallow errors from ^C, allow redraw! below
-    endtry
-    redraw!
-    if v:shell_error == 0 && !empty(output)
-        exec a:vimcmd output
-    endif
-endfunction
+" " FzyDo                 {{{2
+" function! FzyDo(vimcmd, listing)
+"     try
+"         let output = system(a:listing . " | fzy ")
+"     catch /Vim:Interrupt/
+"         " Swallow errors from ^C, allow redraw! below
+"     endtry
+"     redraw!
+"     if v:shell_error == 0 && !empty(output)
+"         exec a:vimcmd output
+"     endif
+" endfunction
 
-if s:executable('fzy', 'ag')
-    " nnoremap <C-p> :call FzyDo(":e",  "ag -l -g ''")<CR>
-    " nnoremap <C-s> :call FzyDo(":vs", "ag -l -g ''")<CR>
-    " nnoremap <C-S-v> :call FzyDo(":sp", "ag -l -g ''")<CR>
-elseif s:executable('fzy')
-    " nnoremap <C-p> :call FzyDo(":e",  "find -type f")<CR>
-    " nnoremap <C-s> :call FzyDo(":sp", "find -type f")<CR>
-    " nnoremap <C-S-v> :call FzyDo(":vs", "find -type f")<CR>
-endif
-
-" Lightline             {{{2
-function! SetupLightline(colorscheme)
-    let mode_map = {
-        \ "n":      'n',
-        \ "i":      'i',
-        \ "R":      'R',
-        \ "c":      'c',
-        \ "v":      'v',
-        \ "V":      'V',
-        \ "\<C-v>": '^v',
-        \ "s":      's',
-        \ "S":      'S',
-        \ "\<C-s>": '^s',
-        \ }
-
-    let symbols = {
-        \    'linenr':     '',
-        \    'paste':      'PASTE',
-        \    'readonly':   '',
-        \    'modified':   '+',
-        \    'space':      ' ',
-        \    'whitespace': '✹',
-        \    'branch':     '',
-        \    'separators':    { 'left': '', 'right': '' },
-        \    'subseparators': { 'left': '', 'right': '' },
-        \ }
-
-    let g:lightline = extend(get(g:, 'lightline', {}), {
-        \ 'colorscheme': a:colorscheme,
-        \ 'mode_map':  mode_map,
-        \ 'separator':    symbols.separators,
-        \ 'subseparator': symbols.subseparators,
-        \
-        \ 'active': {
-        \   'left': [ [ 'mode', 'paste' ],
-        \             [ 'fugitive', 'filename', 'modified' ] ],
-        \   'right': [ [ 'lineinfo' ],
-        \              [ 'percent' ],
-        \              [ 'linter_warnings', 'linter_errors', 'linter_ok' ],
-        \              [ 'fileformat', 'fileencoding', 'filetype' ] ],
-        \ },
-        \ 'components': {
-        \   'modified': '%{&ft=="help"?"":&modified?"+":&modifiable?"":"-"}'
-        \ },
-        \ 'component_function': {
-        \   'fugitive': 'LightlineFugitive',
-        \ },
-        \ 'component_expand': {
-        \   'linter_warnings': 'LightlineAleWarnings',
-        \   'linter_errors': 'LightlineAleErrors',
-        \   'linter_ok': 'LightlineAleOK'
-        \ },
-        \ 'component_type': {
-        \   'linter_warnings': 'warning',
-        \   'linter_errors': 'error',
-        \   'linter_ok': 'ok'
-        \ },
-        \ }, 'keep')
-endfunction!
-
-function! LightlineFugitive()
-    try
-        if exists('*fugitive#head') && buflisted('.')
-            return fugitive#head()
-        endif
-    catch
-    endtry
-    return ''
-endfunction
-
-function! LightlineAleCounts() abort
-    let counts = ale#statusline#Count(bufnr(''))
-    let errors = counts.error + counts.style_error
-    let warnings = counts.total - errors
-    return [counts.total, errors, warnings]
-endfunction
-
-function! LightlineAleWarnings() abort
-    let [total, _, warnings] = LightlineAleCounts()
-    return total == 0 ? '' : printf('%d ◆', warnings)
-endfunction
-
-function! LightlineAleErrors() abort
-    let [total, errors, _] = LightlineAleCounts()
-    return total == 0 ? '' : printf('%d ✗', errors)
-endfunction
-
-function! LightlineAleOK() abort
-    let [total; _] = LightlineAleCounts()
-    return total == 0 ? '✓' : ''
-endfunction
-
-" augroup rc_lightline
-"     au!
-"     au User ALELint call lightline#update()
-" augroup END
-
-" call SetupLightline('wombat')
-
-" Airline               {{{2
-" TODO: move this to the Appearance section
-function! Airline_GetFileInfo()
-    return (&l:bomb ? '[BOM]' : '')
-        \ .(&fenc !=# 'utf-8' ? &fenc : '')
-        \ .(&ff !=# 'unix' ? '['.&ff.']' : '')
-endfunction
-call airline#parts#define_function('finfo', 'Airline_GetFileInfo')
-let g:airline_section_y = airline#section#create(['finfo'])
-
-let g:airline_theme_patch_func = 'AirlineCustomTheme'
-function! AirlineCustomTheme(palette)  " {{{3
-    " colors are [guifg, guibg, ctermfg, ctermbg, styles]
-
-    let white = 231
-    let brightpurple = 189
-    let mediumpurple = 98
-    let darkestpurple = 55
-
-    " Use the style for CtrlP that powerline used
-    " let a:palette.ctrlp = airline#extensions#ctrlp#generate_color_map(
-    "     \ ['', '', brightpurple, darkestpurple, ''],
-    "     \ ['', '', white, mediumpurple, ''],
-    "     \ ['', '', darkestpurple, white, 'bold'])
-
-    " Give the right side the same style as the left in replace mode.  This
-    " may just be a bug in the bubblegum theme but whatever.
-    let a:palette.replace.airline_z = a:palette.replace.airline_a
-    let a:palette.replace.airline_x = a:palette.replace.airline_c
-endfunction
-" }}}3
-
-" Mode-aware cursor     {{{2
-" TODO: move this to the Appearance section
-set gcr=a:block
-
-" mode aware cursors
-set gcr+=o:hor50-Cursor
-set gcr+=n:Cursor
-set gcr+=i-ci-sm:InsertCursor
-set gcr+=r-cr:ReplaceCursor-hor20
-set gcr+=c:CommandCursor
-set gcr+=v-ve:VisualCursor
-
-set gcr+=a:blinkon0
-
-hi InsertCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=37  guibg=#2aa198
-hi VisualCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=125 guibg=#d33682
-hi ReplaceCursor ctermfg=15 guifg=#fdf6e3 ctermbg=65  guibg=#dc322f
-hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
+" if s:executable('fzy', 'ag')
+"     nnoremap <C-p> :call FzyDo(":e",  "ag -l -g ''")<CR>
+"     nnoremap <C-s> :call FzyDo(":vs", "ag -l -g ''")<CR>
+"     nnoremap <C-S-v> :call FzyDo(":sp", "ag -l -g ''")<CR>
+" elseif s:executable('fzy')
+"     nnoremap <C-p> :call FzyDo(":e",  "find -type f")<CR>
+"     nnoremap <C-s> :call FzyDo(":sp", "find -type f")<CR>
+"     nnoremap <C-S-v> :call FzyDo(":vs", "find -type f")<CR>
+" endif
 
 " TODO             {{{1
 " Finalize on some TODO file format                                        {{{2
@@ -1749,6 +1772,7 @@ hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
 " Consider providing documentation for keybindings                         {{{2
 " Kind of like what GNOME does nowadays, or guide-key in emacsland.
 "   * hecal3/vim-leader-guide
+"   * sunaku/vim-shortcut
 
 " Solve autocomplete once and for all!                                     {{{2
 " Here's the usual suspects
@@ -1788,10 +1812,6 @@ hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
 "     nmap dsf ds)db
 " This won't handle methods though, e.g. foo.bar(baz)
 
-" Add useful buffer-local mappings for help windows                        {{{2
-" Like, q for exit and stuff like that.  Help windows are readonly so anything
-" editing related (like macros) are probably not that useful.
-
 " Do tags as git hooks                                                     {{{2
 "   * rafi/vim-tagabana
 " Does some weird 'hashing' that's supposed to be 'caching'.  I don't know.
@@ -1812,12 +1832,6 @@ hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
 " I'll probably just continue using airline, it's the easiest and does most of
 " what I need and like.
 
-" Consider switching to fzf                                                {{{2
-" Ctrl-P is awesome but fzf is more general, can be used in the shell as well.
-" If it's not installed though, it can't be used (think Windows).  fzf can be
-" combined with ripgrep as shown here
-"   * https://www.reddit.com/r/linux/comments/5rrpyy/turbo_charge_bash_with_fzf_ripgrep/
-
 " Get slimey                                                               {{{2
 "   * julienr/vim-cellmode
 "   * jpalardy/vim-slime
@@ -1834,12 +1848,18 @@ hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
 "   * Shougo/denite.nvim
 " I don't have to write these really but whatever.  Denite is the successor.
 
-" Checkout http://howivim.com/2016/tyru/ for ideas                         {{{2
+" http://howivim.com/2016/tyru/                                            {{{2
 " Has some stuff about visualstar and mappings and whatnot.
+
+" http://github.com/unblevable/quick-scope                                 {{{2
+" Perhaps I could do something similar with my motioncounts.  His code is kind
+" of big to just embed in my vimrc, though I don't know how much of it can be
+" refactored/compressed.
 
 " diffopt                                                                  {{{2
 " cscope                                                                   {{{2
 " fzf-tjump                                                                {{{2
 " Right now I'm using Vim's own tjump mappings and these may be enough.
 "   * ivalkeen/vim-ctrlp-tjump
+
 " Replace/rewrite thematic                                                 {{{2
