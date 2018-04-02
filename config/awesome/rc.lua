@@ -293,12 +293,12 @@ local separator = wibox.widget {
 }
 
 -- Mail                      {{{2
--- TODO: use a password manager
 local mailicon = wibox.widget.imagebox(beautiful.widget_mail)
 local mail = lain.widget.imap {
     timeout  = 180,
     server   = "imap.gmail.com",
     mail     = "ottomodinos@gmail.com",
+    -- TODO: use a password manager
     password = {"cat", os.getenv("HOME") .. "/.my_mail_password"},
     settings = function()
         if mailcount == 0 then
@@ -639,7 +639,6 @@ awful.screen.connect_for_each_screen(function(s)
             layout = wibox.layout.fixed.horizontal,
             separator,
             wibox.widget.systray(),
-            separator,
             mailicon,
             mail,
             volicon,
