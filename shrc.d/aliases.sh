@@ -13,9 +13,6 @@ alias lt='ll -tr'        # Lists sorted by date, most recent last.
 alias lc='lt -c'         # Lists sorted by date, most recent last, shows change time.
 alias lu='lt -u'         # Lists sorted by date, most recent last, shows access time.
 
-# alias anime="mpv --msg-module --lua-opts=anime-mode=yes"
-alias anime-todo='todo.sh -d "/home/otto/.todo/anime.conf"'
-
 alias suspend='systemctl suspend; exit'
 
 # The "ternary operator", as normally written in shell,

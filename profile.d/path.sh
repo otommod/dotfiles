@@ -20,11 +20,14 @@ PATH="$(__profile_path_join                     \
         "$HOME/.local/bin"                      \
         "$(
             if command -v ruby >/dev/null; then
-                # using string interpolation
                 ruby -e 'print "#{Gem.user_dir}/bin"'
             fi
         )"                                      \
-            "/usr/bin" \
+        "$(
+            if command -v go >/dev/null; then
+                printf '%s/bin' "${GOPATH:=$HOME/go}"
+            fi
+        )"                                      \
         "$PATH"                                 \
 )"
 
