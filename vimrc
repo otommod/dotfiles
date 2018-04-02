@@ -10,6 +10,8 @@ endif
 
 
 " Helper functions {{{1
+" TODO: consider a cross-platform s:download function, perhaps using netrw
+
 function! s:echohl(hl, msg)            " {{{2
     exec 'echohl' a:hl
     echo a:msg
@@ -71,9 +73,6 @@ function! s:makedirs(path)             " {{{2
         endif
     endtry
 endfunction
-
-" }}}2
-" TODO: consider a cross-platform s:download function, perhaps using netrw
 
 " Pre-Preamble     {{{1
 if s:has('win32') | let $VIMDIR = expand('~/vimfiles')  |
@@ -297,10 +296,9 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'Lokaltog/vim-easymotion'
     Plug 'jeetsukumaran/vim-indentwise'
 
-    " TODO: check if needed and make mappings
+    Plug 'matze/vim-move'
     " Plug 'zirrostig/vim-schlepp'
-    " Plug 'fisadev/dragvisuals.vim'
-    " Plug 'atweiden/vim-dragvisuals'
+    " Plug 'natemaia/DragVisuals'
 
     " Plug 'bruno-/vim-man'
     " Plug 'fmoralesc/vim-pad'
@@ -982,50 +980,6 @@ nnoremap <silent> <Plug>(motioncounts-B)  B:call ShowMotionCounts('B')<CR>
 nnoremap <silent> <Plug>(motioncounts-E)  E:call ShowMotionCounts('E')<CR>
 
 
-" MoveLine              {{{2
-" TODO: consider 'matze/vim-move'
-" Simple plugin for moving lines up and down
-function! s:move_up_or_down(move_arg)
-    let col = col('.')
-    exec 'silent!' a:move_arg
-    call cursor(0, col)
-endfunction
-
-function! s:move_up(line_getter, range)
-    let line_num = line(a:line_getter)
-    if line_num - v:count1 - 1 < 0
-        return
-    else
-        let move_arg = a:line_getter." -".(v:count1 + 1)
-        call s:move_up_or_down(a:range."move ".move_arg)
-    endif
-endfunction
-
-function! s:move_down(line_getter, range)
-    let line_num = line(a:line_getter)
-    if line_num + v:count1 > line("$")
-        return
-    else
-        let move_arg = a:line_getter." +".v:count1
-        call s:move_up_or_down(a:range."move ".move_arg)
-    endif
-endfunction
-
-function! MoveLine(direction, visual)
-    let range = a:visual ? "'<,'>" : ""
-    if a:direction == 'k'
-        let line = a:visual ? "'<" : "."
-        call s:move_up(line, range)
-    elseif a:direction == 'j'
-        let line = a:visual ? "'>" : "."
-        call s:move_down(line, range)
-    endif
-    if a:visual
-        normal! gv
-    endif
-endfunction
-
-
 " wordhl                {{{2
 " Simple plugin to highlight specific words or sentences
 function! s:get_visual_selection()
@@ -1532,17 +1486,6 @@ if s:has_plugin('SplitJoin')
     nnoremap <silent> S :<C-u>call <SID>try_cmd('SplitjoinSplit', "a\n")<CR>
 endif
 
-" can't use Anoremap because there's no way to get the current mode
-nnoremap <silent> <A-j> :<C-u>call MoveLine('j', 0)<CR>
-inoremap <silent> <A-j> <C-o>:call MoveLine('j', 0)<CR>
-vnoremap <silent> <A-j> :<C-u>call MoveLine('j', 1)<CR>
-" Anoremap <A-j> call MoveLine('j', mode() =~ 'v')
-
-nnoremap <silent> <A-k> :<C-u>call MoveLine('k', 0)<CR>
-inoremap <silent> <A-k> <C-o>:call MoveLine('k', 0)<CR>
-vnoremap <silent> <A-k> :<C-u>call MoveLine('k', 1)<CR>
-" Anoremap <A-k> call MoveLine('k', mode() =~ 'v')
-
 nnoremap <silent> <leader>l :call ToggleQuickFix('l')<CR>
 nnoremap <silent> <leader>q :call ToggleQuickFix('c')<CR>
 
@@ -1577,7 +1520,7 @@ Anoremap <F6>u UndotreeToggle
 
 
 " Misc             {{{1
-function! s:zip(...)  " {{{2
+function! s:zip(...)                   " {{{2
     let lists = a:000
     let length = min(map(copy(lists), 'len(v:val)'))
 
@@ -1594,7 +1537,10 @@ function! s:zip(...)  " {{{2
 endfunction
 
 
-function! s:_Random()                  " {{{2
+" Random Numbers        {{{2
+function! s:_Random()                  " {{{3
+    " Base (abstract) class for an RNG.  Provides random() and shuffle().
+    " Subclasses only need to provide a next() method.
     let this = {}
 
     " random({expr} [, {max}])
@@ -1636,7 +1582,7 @@ function! s:_Random()                  " {{{2
     return this
 endfunction
 
-function! s:xorshift16(seed)           " {{{2
+function! s:xorshift16(seed)           " {{{3
     " A simple 16bit xorshift RNG.
     " I used 16bits because 32bit Vim builds use, obviously, signed integers.
     " So instead of trying to implement unsigned shifts in vimscript, I just
@@ -1662,19 +1608,6 @@ function! s:xorshift16(seed)           " {{{2
     endfunction
 
     return this
-endfunction
-
-
-function! TimeIt(start) " {{{2
-    " Use it like this:
-    "   :let s = reltime()
-    "   :sleep 100m
-    "   :let time_passed = TimeIt(s)
-    " This would result in a Float which represents the milliseconds passed.
-
-    let rel_time = reltimestr(reltime(a:start))
-    let [sec, milli] = map(split(rel_time, '\ze\.'), 'str2float(v:val)')
-    return (sec + milli) * 1000
 endfunction
 
 
