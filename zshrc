@@ -1,3 +1,4 @@
+# vim:fdm=marker:
 #
 # ~/.zshrc
 #
@@ -126,7 +127,7 @@ unsetopt flow_control           # disable start/stop characters in shell editor
 setopt transient_rprompt        # only show the rprompt on the current prompt
 
 # Jobs                       {{{2
-setopt long_list_jobs           # use more words to describe jobs
+setopt long_list_jobs           # display PID when suspending processes
 # setopt auto_resume              # try to resume an existing job before starting a new one
 setopt notify                   # report on background jobs immediately
 
@@ -463,17 +464,23 @@ fi
 
 source ~/.zsh/zgen/zgen.zsh
 if ! zgen saved; then
+    zgen load 'supercrabtree/k'
+    zgen load 'Tarrasch/zsh-bd'
+
     # Themes/Prompts
-    zgen load "mafredri/zsh-async"
-    zgen load "sindresorhus/pure"
-    # zgen load "subnixr/minimal"
+    zgen load 'mafredri/zsh-async'
+    zgen load 'sindresorhus/pure'
+    # zgen load 'subnixr/minimal'
+    # zgen load 'mreinhardt/sfz-prompt.zsh'
+    # zgen load 'miekg/lean'
+    # zgen load 'geometry-zsh/geometry'
 
     # Completion
-    zgen load "zsh-users/zsh-completions" src
+    zgen load 'zsh-users/zsh-completions' src
 
-    zgen load "zsh-users/zsh-syntax-highlighting"
-    zgen load "zsh-users/zsh-history-substring-search"  # MUST be after syntax-highlighting
-    zgen load "zsh-users/zsh-autosuggestions"           # MUST be last
+    zgen load 'zsh-users/zsh-syntax-highlighting'
+    zgen load 'zsh-users/zsh-history-substring-search'  # MUST be after syntax-highlighting
+    zgen load 'zsh-users/zsh-autosuggestions'           # MUST be last
     # TODO: http://stchaz.free.fr/mouse.zsh
     # TODO: https://github.com/jimhester/per-directory-history
 
@@ -648,5 +655,3 @@ ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=30
 ZSH_AUTOSUGGEST_USE_ASYNC=1
 
 # TODO: make keybindings
-# }}}1
-# vim:fdm=marker:
