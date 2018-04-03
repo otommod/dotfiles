@@ -82,7 +82,7 @@ local function factory(args)
                     gobject.signal_handler_disconnect(proxy, props_changed_handler)
                     gobject.signal_handler_disconnect(proxy, owner_changed_handler)
 
-                    local _, next_player = tableitem(all_players)
+                    local next_player = tableitem(all_players)
                     make_player_current(next_player)
                 end
             end, "g-name-owner")
