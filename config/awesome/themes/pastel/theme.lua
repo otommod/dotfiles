@@ -14,10 +14,10 @@ theme.icondir                                   = theme.confdir .. "/icons/"
 theme.font                                      = "xos4 Terminus 8"
 theme.bg_normal                                 = "#000000"
 theme.bg_focus                                  = "#000000"
-theme.bg_urgent                                 = "#000000"
+theme.bg_urgent                                 = "#af1d18"
 theme.fg_normal                                 = "#aaaaaa"
 theme.fg_focus                                  = "#ff8c00"
-theme.fg_urgent                                 = "#af1d18"
+theme.fg_urgent                                 = "#aaaaaa"
 theme.fg_minimize                               = "#ffffff"
 
 theme.border_width                              = 1
