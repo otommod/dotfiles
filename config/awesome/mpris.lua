@@ -6,10 +6,6 @@ local gobject   = lgi.GObject
 local glib      = lgi.GLib
 local gio       = lgi.Gio
 
-local function startswith(str, sub)
-    return string.sub(str, 1, string.len(sub)) == sub
-end
-
 local function tableitem(tbl)
     for k, v in pairs(tbl) do
         return k, v
@@ -49,7 +45,6 @@ local function factory(args)
     end
 
     local function make_player_current(name)
-        gears.debug.print_warning("make_player_current: " .. tostring(name))
         if name == nil then
             player = nil
             mpris.update()
@@ -65,9 +60,6 @@ local function factory(args)
                 "/org/mpris/MediaPlayer2",
                 "org.mpris.MediaPlayer2.Player")
             if err then error(err) end
-
-            player = proxy
-            mpris.update()
 
             local props_changed_handler
             props_changed_handler = proxy.on_g_properties_changed:connect(function(_, changed, invalidated)
@@ -86,17 +78,18 @@ local function factory(args)
                     make_player_current(next_player)
                 end
             end, "g-name-owner")
+
+            player = proxy
+            mpris.update()
         end)()
     end
 
     local function add_player(name)
-        gears.debug.print_warning("add_player: " .. tostring(name))
         all_players[name] = true
         if not player then make_player_current(name) end
     end
 
     local function remove_player(name)
-        gears.debug.print_warning("remove_player: " .. tostring(name))
         all_players[name] = nil
     end
 
@@ -134,7 +127,7 @@ local function factory(args)
 
     -- names is of "type" (as), an array inside a tuple
     for _, name in ipairs(names[1]) do
-        if startswith(name, "org.mpris.MediaPlayer2.") then
+        if gears.string.startswith(name, "org.mpris.MediaPlayer2.") then
             add_player(name)
         end
     end

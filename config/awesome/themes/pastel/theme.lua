@@ -11,7 +11,7 @@ theme.name                                      = "pastel"
 theme.confdir                                   = gfs.get_dir("config") .. "themes/" .. theme.name
 theme.icondir                                   = theme.confdir .. "/icons/"
 
-theme.font                                      = "xos4 Terminus 8"
+theme.font                                      = "Inconsolata 12"
 theme.bg_normal                                 = "#000000"
 theme.bg_focus                                  = "#000000"
 theme.bg_urgent                                 = "#af1d18"

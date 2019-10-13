@@ -220,8 +220,7 @@ local conkyinfo = require("mpris") {
         conkyprevcover = mpris_now.cover
 
         -- in case of file URL just decode it
-        -- FIXME: use gears.string.startswith when awesome is updated
-        if mpris_now.cover:sub(1, #"file://") == "file://" then
+        if gears.string.startswith(mpris_now.cover, "file://") then
             local cover = mpris_now.cover
             cover = cover:sub(#"file://")
             cover = cover:gsub("%%(%x%x)", function(x)
@@ -238,23 +237,14 @@ local conkyinfo = require("mpris") {
                 if not gfile then return end
                 local stream = gfile:async_read()
                 if not stream then return end
+                -- TODO: use `Pixbuf.async_new_from_stream_at_scale()`
                 local pb = gdkpixbuf.Pixbuf.async_new_from_stream(stream)
                 if not pb then return end
                 -- stream:async_close()
 
-                local format = cairo.Format.ARGB32
-                if pb.n_channels == 3 then
-                    format = cairo.Format.RGB24
-                end
-
-                -- We create a cairo.Context then use the Gdk-cairo integration to turn
-                -- the Pixbuf into a cairo.Surface.  This function was introduced in
-                -- Gdk-3.10.  Also see https://github.com/awesomeWM/awesome/pull/2160
-                local surface = cairo.ImageSurface(format, pb.width, pb.height)
-                local cr = cairo.Context(surface)
-                gdk.cairo_set_source_pixbuf(cr, pb, 0, 0)
-                cr:paint()
-
+                -- `pixbuf_to_surface` requires the underlying userdata C
+                -- pointer to the Pixbuf istead of the LGI wrapper
+                local surface = awesome.pixbuf_to_surface(pb._native)
                 coverwidget:set_image(surface)
                 coverwidget.visible = true
             end)()
@@ -292,63 +282,46 @@ local separator = wibox.widget {
     align = "center",
 }
 
--- Mail                      {{{2
-local mailicon = wibox.widget.imagebox(beautiful.widget_mail)
-local mail = lain.widget.imap {
-    timeout  = 180,
-    server   = "imap.gmail.com",
-    mail     = "ottomodinos@gmail.com",
-    -- TODO: use a password manager
-    password = {"cat", os.getenv("HOME") .. "/.my_mail_password"},
+-- Volume                    {{{2
+local volinfo = lain.widget.pulse {
     settings = function()
-        if mailcount == 0 then
-            mailicon.visible = false
-            widget:set_text("")
-            return
+        local vol = volume_now.left .. "%"
+        if volume_now.left ~= volume_now.right then
+            vol = ("left:%s right:%s%%"):format(vol, volume_now.right)
         end
 
-        mailicon.visible = true
-        widget:set_markup(markup(beautiful.widget_mail_fg, mailcount))
+        if volume_now.muted == "yes" then
+            vol = ("mute(%s)"):format(vol)
+        end
+        widget:set_text(vol)
     end
 }
 
--- -- Battery                   {{{2
--- local baticon = wibox.widget.imagebox(beautiful.widget_bat)
--- local battery = lain.widget.bat {
---     settings = function()
---         local perc = bat_now.perc == "N/A" and "N/A" or bat_now.perc .. "%"
-
---         if bat_now.ac_status == 1 then
---             perc = perc .. " plug"
---         end
-
---         widget:set_markup(markup(beautiful.widget_bat_fg, perc))
---     end
--- }
-
--- Volume                    {{{2
-local volicon = wibox.widget.imagebox(beautiful.widget_vol)
-local volume = lain.widget.alsa {
-    settings = function()
-        if volume_now.status == "off" then
-            volume_now.level = "M" .. volume_now.level
-        end
-
-        widget:set_markup(markup(beautiful.widget_vol_fg, volume_now.level .. "%"))
-    end
+local volume = wibox.widget {
+    layout = wibox.layout.fixed.horizontal,
+    {
+        widget = wibox.widget.imagebox,
+        image = beautiful.widget_vol,
+    },
+    {
+        widget = wibox.container.background,
+        fg = beautiful.widget_vol_fg,
+        {
+            widget = volinfo.widget,
+        },
+    },
 }
 
 -- We call `volume.update()` as a callback so that it runs after the volume has changed.
-volume.widget:buttons(awful.util.table.join(
+volume:buttons(awful.util.table.join(
     awful.button({ }, 1, function() awful.spawn("pavucontrol") end),
-    awful.button({ }, 3, function() awful.spawn.easy_async("amixer -q set Master toggle",     volume.update) end),
-    awful.button({ }, 4, function() awful.spawn.easy_async("amixer -q set Master 5%+ unmute", volume.update) end),
-    awful.button({ }, 5, function() awful.spawn.easy_async("amixer -q set Master 5%- unmute", volume.update) end)
+    awful.button({ }, 3, function() awful.spawn.easy_async(("pactl set-sink-mute %s toggle"):format(volinfo.device), volinfo.update) end),
+    awful.button({ }, 4, function() awful.spawn.easy_async(("pactl set-sink-volume %s +5%%"):format(volinfo.device), volinfo.update) end),
+    awful.button({ }, 5, function() awful.spawn.easy_async(("pactl set-sink-volume %s -5%%"):format(volinfo.device), volinfo.update) end)
 ))
 
-
--- Net                       {{{2
-local net = wibox.widget {
+-- Network                   {{{2
+local network = wibox.widget {
     layout = wibox.layout.fixed.horizontal,
     {
         id = "wifi",
@@ -396,24 +369,15 @@ local net = wibox.widget {
 
 local netinfo = lain.widget.net {
     iface = { "wlp4s6" },
+    wifi_state = "on",
     settings = function()
-        -- if iface == "network off" then
-        -- end
+        local downwidget = network:get_children_by_id("down")[1]
+        local upwidget = network:get_children_by_id("up")[1]
 
-        local downwidget = net:get_children_by_id("down")[1]
-        local upwidget = net:get_children_by_id("up")[1]
-        local wifiwidget = net.wifi
-
-        -- TODO: perhaps also try to detect if we have an IP too rather than
-        -- just be connected to the network
-        if net_now.carrier:match("0") then
-            wifiwidget.visible = true
-        elseif net_now.carrier:match("1") then
-            wifiwidget.visible = false
-        end
-
-        downwidget:set_text(("%.0f"):format(net_now.received))
-        upwidget:set_text(("%.0f"):format(net_now.sent))
+        local iface = net_now.devices["wlp4s6"]
+        network.wifi.visible = not iface.wifi
+        downwidget:set_text(("%.0f"):format(iface.received))
+        upwidget:set_text(("%.0f"):format(iface.sent))
     end
 }
 
@@ -425,45 +389,48 @@ local memory = wibox.widget {
         image = beautiful.widget_mem,
     },
     {
-        id = "ram",
         widget = wibox.container.background,
         fg = beautiful.widget_mem_ram_fg,
         {
+            id = "ram",
             widget = wibox.widget.textbox,
         },
     },
     {
-        id = "swap",
         widget = wibox.container.background,
         fg = beautiful.widget_mem_swap_fg,
         {
+            id = "swap",
             widget = wibox.widget.textbox,
         },
     },
 }
 
-local mem_tt = awful.tooltip {
+local memtt = awful.tooltip {
     objects = { memory }
 }
 
 local meminfo = lain.widget.mem {
     settings = function()
-        local mempercent = (mem_now.used / mem_now.total) * 100
-        if mempercent < 10 then
-            memory.ram.widget:set_text(("%dMiB"):format(mem_now.used))
-        else
-            memory.ram.widget:set_text(("%.0f%%"):format(mempercent))
+        local ramwidget = memory:get_children_by_id("ram")[1]
+        local swapwidget = memory:get_children_by_id("swap")[1]
+        local tooltiptext = ""
+
+        ramwidget:set_text("N/A")
+        if mem_now.total > 0 then
+            ramwidget:set_text(("%.0f%%"):format(100 * mem_now.used / mem_now.total))
+            tooltiptext = markup(beautiful.widget_mem_ram_fg,
+                ("RAM: %d / %d MB"):format(mem_now.used, mem_now.total))
         end
 
+        swapwidget:set_text("N/A")
         if mem_now.swap > 0 then
-            memory.swap.widget:set_text(
-                (" %.0f%%"):format(100 * mem_now.swapused / mem_now.swap))
+            swapwidget:set_text((" %.0f%%"):format(100 * mem_now.swapused / mem_now.swap))
+            tooltiptext = tooltiptext .. "\n" ..  markup(beautiful.widget_mem_swap_fg,
+                ("Swap: %d / %d MB"):format(mem_now.swapused, mem_now.swap))
         end
 
-        mem_tt:set_text(
-            ("RAM: %s MB (%s / %s MB)\nSwap: %s MB (%s / %s MB)"):format(
-                mem_now.free, mem_now.used, mem_now.total,
-                mem_now.swapf, mem_now.swapused, mem_now.swap))
+        memtt:set_markup(tooltiptext)
     end
 }
 
@@ -518,19 +485,16 @@ local clock = wibox.widget {
         widget = wibox.widget.imagebox,
         image = beautiful.widget_clock,
     },
-    -- FIXME: write as declerative when awesome is updated
-    wibox.widget.textclock(
-        markup("#7788af", "%a %d %b")
-        .. markup("#de5e1e", " %H:%M ")),
+    {
+        widget = wibox.widget.textclock,
+        format = markup("#7788af", "%a %d %b") .. markup("#de5e1e", " %H:%M "),
+    },
 }
 
--- Calendar                  {{{2
-local calendar = lain.widget.calendar {
+local calendar = lain.widget.cal {
     attach_to = { clock },
+    icons = "",
 }
-
--- -- Keyboard layout           {{{2
--- mykeyboardlayout = awful.widget.keyboardlayout()
 
 -- -- Power menu                {{{2
 -- powermenu = awful.menu { items = {
@@ -573,57 +537,58 @@ awful.screen.connect_for_each_screen(function(s)
                            awful.button({ }, 5, function () awful.layout.inc(-1) end)))
 
     -- Create a taglist widget
-    local taglist_buttons = gears.table.join(
-                    awful.button({ }, 1, function(t) t:view_only() end),
-                    awful.button({ modkey }, 1, function(t)
-                                              if client.focus then
-                                                  client.focus:move_to_tag(t)
-                                              end
-                                          end),
-                    awful.button({ }, 3, awful.tag.viewtoggle),
-                    awful.button({ modkey }, 3, function(t)
-                                              if client.focus then
-                                                  client.focus:toggle_tag(t)
-                                              end
-                                          end),
-                    awful.button({ }, 4, function(t) awful.tag.viewnext(t.screen) end),
-                    awful.button({ }, 5, function(t) awful.tag.viewprev(t.screen) end)
-                )
-    s.mytaglist = awful.widget.taglist(s, awful.widget.taglist.filter.all, taglist_buttons)
+    s.mytaglist = awful.widget.taglist {
+        screen = s,
+        filter = awful.widget.taglist.filter.noempty,
+        buttons = gears.table.join(
+            awful.button({ }, 1, function(t) t:view_only() end),
+            awful.button({ modkey }, 1, function(t)
+                if client.focus then
+                    client.focus:move_to_tag(t)
+                end
+            end),
+            awful.button({ }, 3, awful.tag.viewtoggle),
+            awful.button({ modkey }, 3, function(t)
+                if client.focus then
+                    client.focus:toggle_tag(t)
+                end
+            end),
+            awful.button({ }, 4, function(t) awful.tag.viewnext(t.screen) end),
+            awful.button({ }, 5, function(t) awful.tag.viewprev(t.screen) end)),
+    }
 
     -- Create a tasklist widget
-    local tasklist_buttons = gears.table.join(
-                     awful.button({ }, 1, function (c)
-                                              if c == client.focus then
-                                                  c.minimized = true
-                                              else
-                                                  -- Without this, the following
-                                                  -- :isvisible() makes no sense
-                                                  c.minimized = false
-                                                  if not c:isvisible() and c.first_tag then
-                                                      c.first_tag:view_only()
-                                                  end
-                                                  -- This will also un-minimize
-                                                  -- the client, if needed
-                                                  client.focus = c
-                                                  c:raise()
-                                              end
-                                          end),
-                     awful.button({ }, 3, client_menu_toggle_fn()),
-                     awful.button({ }, 4, function ()
-                                              awful.client.focus.byidx(1)
-                                              -- if client.focus then client.focus:raise() end
-                                          end),
-                     awful.button({ }, 5, function ()
-                                              awful.client.focus.byidx(-1)
-                                              -- if client.focus then client.focus:raise() end
-                                          end))
-    s.mytasklist = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, tasklist_buttons)
+    s.mytasklist = awful.widget.tasklist {
+        screen = s,
+        filter = awful.widget.tasklist.filter.currenttags,
+        buttons = gears.table.join(
+            awful.button({ }, 1, function (c)
+                if c == client.focus then
+                    c.minimized = true
+                else
+                    -- Without this, the following :isvisible() makes no sense
+                    c.minimized = false
+                    if not c:isvisible() and c.first_tag then
+                        c.first_tag:view_only()
+                    end
+                    -- This will also un-minimize the client, if needed
+                    client.focus = c
+                    c:raise()
+                end
+            end),
+            awful.button({ }, 3, client_menu_toggle_fn()),
+            awful.button({ }, 4, function ()
+                awful.client.focus.byidx(1)
+                -- if client.focus then client.focus:raise() end
+            end),
+            awful.button({ }, 5, function ()
+                awful.client.focus.byidx(-1)
+                -- if client.focus then client.focus:raise() end
+            end)),
+    }
 
-
-    -- Create the wibox
-    s.mywibox = awful.wibar({ position = "top", height = "20", screen = s })
-
+    -- Create the wibar
+    s.mywibox = awful.wibar { screen = s, position = "top", height = 20 }
     s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
         { -- left side widgets
@@ -632,23 +597,20 @@ awful.screen.connect_for_each_screen(function(s)
             s.mylayoutbox,
             music,
             separator,
-            s.mypromptbox
+            s.mypromptbox,
         },
         s.mytasklist, -- center widget
         { -- right side widgets
             layout = wibox.layout.fixed.horizontal,
             separator,
             wibox.widget.systray(),
-            mailicon,
-            mail,
-            volicon,
             volume,
-            net,
+            network,
             memory,
+            -- awful.widget.keyboardlayout(),
             clock,
         },
     }
-
 end)
 
 -- Mouse bindings       {{{1
