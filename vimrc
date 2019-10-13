@@ -1,7 +1,6 @@
 " vim:fdm=marker:
 " Author: Otto Modinos <ottomodinos@gmail.com>
 
-set nocompatible   " be ViM, not vi
 set shellslash     " always use forward slash as path separator
 if has('multi_byte')
     set encoding=utf-8       " Use UTF-8 as ViM's internal encoding
@@ -30,14 +29,6 @@ function! s:every(arr)                 " {{{2
         if !elem | return 0 | endif
     endfor
     return 1
-endfunction
-
-function! s:has(...)                   " {{{2
-    return s:every(map(copy(a:000), 'has(v:val)'))
-endfunction
-
-function! s:executable(...)            " {{{2
-    return s:every(map(copy(a:000), 'executable(v:val) > 0'))
 endfunction
 
 function! s:has_plugin(...)            " {{{2
@@ -75,8 +66,8 @@ function! s:makedirs(path)             " {{{2
 endfunction
 
 " Pre-Preamble     {{{1
-if s:has('win32') | let $VIMDIR = expand('~/vimfiles')  |
-else              | let $VIMDIR = expand('~/.vim')      | endif
+if has('win32') | let $VIMDIR = expand('~/vimfiles')  |
+else            | let $VIMDIR = expand('~/.vim')      | endif
 
 " Auto-install plug.vim if needed
 if !s:path_exists('$VIMDIR/autoload/plug.vim')
@@ -91,24 +82,19 @@ endif
 call plug#begin('$VIMDIR/plugged')
 
 " Plugins          {{{1
-Plug 'editorconfig/editorconfig-vim'
+" Plug 'editorconfig/editorconfig-vim'
+Plug 'sgur/vim-editorconfig'
 
-" Sidepanes             {{{2
-    Plug 'majutsushi/tagbar'
-    " Plug 'simnalamburt/vim-mundo'
-    Plug 'mbbill/undotree'
-    Plug 'mtth/scratch.vim'
 " File explorers        {{{2
     " Plug 'tpope/vim-vinegar'
-    " Plug 'jeetsukumaran/vim-filebeagle'
+
+    " XXX: disable netrw
+    let g:loaded_netrw       = 1
+    let g:loaded_netrwPlugin = 1
+
     Plug 'justinmk/vim-dirvish'
-    " Plug 'Shougo/vimfiler.vim'
     " Plug 'scrooloose/nerdtree'
-    " Plug 'jistr/vim-nerdtree-tabs'
-" Rainbow parentheses   {{{2
-    " Plug 'kien/rainbow_parentheses.vim'
-    " Plug 'amdt/vim-niji'
-    Plug 'luochen1990/rainbow'
+    " Plug 'Xuyuanp/nerdtree-git-plugin'
 " Window management     {{{2
     " Plug 'szw/vim-ctrlspace'
     " Plug 'spolu/dwm.vim'
@@ -129,13 +115,19 @@ Plug 'editorconfig/editorconfig-vim'
 " Distraction-free      {{{2
     " Plug 'junegunn/goyo.vim'
     " Plug 'junegunn/limelight.vim'
+" Rainbow parentheses   {{{2
+    " Plug 'kien/rainbow_parentheses.vim'
+    " Plug 'losingkeys/vim-niji'
+    Plug 'luochen1990/rainbow'
 " Eye candy             {{{2
     Plug 'myusuf3/numbers.vim'
     Plug 'ntpeters/vim-better-whitespace'
-    Plug 'Yggdroot/indentLine'
+    " Plug 'Yggdroot/indentLine'
+    Plug 'thaerkh/vim-indentguides'
     " Plug 'itchyny/vim-cursorword'
     " Plug 'qstrahl/vim-matchmaker'
     Plug 'chrisbra/Colorizer'
+    " Plug 'RRethy/vim-hexokinase'
     " Plug 'boucherm/ShowMotion'
 " Colorschemes          {{{2
     " Light {{{3
@@ -153,6 +145,8 @@ Plug 'editorconfig/editorconfig-vim'
         " Plug 'kabbamine/yowish.vim'
         " Plug 'joshdick/onedark.vim'
         " Plug 'nanotech/jellybeans.vim'
+        " Plug 'AlessandroYorba/Despacio'
+        Plug 'drewtempelmeyer/palenight.vim'
         " Plug 'mitsuhiko/fruity-vim-colorscheme'
     " Both {{{3
         Plug 'w0ng/vim-hybrid'
@@ -168,15 +162,12 @@ Plug 'editorconfig/editorconfig-vim'
         " Plug 'owickstrom/vim-colors-paramount'
         Plug 'altercation/vim-colors-solarized'
 " Syntax                {{{2
-    Plug 'justinmk/vim-syntax-extra'
+    " Plug 'justinmk/vim-syntax-extra'
     Plug 'hdima/python-syntax'
     Plug 'mgrabovsky/vim-cuesheet'
     " Plug 'baskerville/vim-sxhkdrc'
     " Plug 'smancill/conky-syntax.vim'
     Plug 'otommod/twee-sugarcube.vim'
-    Plug 'vim-pandoc/vim-pandoc-syntax'
-    " Needs to be last so it won't override the previous ones
-    Plug 'sheerun/vim-polyglot'
 " Autoclose pairs       {{{2
     " Plug 'Raimondi/delimitMate'
     " Plug 'kana/vim-smartinput'
@@ -211,20 +202,31 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
     " Plug 'powerline/powerline', {'rtp': 'powerline/bindings/vim'}
-" Text Objects          {{{2
-    " XXX: I like the 'next' object stuff, dunno about the rest
-    " Plug 'wellle/targets.vim'
-
+" Objects & Operators   {{{2
+    " Dependencies
     " Plug 'kana/vim-textobj-user'
+    Plug 'kana/vim-operator-user'
+
+    " Operators
+    " Plug 'tpope/vim-surround'
+    " Plug 'machakann/vim-sandwich'
+    Plug 'rhysd/vim-operator-surround'
+
+    " Text objects
     " Plug 'kana/vim-textobj-indent'
-    " Plug 'bps/vim-textobj-python'
     " Plug 'glts/vim-textobj-comment'
     " Plug 'reedes/vim-textobj-quote'
     " Plug 'thinca/vim-textobj-between'
-    " Plug 'rbonvall/vim-textobj-latex'
+    " Plug 'AndrewRadev/sideways.vim'
+    Plug 'PeterRincker/vim-argumentative'
     " Plug 'adriaanzon/vim-textobj-matchit'
     " Plug 'lucapette/vim-textobj-underscore'
     " Plug 'coderifous/textobj-word-column.vim'
+    " XXX: I like the 'next' object stuff, dunno about the rest
+    " Plug 'wellle/targets.vim'
+
+    " Plug 'bps/vim-textobj-python'
+    " Plug 'rbonvall/vim-textobj-latex'
 " Warm and fuzzy        {{{2
     Plug 'junegunn/fzf'
     Plug 'junegunn/fzf.vim'
@@ -249,6 +251,8 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'vim-scripts/Efficient-python-folding'
 " Go                         {{{3
     Plug 'fatih/vim-go'
+    " Plug 'arp242/gopher.vim', {'for': 'go'}
+    Plug 'rhysd/vim-goyacc'
 " C/C++                      {{{3
     Plug 'Rip-Rip/clang_complete', {'for': ['c', 'cpp']}
 " Elixir                     {{{3
@@ -272,7 +276,13 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'gregsexton/MatchTag', {'for': XMLFiletypes}
 " }}}2
 
+    Plug 'liuchengxu/vim-which-key'
+
     Plug 'metakirby5/codi.vim'
+    Plug 'majutsushi/tagbar'
+    " Plug 'simnalamburt/vim-mundo'
+    Plug 'mbbill/undotree'
+    Plug 'mtth/scratch.vim'
 
     " Plug 'tpope/vim-projectionist'
     " Plug 'terryma/vim-multiple-cursors'
@@ -284,35 +294,46 @@ Plug 'editorconfig/editorconfig-vim'
     Plug 'w0rp/ale'
 
     runtime macros/matchit.vim
-    " Plug 'benjifisher/matchit.zip'
+    " Plug 'andymass/vim-matchup'
 
     Plug 'tpope/vim-repeat'
-    Plug 'tpope/vim-surround'
     Plug 'tpope/vim-commentary'
     Plug 'justinmk/vim-sneak'
-    Plug 'tommcdo/vim-exchange'
-    " Plug 'AndrewRadev/sideways.vim'
-    Plug 'PeterRincker/vim-argumentative'
+    Plug 'unblevable/quick-scope'
     " Plug 'Lokaltog/vim-easymotion'
-    Plug 'jeetsukumaran/vim-indentwise'
+    " Plug 'jeetsukumaran/vim-indentwise'
 
+    Plug 'tommcdo/vim-exchange'
     Plug 'matze/vim-move'
     " Plug 'zirrostig/vim-schlepp'
     " Plug 'natemaia/DragVisuals'
 
-    " Plug 'bruno-/vim-man'
-    " Plug 'fmoralesc/vim-pad'
-    " Plug 'mivok/vimtodo'
-    " Plug 'freitass/todo.txt-vim'
-    " Plug 'lukaszkorecki/workflowish'
-    " Plug 'irrationalistic/vim-tasks'
-    " Plug 'vim-pandoc/vim-pandoc'
-    " Plug 'jceb/vim-orgmode'
-    " Plug 'vimwiki/vimwiki'
-    " Plug 'plasticboy/vim-markdown'
-    " Plug 'vimoutliner/vimoutliner'
-    " Plug 'dhruvasagar/vim-table-mode'
+    let g:markdown_fenced_languages = ["viml=vim"]
 
+    " Plug 'vim-pandoc/vim-pandoc-syntax'
+    Plug 'vim-pandoc/vim-pandoc'
+    Plug 'vim-pandoc/vim-pandoc-after'
+    " Plug 'dhruvasagar/vim-table-mode'
+    " Plug 'clarke/vim-renumber'
+    " Plug 'JamshedVesuna/vim-markdown-preview'
+    " Plug 'previm/previm'
+
+    " Plug 'jceb/vim-orgmode'
+    " Plug 'vimoutliner/vimoutliner'
+    " Plug 'lukaszkorecki/workflowish'
+    " Plug 'fmoralesc/vim-pad'
+
+    " Plug 'xolox/vim-misc'
+    " Plug 'xolox/vim-notes'
+
+    " Plug 'vimwiki/vimwiki'
+    " Plug 'tbabej/taskwiki'
+    " Plug 'lervag/wiki.vim'
+    " Plug 'lervag/wiki-ft.vim'
+    " Plug 'fcpg/vim-waikiki'
+   let g:wiki_root = '~/vimwiki'
+
+    " Plug 'bruno-/vim-man'
     " Plug 'LucHermitte/lh-tags'
     " Plug 'xuhdev/SingleCompile'
     Plug 'ludovicchabant/vim-gutentags'
@@ -320,6 +341,10 @@ Plug 'editorconfig/editorconfig-vim'
     " Plug 'takac/vim-hardtime'
     Plug 'lyokha/vim-xkbswitch'
     Plug 'drmikehenry/vim-fontdetect'
+
+    " XXX: Needs to be after all the other syntax plugins
+    Plug 'sheerun/vim-polyglot'
+    let g:polyglot_disabled = ["markdown"]
 
     " Vimscript libraries
     " Plug 'romgrk/lib.kom'
@@ -344,7 +369,9 @@ syntax enable
     set undodir=$VIMDIR/tmp/undo//
     set directory=$VIMDIR/tmp/swap//
 
+    if !has('nvim')
     set viminfo+=n$VIMDIR/tmp/viminfo
+    endif
 
     call s:makedirs(&backupdir)
     call s:makedirs(&undodir)
@@ -352,10 +379,10 @@ syntax enable
 
 " Wildcompltetion       {{{2
     set wildmode=longest:full,full     " command-line completion
-if s:has('wildmenu')
+if has('wildmenu')
     set wildmenu                       " enhanced command-line completion
 endif
-if s:has('wildignore')
+if has('wildignore')
     set wildignore+=*/.git/*,*/.hg/*,*/.svn/*    " version control directories
     set wildignore+=*.DS_Store                   " OS X things
     set wildignore+=*.sw?                        " vim swap files
@@ -428,7 +455,9 @@ set ttyfast        " I have a fast connection to my tty
 
 " FIXME:
 if $TERM =~ 'st'
+    if !has('nvim')
     set ttymouse=xterm
+    endif
 
     " termguicolors
     " set termguicolors
@@ -441,13 +470,13 @@ if $TERM =~ 'st'
     " let &t_SR = "\<Esc>[3 q"
 endif
 
-if s:executable('rg')
+if executable('rg')
     set grepprg=rg\ --vimgrep
     set grepformat=%f:%l:%c:%m,%f:%l:%m
-elseif s:executable('ag')
+elseif executable('ag')
     set grepprg=ag\ --vimgrep
     set grepformat=%f:%l:%c:%m,%f:%l:%m
-elseif s:executable('grep')
+elseif executable('grep')
     call system('grep --version')
     if !v:shell_error   " GNU grep
         set grepprg=grep\ -nH\ -r
@@ -469,17 +498,21 @@ endif
 " foldcolumn=2     " a 2-char wide column indicating open and closed folds
 " concealcursor=nc " don't conceal the cursor line in visual and insert mode
 
-if s:has('title')            | set title             | endif
-if s:has('cmdline_info')     | set showcmd           | endif
-if s:has('extra_search')     | set incsearch         | set hlsearch       | endif
-if s:has('vertsplit')        | set splitright        | endif
-if s:has('virtualedit')      | set virtualedit=block | endif
-if s:has('syntax')           | set cursorline        | set colorcolumn=80 | endif
-if s:has('linebreak')        | set showbreak=↪\      | endif
-if s:has('folding')          | set foldcolumn=2      | endif
-if s:has('windows','folding')| set fillchars=vert:│  | endif
-if s:has('insert_expand')    | set completeopt=menu,menuone,longest       | endif
-if s:has('conceal')          | set concealcursor=nc  | endif
+if has('title')            | set title             | endif
+if has('cmdline_info')     | set showcmd           | endif
+if has('extra_search')     | set incsearch         | set hlsearch       | endif
+if has('vertsplit')        | set splitright        | endif
+if has('virtualedit')      | set virtualedit=block | endif
+if has('syntax')           | set cursorline        | set colorcolumn=80 | endif
+if has('linebreak')        | set showbreak=↪\      | endif
+if has('folding')          | set foldcolumn=2      | endif
+if has('windows') && has('folding') | set fillchars=vert:│              | endif
+if has('insert_expand')    | set completeopt=menu,menuone,longest       | endif
+if has('conceal')          | set concealcursor=nc  | endif
+
+if has('patch-8.1.0360') || has('nvim-0.3.2')
+    set diffopt=filler,internal,algorithm:histogram,indent-heuristic
+endif
 
 " GUI Options      {{{1
 " TODO: move this
@@ -495,7 +528,7 @@ function! ComposeGuifont(fontsize, typeface)
 endfunction
 
 function! SetupGUI()
-if s:has('gui_mac')
+if has('gui_mac')
     set antialias  " antialized goodness
 endif
 
@@ -521,7 +554,7 @@ endfunction
 " Plugin Options   {{{1
 " bufline               {{{2
 let g:bufline_separator = '  '
-" let g:bufline_fnamemodify = ':p:~:.:gs#\v/(.)[^/]*\ze/#/\1#'
+" let g:bufline_fmt_fnamemodify = ':p:~:.:gs#\v/(.)[^/]*\ze/#/\1#'
 
 " buftabline            {{{2
 let g:buftabline_show = 1
@@ -589,13 +622,14 @@ let NERDTreeMinimalUI = 1
 let g:nerdtree_tabs_open_on_gui_startup = 0
 
 " fzf                   {{{2
-if s:executable('rg')
+if executable('rg')
     let $FZF_DEFAULT_COMMAND = "rg --files --hidden --glob '!.git'"
 endif
 
 " indexed-search        {{{2
 let g:indexed_search_dont_move = 1
 let g:indexed_search_center = 1
+let g:indexed_search_n_always_searches_forward = 1
 
 " better-whitespace     {{{2
 let g:better_whitespace_filetypes_blacklist = ['help', 'vim-plug']
@@ -624,13 +658,17 @@ let g:gitgutter_sign_modified_removed = '∙'
 let python_highlight_all = 1
 
 " go-mode               {{{2
-let g:go_highlight_extra_types = 1
 let g:go_highlight_types = 1
-let g:go_highlight_operators = 1
+let g:go_highlight_extra_types = 1
 let g:go_highlight_functions = 1
-let g:go_highlight_fields = 1
-let g:go_highlight_methods = 1
+" let g:go_highlight_function_parameters = 1
+" let g:go_highlight_function_calls = 1
+" let g:go_highlight_fields = 1
+" let g:go_highlight_operators = 1
+" let g:go_highlight_variable_declerations = 1
+" let g:go_highlight_variable_assignments = 1
 let g:go_highlight_build_constraints = 1
+let g:go_highlight_generate_tags = 1
 
 let g:go_auto_sameids = 1
 let g:go_auto_type_info = 1
@@ -767,7 +805,7 @@ endfunction!
 
 
 function! Terminfo(cap, ...)           " {{{2
-    if !s:executable('tput')
+    if !executable('tput')
         echomsg "Could not find 'tput' in $PATH" | return
     endif
 
@@ -830,10 +868,10 @@ call s:def_option('g:bufline_highlight', 'None')
 call s:def_option('g:bufline_formatter', 's:default_formatter')
 call s:def_option('g:bufline_positioner', 's:default_positioner')
 
-call s:def_option('g:bufline_modified', '+')
-call s:def_option('g:bufline_fnamemodify', ':t')
 call s:def_option('g:bufline_fmt', '%s:%s%s')
-call s:def_option('g:bufline_active_fmt', '[%s:%s%s]')
+call s:def_option('g:bufline_fmt_active', '[%s:%s%s]')
+call s:def_option('g:bufline_fmt_modified', '+')
+call s:def_option('g:bufline_fmt_fnamemodify', ':t')
 
 
 function! s:get_bufnrs()
@@ -876,10 +914,10 @@ function! s:default_formatter(bufnr)
     let has_window = bufwinnr(a:bufnr) > 0
     let is_current = a:bufnr == bufnr('%')
 
-    return printf(has_window && is_current ? g:bufline_active_fmt : g:bufline_fmt,
+    return printf(has_window && is_current ? g:bufline_fmt_active : g:bufline_fmt,
                 \ a:bufnr,
-                \ fnamemodify(name, g:bufline_fnamemodify),
-                \ modified ? g:bufline_modified : '')
+                \ fnamemodify(name, g:bufline_fmt_fnamemodify),
+                \ modified ? g:bufline_fmt_modified : '')
 endfunction
 
 function! s:default_positioner(buffers, max_width)
@@ -994,7 +1032,7 @@ endfunction
 
 function! s:wordhl_groups()
     redir => hls
-    silent! highlight
+        silent! highlight
     redir END
     let wordhls = map(split(hls, "\n"), 'matchstr(v:val, "^WordHL\\S*")')
     return filter(wordhls, '!empty(v:val)')
@@ -1019,9 +1057,9 @@ endfunction
 function! HighlightWord(mode)
     let word = a:mode == 'v' ? s:get_visual_selection() : expand('<cword>')
     let ic = (&ic && (!&scs || match(word, '\u') < 0)) ? '\c' : ''
-    let pattern = a:mode == 'v' ?
-                \ ic.'\V\zs'.escape(word, '\').'\ze' :
-                \ ic.'\V\<'.escape(word, '\').'\>'
+    let pattern = a:mode == 'v'
+                \ ? ic.'\V\zs'.escape(word, '\').'\ze'
+                \ : ic.'\V\<'.escape(word, '\').'\>'
     call HighlightPattern(pattern, s:next_wordhl_group())
 endfunction
 
@@ -1274,6 +1312,14 @@ augroup rc_airline
     au User AirlineAfterInit call AirlineCustom()
 augroup END
 
+" Filetypes        {{{1
+" Markdown              {{{2
+let g:pandoc#filetypes#handled = ["pandoc", "markdown"]
+let g:pandoc#filetypes#pandoc_markdown = 0
+let g:pandoc#folding#fastfolds = 1
+let g:pandoc#folding#fold_fenced_codeblocks = 1  " doesn't seem to work :/
+let g:pandoc#after#modules#enabled = ["tablemode"]
+
 " Autocommands     {{{1
 augroup rc_general      " {{{2
     au!
@@ -1292,11 +1338,22 @@ augroup rc_general      " {{{2
     au BufNewFile * call AskMakeDirs(expand('%:h'))
 
     " Automaticaly destroy fugitive buffers when hidden
-    au BufReadPost fugitive://* set bufhidden=delete
+    au BufReadPost fugitive://* setlocal bufhidden=delete
     au User fugitive
         \ if fugitive#buffer().type() =~# '^\%(tree\|blob\)$'   |
         \     nnoremap <buffer> .. :edit %:h<CR>                |
         \ endif
+
+    " I just can't seem to be able to make netrw buffers disappear
+    " autocmd FileType netrw setlocal bufhidden=wipe
+    " autocmd FileType netrw nnoremap <buffer> q :bdelete<CR>
+    " autocmd OptionSet bufhidden
+    "     \ if &filetype == 'netrw' |
+    "     \     echomsg 'netrw changed bufhidden=' v:option_new |
+    "     \     setlocal bufhidden=delete |
+    "     \     echomsg 'netrw changed back to bufhidden=' &bufhidden |
+    "     \ endif
+    let g:netrw_altfile = 1
 
     " Re-source .vimrc on save
     au BufWritePost $MYVIMRC nested source $MYVIMRC
@@ -1307,10 +1364,13 @@ augroup ft_help         " {{{2
     au FileType help setlocal keywordprg=:help
 
     " These ones are only meant for help windows
-    au FileType help if &buftype == 'help'
-                \ | nnoremap <buffer> q :close<CR>
-                \ | endif
+    au FileType help if &buftype == 'help' | call s:ft_help() | endif
 augroup END
+
+function! s:ft_help()
+    nnoremap <buffer> q :echohl WarningMsg<Bar>echo "q is deprecated, use gq instead"<Bar>echohl NONE<CR>
+    nnoremap <buffer> gq :close<CR>
+endfunction
 
 augroup ft_vim          " {{{2
     au!
@@ -1320,18 +1380,20 @@ augroup END
 augroup ft_python       " {{{2
     au!
 
+    au FileType python setlocal
+                \ tabstop=8
+                \ softtabstop=4
+                \ shiftwidth=4
+                \ textwidth=79
+                \ expandtab
+                \ autoindent
+
     au FileType python setlocal suffixesadd=.py
     au FileType python setlocal includeexpr=PythonIncludeExpr(v:fname)
-    " au FileType python let &l:isfname = '_,@,48-57,.'
     au FileType python let &l:path = join(['.', PythonPath(3), PythonPath(2)], ',')
     au FileType python let &l:include = join([
                 \ '^\s*import\s\+\zs[_.[:alnum:]]\+\ze',
                 \ '^\s*from\s\+\zs[_.[:alnum:]]\+\ze\s\+import'], '\|')
-    au FileType python let b:match_words = join([
-                \ '\<def\>:\<return\>',
-                \ '\<\(while\|for\)\>:\<break\>:\<continue\>',
-                \ '\<if\>:\<elif\>:\<else\>',
-                \ '\<try\>:\<except\>:\<finally\>', ','])
 
     " This next pattern, courtesy of wushee on #vim on freenode, can find
     " multi-import lines, matching each package separately, i.e. in:
@@ -1343,24 +1405,26 @@ augroup ft_python       " {{{2
     "             \ '\(^\s*import .*\)\@<=\zs[_.[:alnum:]]\+\ze',
     "             \ '^\s*from\s\+\zs[_.[:alnum:]]\+\ze\s\+import'], '\|')
 
-    au FileType python setlocal
-        \ tabstop=8
-        \ softtabstop=4
-        \ shiftwidth=4
-        \ textwidth=79
-        \ expandtab
-        \ autoindent
-        \ fileformat=unix
+    " matchit.vim support for Python
+    " Unfortunately, this is not so easy for Python because it doesn't use
+    " explicit end-block delimiters; see https://vi.stackexchange.com/q/13209
+    " au FileType python let b:match_words = join([
+    "             \ '\<def\>:\<return\>',
+    "             \ '\<\(while\|for\)\>:\<break\>:\<continue\>',
+    "             \ '\<if\>:\<elif\>:\<else\>',
+    "             \ '\<try\>:\<except\>:\<finally\>'], ',')
 augroup END
 
 augroup ft_go           " {{{2
     au!
 
-    au FileType go setlocal noexpandtab
-    au FileType go setlocal shiftwidth=4
-    au FileType go setlocal softtabstop=4
-    au FileType go setlocal tabstop=4
+    au FileType go setlocal
+                \ tabstop=4
+                \ softtabstop=4
+                \ shiftwidth=4
+                \ noexpandtab
 augroup END
+
 augroup ft_cpt          " {{{2
     au!
 
@@ -1403,14 +1467,6 @@ endfunction
 
 command! -nargs=+ Anoremap call s:all_mode_map(<f-args>)
 
-function! s:operator_map(key, ...)     " {{{2
-    let cmd = join(a:000)
-    exec 'nmap' a:key cmd
-    exec 'xmap' a:key cmd
-    exec 'omap' a:key cmd
-endfunction
-
-command! -nargs=+ OperatorMap call s:operator_map(<f-args>)
 " }}}2
 
 " fixes
@@ -1425,7 +1481,7 @@ vnoremap > >gv
 noremap H ^
 noremap L $
 noremap gV `[v`]
-nnoremap <BS> <C-^>
+" nnoremap <BS> <C-^>
 nnoremap gb :ls<CR>:b<Space>
 
 " Use :tjump instead of :tag
@@ -1473,11 +1529,17 @@ if s:has_plugin('ShowMotion')
     nmap E <Plug>(show-motion-E)
 endif
 
+if s:has_plugin('vim-operator-surround')
+    map <silent>sa <Plug>(operator-surround-append)
+    map <silent>sd <Plug>(operator-surround-delete)
+    map <silent>sr <Plug>(operator-surround-replace)
+endif
+
 if s:has_plugin('vim-sneak')
-    OperatorMap f <Plug>Sneak_f
-    OperatorMap F <Plug>Sneak_F
-    OperatorMap t <Plug>Sneak_t
-    OperatorMap T <Plug>Sneak_T
+    map f <Plug>Sneak_f
+    map F <Plug>Sneak_F
+    map t <Plug>Sneak_t
+    map T <Plug>Sneak_T
 endif
 
 if s:has_plugin('SplitJoin')
@@ -1681,11 +1743,11 @@ endfunction
 "     endif
 " endfunction
 
-" if s:executable('fzy', 'ag')
+" if executable('fzy', 'ag')
 "     nnoremap <C-p> :call FzyDo(":e",  "ag -l -g ''")<CR>
 "     nnoremap <C-s> :call FzyDo(":vs", "ag -l -g ''")<CR>
 "     nnoremap <C-S-v> :call FzyDo(":sp", "ag -l -g ''")<CR>
-" elseif s:executable('fzy')
+" elseif executable('fzy')
 "     nnoremap <C-p> :call FzyDo(":e",  "find -type f")<CR>
 "     nnoremap <C-s> :call FzyDo(":sp", "find -type f")<CR>
 "     nnoremap <C-S-v> :call FzyDo(":vs", "find -type f")<CR>
