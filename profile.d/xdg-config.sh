@@ -12,4 +12,7 @@ export ELINKS_CONFDIR=${XDG_CONFIG_HOME:-"$HOME/.config"}/elinks
 # The program logs always go to $WEECHAT_HOME/weechat.log.
 export WEECHAT_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}/weechat
 
+# ripgrep will read it's config file only if this variable is defined
+export RIPGREP_CONFIG_PATH=${XDG_CONFIG_HOME:-"$HOME/.config"}/ripgreprc
+
 mkdir -p "$HTTPIE_CONFIG_DIR" "$ELINKS_CONFDIR" "$WEECHAT_HOME"
