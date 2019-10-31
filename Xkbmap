@@ -1,0 +1,11 @@
+-layout us,gr
+-variant altgr-intl,
+
+-option
+-option grp:lalt_lshift_toggle
+-option lv3:ralt_switch_multikey
+-option grp_led:scroll
+-option caps:ctrl_modifier
+-option shift:both_capslock
+-option eurosign:e
+-option nbsp:level3

@@ -4,9 +4,22 @@
 #
 # Sourced by most Display Managers before the window manager
 
-if [ -d ~/Documents/scripts/autostart/ ]; then
-    for f in ~/Documents/scripts/autostart/?*.sh; do
-        [ -x "$f" ] && . "$f"
-    done
-    unset f
+# Apparently, redirecting from globs (as in, `foo </bar/*`) is not in POSIX
+# cat "${XDG_CONFIG_HOME:-$HOME/.config}"/dconf/user.d/* 2>/dev/null \
+#     | dconf load /
+
+# Hide the cursor when typing though not if modified with Super key (which will
+# probably be an awesomewm keybind)
+xbanish -i mod4 &
+
+# Make Caps_Lock act as Escape when pressed once.  When combined with another
+# key it acts as Control; that's set in ~/.Xkbmap
+xcape -e 'Caps_Lock=Escape'
+
+# Run the XSettings daemon; this is how I set the GTK theme too
+xsettingsd &
+
+# Autostart XDG apps only when not running under a full DE.
+if [ -z "$XDG_CURRENT_DESKTOP" ]; then
+    dex -ae foo
 fi
