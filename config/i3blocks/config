@@ -1,0 +1,38 @@
+markup=pango
+border_right=3
+
+# Signal allocation is as follows
+#   1. volume
+
+[focused-window]
+command=xtitle -s
+interval=persist
+# border=#253941
+
+# [mediaplayer]
+# command=~/.config/i3blocks/i3blocks-contrib/mediaplayer/mediaplayer
+# interval=5
+# # signal=10
+# instance=chrome
+
+# [wifi]
+# command=~/.config/i3blocks/i3blocks-contrib/bandwidth/bandwidth
+# interval=5
+# INTERFACE=wlp4s6
+# INLABEL=rx 
+# OUTLABEL=tx 
+
+# [memory]
+# command=~/.config/i3blocks/i3blocks-contrib/memory/memory
+# interval=10
+
+[volume]
+command=~/.config/i3blocks/pulsevol.py
+interval=persist
+# interval=once
+# signal=1
+
+[clock]
+command=date '+%d %b %Y %H:%M' | tr [:upper:] [:lower:]
+interval=10
+# border=#7a5e4a
