@@ -2,3 +2,4 @@ tags
 
 config/weechat/sec.conf
 config/weechat/weechat.log
+config/weechat/weechat_fifo
