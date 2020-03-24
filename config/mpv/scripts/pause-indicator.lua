@@ -14,8 +14,8 @@ local settings = {
 options.read_options(settings)
 
 local state = {
-    anistart,
     timer = nil,
+    anistart = nil,
     paused = false,
     framestep = false,
 }

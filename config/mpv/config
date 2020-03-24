@@ -1,13 +1,30 @@
-# Write your default config options here!
+# General
+msg-module  # prepend module name to log messages
+msg-color   # color log messages on terminal
 
-autofit-larger=90%
+no-border   # no window title bar
+autofit-larger=90%x90%  # resize window in case it's larger than W%xH% of the screen
 
-write-filename-in-watch-later-config=yes
-ignore-path-in-watch-later-config=yes
+write-filename-in-watch-later-config    # self explanatory
+ignore-path-in-watch-later-config       # only uses the basename for watch-later
 
-[anime-gfy]
-ovc = libx264
-ovcopts = profile=high,preset=medium,tune=animation,crf=25
-oac = aac
-oacopts = b=72k
-vf = hqdn3d,lavfi=[scale='if(gt(iw,960),960,iw)':-1]
+# Video
+icc-profile-auto  # automatically select the ICC profile set by the OS
+
+# Subtitles
+sub-auto=fuzzy      # autoload all external subs containing media filename
+sub-fix-timing=no   # do not try to fix gaps (which might make it worse in some cases)
+demuxer-mkv-subtitle-preroll  # try to correctly show embedded subs when seeking
+# sub-ass-force-style=Kerning=yes  # allows you to override style parameters of ASS scripts
+
+sub-use-margins         # enables placing subs in black borders
+sub-ass-force-margins   # like the above but for ASS subs
+
+# Languages
+slang=en,eng,gr,gre             # preferred audio languages (decreasing priority)
+alang=ja,jp,jpn,en,eng,gr,gre   # preferred subtitle languages (decreasing priority)
+
+# Audio
+audio-pitch-correction  # automatically insert scaletempo when playing with higher speed
+volume-max=200          # maximum volume in %, everything above 100 results in amplification
+volume=100              # default volume, 100 = unchanged
