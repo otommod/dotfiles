@@ -55,6 +55,8 @@
 	mnemonicPrefix = true
 
 [merge]
+	# Create merge commits when merging
+	ff = false
 	# Display common-ancestor blocks in conflict hunks
 	conflictStyle = diff3
 
