@@ -19,6 +19,9 @@ xcape -e 'Caps_Lock=Escape'
 # Run the XSettings daemon; this is how I set the GTK theme too
 xsettingsd &
 
+# Set my favorite wallpaper
+hsetroot -fill "${XDG_CONFIG_HOME:-"$HOME/.config"}/wallpaper"
+
 # Autostart XDG apps only when not running under a full DE.
 if [ -z "$XDG_CURRENT_DESKTOP" ]; then
     dex -ae foo

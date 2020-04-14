@@ -148,10 +148,6 @@ pa_signal_new = wrap(libpulse.pa_signal_new, pa_signal_event_p,
                      c_int, pa_signal_cb_t, c_void_p)
 
 
-def debug(*args):
-    print(*args, flush=True, file=sys.stderr)
-
-
 @pa_context_notify_cb_t
 def on_state_change(ctx, userdata):
     state = pa_context_get_state(ctx)
@@ -163,14 +159,14 @@ def on_state_change(ctx, userdata):
 
     if (state == 5              # PA_CONTEXT_FAILED
             or state == 6):     # PA_CONTEXT_TERMINATED
-        pass
+        # XXX:
+        print("vol Crashed", flush=True)
+        sys.exit(1)
 
     if state == 4:              # PA_CONTEXT_READY:
         # This captures two types of events
-        #   - 0x0001: sink events
-        #   in our case we care for volume changes or mute
-        #   - 0x0080: server events
-        #   in our case, the DEFAULT_SINK may change
+        #   - 0x0001: sink events; for volume changes or muting
+        #   - 0x0080: server events; the DEFAULT_SINK may change
         mask = 0x0001 | 0x0080
         null_cb = cast(None, pa_context_success_cb_t)
 
@@ -178,8 +174,8 @@ def on_state_change(ctx, userdata):
         op = pa_context_subscribe(ctx, mask, null_cb, None)
         pa_operation_unref(op)
 
-        op = pa_context_get_sink_info_by_name(ctx, b"@DEFAULT_SINK@",
-                                              on_get_sink_info, None)
+        op = pa_context_get_sink_info_by_name(
+            ctx, b"@DEFAULT_SINK@", on_get_sink_info, None)
         pa_operation_unref(op)
 
 
@@ -202,12 +198,12 @@ def on_get_sink_info(ctx, sink_info, is_last, userdata):
 
     # ".contents" is essentially "->" in C
     chans = sink_info.contents.channel_map.channels
-    print_volumes(bool(sink_info.contents.mute),
-                  sink_info.contents.channel_map.map[:chans],
-                  sink_info.contents.volume.values[:chans])
+    print_status(bool(sink_info.contents.mute),
+                 sink_info.contents.channel_map.map[:chans],
+                 sink_info.contents.volume.values[:chans])
 
 
-def print_volumes(is_muted, channel_map, volumes):
+def print_status(is_muted, channel_map, volumes):
     voltext = "{:.0%}".format(volumes[0] / PA_VOLUME_NORM)
     if any(v != volumes[0] for v in volumes):
         voltext = " ".join("{}:{:.0%}".format(
@@ -216,7 +212,7 @@ def print_volumes(is_muted, channel_map, volumes):
     if is_muted:
         voltext = "mute({})".format(voltext)
 
-    print(voltext, flush=True)
+    print("vol", voltext, flush=True)
 
 
 @pa_signal_cb_t
@@ -224,7 +220,7 @@ def on_exit_signal(mainloop_api, sigevent, sig, userdata):
     sys.exit(0)
 
 
-def main(args):
+def main(argv):
     mainloop = pa_mainloop_new()
     mainloop_api = pa_mainloop_get_api(mainloop)
 
@@ -236,13 +232,10 @@ def main(args):
     pa_signal_init(mainloop_api)
     pa_signal_new(signal.SIGINT, on_exit_signal, None)
 
-    # Catch stdin
-
-
     ret = c_int()
     pa_mainloop_run(mainloop, byref(ret))
 
-    return 0
+    return ret.value
 
 
 if __name__ == "__main__":
