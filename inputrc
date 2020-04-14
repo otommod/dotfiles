@@ -1,0 +1,38 @@
+set enable-bracketed-paste on
+
+# Color-code completions according to their stat(3) type
+# Unfortunately, this breaks non-file completions, e.g. options
+#set colored-stats on
+set visible-stats on
+
+# When completing directory names that are symlinks suffix them with '/' just
+# as with normal directories
+set mark-symlinked-directories on
+
+set skip-completed-text on
+set show-all-if-unmodified on
+
+# XXX: try to find a way for st to recognize 'A-x' mappings
+#set convert-meta on
+#set enable-meta-key off
+
+# Very useful for the tab completion
+set completion-ignore-case on
+# It treats hyphens and underscores equally during the completion
+set completion-map-case on
+
+# some defaults / modifications for the emacs mode
+$if mode=emacs
+
+# Search in history based on prefix with up and down
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+# Same for Ctrl-{p,n}
+"\C-p": history-search-backward
+"\C-n": history-search-forward
+
+# Move in whole shell words with Meta-Ctrl-{f,b}
+"\e\C-f": shell-forward-word
+"\e\C-b": shell-backward-word
+
+$endif

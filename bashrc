@@ -1,3 +1,4 @@
+# vim:fdm=marker:
 #
 # ~/.bashrc
 # executed by bash(1) for non-login shells
@@ -13,14 +14,10 @@ if [ -d ~/.shrc.d ]; then
     unset f
 fi
 
-# TODO: hook up ~/.shrc.d/undistract-me.sh with bash-preexec
+# do history expansion when space entered
+bind 'Space: magic-space'
 
-if [[ -f /etc/bash_command_not_found ]]; then
-    . /etc/bash_command_not_found
-elif [[ -f /usr/share/doc/pkgfile/command-not-found.bash ]]; then
-    . /usr/share/doc/pkgfile/command-not-found.bash
-fi
-
+# {{{1 Prompt
 # TODO: add some way to make the colored prompt conditional based on the
 # terminal and stuff
 
@@ -93,16 +90,7 @@ __prompt_command() {
 }
 export PROMPT_COMMAND=__prompt_command
 
-
-export HISTFILE="$HISTDIR/bash"
-export HISTCONTROL=ignorespace:ignoredups
-export HISTIGNORE='exit:clear'
-# XXX: look into HISTTIMEFORMAT
-
-# append to the history file, don't overwrite it
-shopt -s histappend
-
-
+# {{{1 Settings
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
 shopt -s checkwinsize
@@ -111,12 +99,11 @@ shopt -s checkwinsize
 # match all files and zero or more directories and subdirectories.
 #shopt -s globstar
 
-# add completions for pip and also cache them, since pip is slow and running it
-# every time the shell starts would be unbearable
-if command -v pip >/dev/null; then
-    pipcomplcache="${XDG_CACHE_HOME:-$HOME/.cache}/bash/pip.complcache"
-    if [ ! -s "$pipcomplcache" ] || [ "$(command -v pip)" -nt "$pipcomplcache" ]; then
-        PIP_REQUIRE_VIRTUALENV= pip completion --bash 2>/dev/null | sed -e '/^complete/s/$/ pip2 pip3/' >"$pipcomplcache"
-    fi
-    . "$pipcomplcache"
-fi
+# {{{2 History
+# TODO: look into HISTTIMEFORMAT
+export HISTFILE="$HISTDIR/bash"
+export HISTCONTROL=ignorespace:ignoredups
+export HISTIGNORE='exit:clear'
+
+# append to the history file, don't overwrite it
+shopt -s histappend
