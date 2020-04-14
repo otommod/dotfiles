@@ -10,6 +10,9 @@ mkdir -p "$RLWRAP_HOME"
 # For the 'less' pager
 export LESSHISTFILE="$HISTDIR/less"
 
+# nodeJS
+export NODE_REPL_HISTORY="$HISTDIR/node"
+
 # The python interpreter runs $PYTHONSTARTUP at the, well, startup in
 # interactive mode.  It's there that we set the history file to $PYTHONHISTORY,
 # it's can't be done any other way.  This is not a complete solution: if python
@@ -19,3 +22,8 @@ export LESSHISTFILE="$HISTDIR/less"
 # somewhere in the python path which is different between versions and systems.
 export PYTHONSTARTUP="$HOME/.pythonrc"
 export PYTHONHISTORY="$HISTDIR/python"
+
+# 'tig' will write to ~/.tig_history unless ~/.local/share/tig exists and is a
+# directory.  There doesn't seem to be a way to write it where I want so at
+# least put it out of the way.
+mkdir -p ~/.local/share/tig

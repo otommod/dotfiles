@@ -72,7 +72,7 @@ __udm_format() {
 
 __udm_parse_cmdname() {
     local cmd="$1"; shift
-    local callback="$2"; shift
+    local callback="$1"; shift
     local callback_args="$#"
 
     # We split the command on spaces; this is *not* correct since it doesn't
@@ -85,7 +85,7 @@ __udm_parse_cmdname() {
     while [ $# -gt $(( 1 + callback_args )) ]; do
         case "$1" in
             # skip some shell syntax
-            #*=*) shift ;;
+            *=*) shift ;;
             \;|\&|\|) shift ;;
             \!|\&\&|\|\|) shift ;;
             \{|\}|\(|\)) shift ;;
@@ -106,7 +106,7 @@ __udm_parse_cmdname() {
             # and these spawn subshells.  For most shells these subshells don't
             # share the jobs of their parent shell.  You'd need to use
             # temporary files or things like process substitution and by that
-            # point you're either too xomplex or non-portable.
+            # point you're either too complex or non-portable.
             #
             # If you could get the PID though, getting the command name is
             # POSIXly easy, it's just:

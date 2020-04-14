@@ -39,13 +39,6 @@ if [[ $USE_COLOR == true ]]; then
     autoload -Uz colors && colors
 fi
 
-if [[ $USE_COLOR == true ]]; then
-    if (( $+commands[dircolors] )) && [[ -r ~/.colors/dircolors ]]; then
-        eval "$(dircolors --sh ~/.colors/dircolors)"
-    fi
-fi
-
-
 ls_cmd="ls"
 if (( $+commands[gls] )); then
     ls_cmd="gls"      # GNU on non-GNU systems (BSDs, macOS)

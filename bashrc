@@ -42,10 +42,6 @@ bind 'Space: magic-space'
 #     fi
 # fi
 
-if [ -r ~/.colors//dircolors ]; then
-    eval "$(dircolors -b ~/.colors/dircolors)"
-fi
-
 __prompt_command() {
     local exitcode=$?
 
