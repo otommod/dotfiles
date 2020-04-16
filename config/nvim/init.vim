@@ -51,6 +51,10 @@ call minpac#add('sgur/vim-editorconfig')
     " call minpac#add('dhruvasagar/vim-zoom')
     call minpac#add('troydm/zoomwintab.vim')
 " Fixes                 {{{2
+    " XXX: fix for NeoViM to allow `sudo' to work again.
+    " NeoViM's `!' redirects stdin to a pipe and `sudo' doesn't like that. See
+    "   https://github.com/neovim/neovim/issues/1716
+    call minpac#add('lambdalisue/suda.vim')
     " call minpac#add('tpope/vim-rsi')
     " call minpac#add('Konfekt/FastFold')
     " call minpac#add('justinmk/vim-ipmotion')
@@ -85,6 +89,10 @@ call minpac#add('sgur/vim-editorconfig')
     call minpac#add('chriskempson/vim-tomorrow-theme', {'type': 'opt'})
     call minpac#add('owickstrom/vim-colors-paramount', {'type': 'opt'})
     call minpac#add('altercation/vim-colors-solarized', {'type': 'opt'})
+
+    call minpac#add('romainl/flattened', {'type': 'opt'})
+    " call minpac#add('lifepillar/vim-gruvbox8', {'type': 'opt'})
+    " call minpac#add('lifepillar/vim-solarized8', {'type': 'opt'})
 
     " Light
     call minpac#add('daddye/soda.vim', {'type': 'opt'})
@@ -188,7 +196,8 @@ call minpac#add('sheerun/vim-polyglot', {'name': '00-vim-polyglot'})
 call minpac#add('justinmk/vim-syntax-extra')
 
 " Python                     {{{3
-    call minpac#add('fisadev/vim-isort',            {'for': 'python'})
+    " XXX: isort takes around 300ms to load, need to do it conditionally
+    " call minpac#add('fisadev/vim-isort',            {'for': 'python'})
     call minpac#add('davidhalter/jedi-vim',         {'for': 'python'})
     " call minpac#add('python-rope/ropevim',          {'for': 'python'})
     " call minpac#add('tmhedberg/SimpylFold')
@@ -1336,7 +1345,9 @@ nnoremap <leader>.v :e $MYVIMRC<CR>
 nnoremap <leader>.t :e ~/.tmux.conf<CR>
 nnoremap <leader>.z :e ~/.zshrc<CR>
 
-cnoremap w!! w !sudo tee % >/dev/null
+" XXX: NeoViM fix
+cnoremap w!! w suda://%
+" cnoremap w!! w !sudo tee % >/dev/null
 
 " {{{1 Plugin Mappings
 " nmap w <Plug>(motioncounts-w)
