@@ -388,10 +388,10 @@ bindkey -M vicmd '^X' decrement-number
 # SPROMPT="Change '$fg[red]%R$reset_color' to '$fg[green]%r$reset_color'? ($fg[green]Yes$reset_color, $fg[red]No$reset_color, $fg[red]Abort$reset_color, $fg[yellow]Edit$reset_color) > "
 
 # # XXX: what does this do and why is it, apparently, problematic
-# function _pre_noempty(){
+# function _pre_noempty {
 #    stty intr "^P"
 # }
-# function _post_noempty(){
+# function _post_noempty {
 #   stty intr "^C"
 # }
 # add-zsh-hook precmd _pre_noempty
@@ -411,6 +411,7 @@ if ! zgen saved; then
     # zgen load 'mreinhardt/sfz-prompt.zsh'
     # zgen load 'miekg/lean'
     # zgen load 'geometry-zsh/geometry'
+    # zgen load 'romkatv/powerlevel10k' powerlevel10k
 
     # Completion
     zgen load 'zsh-users/zsh-completions' src
