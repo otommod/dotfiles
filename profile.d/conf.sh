@@ -1,15 +1,10 @@
 export PAGER=less
 
-export EDITOR=vim
-export VISUAL=vim
+export EDITOR=nvim
 
-if [ -n "$OSTYPE" ]; then
-    case "$OSTYPE" in
-        darwin*)
-            export BROWSER=open
-            ;;
-    esac
-fi
+export TERMINAL=st
+
+export BROWSER=chromium
 
 # Set the default Less options.
 # Mouse-wheel scrolling has been disabled by -X (disable screen clearing).
