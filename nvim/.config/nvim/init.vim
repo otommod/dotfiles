@@ -24,11 +24,6 @@ function! s:every(arr)                 " {{{2
     return 1
 endfunction
 
-function! s:has_plugin(...)            " {{{2
-    return v:false
-    return s:every(map(copy(a:000), 'has_key(g:plugs, v:val)'))
-endfunction
-
 " {{{1 Pre-Preample
 function! PackInit() abort
   packadd minpac
@@ -527,18 +522,6 @@ let g:indentLine_concealcursor = 'nc'  " XXX: this sets 'concealcursor'
 
 " {{{2 indentguides
 let g:indentguides_tabchar = '┊'
-
-" {{{2 cursorword
-let g:cursorword = 1
-
-" {{{2 Matchmaker
-let g:matchmaker_enable_startup = 1
-
-" {{{2 gitgutter
-let g:gitgutter_sign_added = '∙'
-let g:gitgutter_sign_modified = '∙'
-let g:gitgutter_sign_removed = '∙'
-let g:gitgutter_sign_modified_removed = '∙'
 
 " {{{2 python-syntax
 let python_highlight_all = 1
@@ -1353,24 +1336,18 @@ cnoremap w!! w suda://%
 " nmap w <Plug>(motioncounts-w)
 " nmap b <Plug>(motioncounts-b)
 
-" if s:has_plugin('vim-operator-surround')
-    map <silent>sa <Plug>(operator-surround-append)
-    map <silent>sd <Plug>(operator-surround-delete)
-    map <silent>sr <Plug>(operator-surround-replace)
-" endif
+map <silent>sa <Plug>(operator-surround-append)
+map <silent>sd <Plug>(operator-surround-delete)
+map <silent>sr <Plug>(operator-surround-replace)
 
-if s:has_plugin('vim-sneak')
-    map f <Plug>Sneak_f
-    map F <Plug>Sneak_F
-    map t <Plug>Sneak_t
-    map T <Plug>Sneak_T
-endif
+" map f <Plug>Sneak_f
+" map F <Plug>Sneak_F
+" map t <Plug>Sneak_t
+" map T <Plug>Sneak_T
 
-if s:has_plugin('SplitJoin')
-    " TODO: use SplitJoin plugin
-    nnoremap <silent> J :<C-u>call <SID>try_cmd('SplitjoinJoin',  'J')<CR>
-    nnoremap <silent> S :<C-u>call <SID>try_cmd('SplitjoinSplit', "a\n")<CR>
-endif
+" TODO: use SplitJoin plugin
+" nnoremap <silent> J :<C-u>call <SID>try_cmd('SplitjoinJoin',  'J')<CR>
+" nnoremap <silent> S :<C-u>call <SID>try_cmd('SplitjoinSplit', "a\n")<CR>
 
 nnoremap <silent> <leader>l :call ToggleQuickFix('l')<CR>
 nnoremap <silent> <leader>q :call ToggleQuickFix('c')<CR>
@@ -1379,25 +1356,16 @@ nnoremap <silent> <leader>k :call HighlightWord('n')<CR>
 vnoremap <silent> <leader>k :call HighlightWord('v')<CR>
 nnoremap <silent> <leader>K :call UnHighlightAllWords()<CR>
 
-" if s:has_plugin('fzf.vim')
-    nnoremap <C-p> :FZF<CR>
-    nnoremap gb :Buffers<CR>
-" endif
+nnoremap <C-p> :FZF<CR>
+nnoremap gb :Buffers<CR>
 
-if s:has_plugin('ale')
-    nmap <silent> [w <Plug>(ale_previous)
-    nmap <silent> ]w <Plug>(ale_next)
-    nmap <silent> [W <Plug>(ale_first)
-    nmap <silent> ]W <Plug>(ale_last)
-endif
+nmap <silent> [w <Plug>(ale_previous)
+nmap <silent> ]w <Plug>(ale_next)
+nmap <silent> [W <Plug>(ale_first)
+nmap <silent> ]W <Plug>(ale_last)
 
 Anoremap <F5>a AirlineToggle
 Anoremap <F5>i IndentLinesToggle
-if s:has_plugin("vim-matchmaker")
-    Anoremap <F5>m MatchmakerToggle
-elseif s:has_plugin("vim-cursorword")
-    Anoremap <F5>m let g:cursorword = !g:cursorword
-endif
 Anoremap <F5>r RainbowToggle
 Anoremap <F5>w ToggleWhitespace
 
