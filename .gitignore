@@ -1,5 +1,5 @@
 tags
 
-config/weechat/sec.conf
-config/weechat/weechat.log
-config/weechat/weechat_fifo
+weechat/.config/weechat/sec.conf
+weechat/.config/weechat/weechat.log
+weechat/.config/weechat/weechat_fifo
