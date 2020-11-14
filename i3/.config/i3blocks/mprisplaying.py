@@ -69,7 +69,6 @@ def main(argv):
         metadata = metadata.unpack()
     print_status(metadata)
 
-    # GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, on_exit_signal)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 

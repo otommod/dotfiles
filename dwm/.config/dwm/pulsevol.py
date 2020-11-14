@@ -229,8 +229,10 @@ def main(argv):
     pa_context_connect(ctx, None, 0, None)
 
     # Make CTRL-c work again
-    pa_signal_init(mainloop_api)
-    pa_signal_new(signal.SIGINT, on_exit_signal, None)
+    # pa_signal_init(mainloop_api)
+    # pa_signal_new(signal.SIGINT, on_exit_signal, None)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
     ret = c_int()
     pa_mainloop_run(mainloop, byref(ret))

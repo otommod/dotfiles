@@ -14,7 +14,6 @@ except ImportError:
 
 
 def on_properties_changed(proxy, changed, invalidated):
-    # print("g-properties-changed", changed, invalidated)
     new_metadata = changed.lookup_value("Metadata")
     if new_metadata:
         print_status(new_metadata.unpack())
@@ -62,7 +61,8 @@ def main(argv):
         metadata = metadata.unpack()
     print_status(metadata)
 
-    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, on_exit_signal)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
     mainloop = GLib.MainLoop()
     mainloop.run()
