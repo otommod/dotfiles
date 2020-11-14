@@ -1,3 +1,0 @@
-SYMLINK_DIRS='colors profile.d shrc.d'
-
-EXCLUDES='tags bootstrap'
