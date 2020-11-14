@@ -28,3 +28,7 @@ alang=ja,jp,jpn,en,eng,gr,gre   # preferred subtitle languages (decreasing prior
 audio-pitch-correction  # automatically insert scaletempo when playing with higher speed
 volume-max=200          # maximum volume in %, everything above 100 results in amplification
 volume=100              # default volume, 100 = unchanged
+
+# YouTube-DL
+# I don't need more than 1080p
+ytdl-format="bestvideo[height<=1080]+bestaudio/best[height<=1080]"
