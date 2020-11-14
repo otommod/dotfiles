@@ -1,3 +1,5 @@
+$include /etc/inputrc
+
 set enable-bracketed-paste on
 
 # Color-code completions according to their stat(3) type
