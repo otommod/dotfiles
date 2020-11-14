@@ -1,0 +1,18 @@
+command=/home/otto/.config/i3blocks/$BLOCK_NAME
+interval=5
+
+[mprisplaying.py]
+interval=persist
+markup=pango
+
+[mem]
+
+[net]
+instance=wlp4s6
+format=json
+
+[pulsevol.py]
+interval=persist
+
+[date]
+command=date +"%a %d %b %Y %H:%M"

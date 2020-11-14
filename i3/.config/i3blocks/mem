@@ -1,0 +1,14 @@
+#!/bin/sh
+
+while read -r label value unit; do
+    # XXX: make sure units are kB and label ends in a ':' (meaning that we
+    # captured the whole label and it didn't 'leak' in $value or $unit)
+    case "$label" in
+        MemAvailable:) MemAvailable="$value" ;;
+        MemTotal:) MemTotal="$value" ;;
+    esac
+done </proc/meminfo
+
+if [ -n "$MemAvailable" ] && [ "$MemAvailable" -gt 0 ]; then
+    printf "mem %d%%\n" $(( 100 - 100 * MemAvailable  / MemTotal ))
+fi

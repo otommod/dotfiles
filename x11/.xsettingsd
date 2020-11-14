@@ -11,7 +11,7 @@ Gtk/DecorationLayout ""
 # Gtk/CanChangeAccels 1
 # Gtk/CursorThemeName ""
 # Gtk/CursorThemeSize 0
-Gtk/FontName "Sans 10"
+Gtk/FontName "SF Pro Display 11"
 # Gtk/KeyThemeName ""
 # Gtk/MenuBarAccel "F10"
 Gtk/ApplicationPreferDarkTheme 1
