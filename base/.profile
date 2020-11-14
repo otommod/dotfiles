@@ -4,6 +4,13 @@
 # ~/.profile
 #
 
+if [ -d ~/.profile.d ]; then
+    for f in ~/.profile.d/?*.sh; do
+        [ -x "$f" ] && . "$f"
+    done
+    unset f
+fi
+
 
 # {{{1 Golang
 # Use Go modules; I'm not sure if this is needed after Go 1.13
@@ -98,6 +105,10 @@ mkdir -p "$ELINKS_CONFDIR"
 # The program logs always go to $WEECHAT_HOME/weechat.log.
 export WEECHAT_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}/weechat
 mkdir -p "$WEECHAT_HOME"
+
+# IPython
+export IPYTHONDIR=${XDG_CONFIG_HOME:-"$HOME/.config"}/ipython
+mkdir -p "$IPYTHONDIR"
 
 # ripgrep will read it's config file only if this variable is defined
 export RIPGREP_CONFIG_PATH=${XDG_CONFIG_HOME:-"$HOME/.config"}/ripgreprc
