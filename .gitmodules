@@ -1,3 +1,6 @@
 [submodule "awesome/.config/awesome/lain"]
 	path = awesome/.config/awesome/lain
 	url = https://github.com/copycat-killer/lain
+[submodule "fontconfig/.config/fontconfig/conf.d"]
+	path = fontconfig/.config/fontconfig/conf.d
+	url = https://github.com/stove-panini/fontconfig-emoji
