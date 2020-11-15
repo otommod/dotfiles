@@ -61,10 +61,10 @@ call minpac#add('sgur/vim-editorconfig')
     " call minpac#add('junegunn/limelight.vim')
 " Eye candy             {{{2
     call minpac#add('myusuf3/numbers.vim')
-    call minpac#add('machakann/vim-highlightedyank')
+    call minpac#add('machakann/vim-highlightedyank', {'type': 'opt'})
     call minpac#add('ntpeters/vim-better-whitespace')
     " call minpac#add('Yggdroot/indentLine')
-    call minpac#add('thaerkh/vim-indentguides')
+    " call minpac#add('thaerkh/vim-indentguides')
     " TODO: I could write on of those (vim-illuminate, vim-cursorword, vim-matchmaker) and combine it with wordhl
     call minpac#add('RRethy/vim-illuminate')
     " call minpac#add('itchyny/vim-cursorword')
@@ -141,8 +141,8 @@ call minpac#add('sgur/vim-editorconfig')
 " Statusline            {{{2
     " call minpac#add('ap/vim-buftabline')
     " call minpac#add('itchyny/lightline.vim')
-    " call minpac#add('vim-airline/vim-airline')
-    " call minpac#add('vim-airline/vim-airline-themes')
+    call minpac#add('vim-airline/vim-airline')
+    call minpac#add('vim-airline/vim-airline-themes')
     " call minpac#add('powerline/powerline', {'rtp': 'powerline/bindings/vim'})
 " Objects & Operators   {{{2
     " Dependencies
@@ -192,7 +192,7 @@ call minpac#add('justinmk/vim-syntax-extra')
 
 " Python                     {{{3
     " XXX: isort takes around 300ms to load, need to do it conditionally
-    " call minpac#add('fisadev/vim-isort',            {'for': 'python'})
+    call minpac#add('fisadev/vim-isort',            {'for': 'python'})
     call minpac#add('davidhalter/jedi-vim',         {'for': 'python'})
     " call minpac#add('python-rope/ropevim',          {'for': 'python'})
     " call minpac#add('tmhedberg/SimpylFold')
@@ -258,9 +258,9 @@ call minpac#add('justinmk/vim-syntax-extra')
     " call minpac#add('zirrostig/vim-schlepp')
     " call minpac#add('natemaia/DragVisuals')
 
-    " call minpac#add('vim-pandoc/vim-pandoc-syntax')
-    " call minpac#add('vim-pandoc/vim-pandoc')
-    " call minpac#add('vim-pandoc/vim-pandoc-after')
+    call minpac#add('vim-pandoc/vim-pandoc-syntax')
+    call minpac#add('vim-pandoc/vim-pandoc')
+    call minpac#add('vim-pandoc/vim-pandoc-after')
     " call minpac#add('dhruvasagar/vim-table-mode')
     " call minpac#add('clarke/vim-renumber')
     " call minpac#add('JamshedVesuna/vim-markdown-preview')
@@ -309,7 +309,7 @@ endfunction
 " Define user commands for updating/cleaning the plugins.
 " Each of them calls PackInit() to load minpac and register the information of
 " plugins, then performs the task.
-command! PackUpdate call PackInit() | call minpac#update('', {'do': 'call minpac#status()'})
+command! PackUpdate call PackInit() | call minpac#update()
 command! PackClean  call PackInit() | call minpac#clean()
 command! PackStatus call PackInit() | call minpac#status()
 
@@ -517,11 +517,12 @@ let g:interestingWordsRandomiseColors = 0
 
 " {{{2 indentLine
 let g:indentLine_faster = 1
-let g:indentLine_char = '┊'
+let g:indentLine_char = '¦'
 let g:indentLine_concealcursor = 'nc'  " XXX: this sets 'concealcursor'
 
 " {{{2 indentguides
-let g:indentguides_tabchar = '┊'
+let g:indentguides_spacechar = '¦'
+let g:indentguides_tabchar = '»'  " XXX: this changes 'listchars'
 
 " {{{2 python-syntax
 let python_highlight_all = 1
@@ -963,6 +964,14 @@ highlight ExtraWhitespace  cterm=underline ctermfg=Red gui=underline guifg=Red
 " }}}2
 endfunction
 call Highlights()
+
+" if exists('##TextYankPost')
+" XXX: waiting on nvim 0.5
+" https://blog.kdheepak.com/three-built-in-neovim-features.html#highlight-yanked-text
+"     au TextYankPost * silent! lua require('vim.highlight').on_yank('IncSearch', 1000)
+" else
+    packadd vim-highlightedyank
+" endif
 
 augroup rc_colors
     au!

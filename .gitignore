@@ -1,5 +1,7 @@
 tags
 
+nvim/.config/nvim/.netrwhist
+
 weechat/.config/weechat/sec.conf
 weechat/.config/weechat/weechat.log
 weechat/.config/weechat/weechat_fifo
