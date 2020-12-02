@@ -313,33 +313,9 @@ command! PackUpdate call PackInit() | call minpac#update()
 command! PackClean  call PackInit() | call minpac#clean()
 command! PackStatus call PackInit() | call minpac#status()
 
-filetype on
-filetype plugin on
-filetype indent on
-
-syntax enable
-
 " {{{1 Settings
-packadd matchit
-
-" {{{2 Swap, undo, etc
-    set backup     " save backups
-    let &g:backupdir = stdpath('data') . '/backup//'
-
-    set undofile   " save undos (persistent undo)
-    let &g:undodir = stdpath('data') . '/undo//'
-
-    set swapfile   " use swapfiles
-    let &g:directory = stdpath('data') . '/swap//'
-
-    " Create directories if they doesn't exist
-    call mkdir(expand(&g:directory), 'p', 0700)
-    call mkdir(expand(&g:backupdir), 'p', 0700)
-    call mkdir(expand(&g:undodir), 'p', 0700)
-
 " {{{2 Wildcompltetion
     set wildmode=longest:full,full     " command-line completion
-    set wildmenu                       " enhanced command-line completion
 
     set wildignore+=*/.git/*,*/.hg/*,*/.svn/*    " version control directories
     set wildignore+=*.DS_Store                   " OS X things
@@ -362,21 +338,16 @@ packadd matchit
     set wildignore+=*.zip,*.rar                  " other archives
 " }}}2
 
-set history=500    " keep 500 commands in history
 " set number         " display line numbers
 set showmatch      " show matching pairs, like parentheses
 set matchtime=5    " tenths of seconds to show the matching paren
-set autoread       " re-read the file when changed outside of vim
 set wrapscan       " searches wrap around the end of file
-set laststatus=2   " always show status line
-set backspace=indent,eol,start         " backspace over everything!
 set equalalways    " make new splits equal size
 set modeline       " allow modeline execution
 set mouse=a        " enable mouse for all modes (Normal, Insert, etc)
 set ignorecase     " ignores case when searching
 set smartcase      " only match case when it exists
 set magic          " allow 'magic' regexps
-" set noshowmode     " have powerline for that
 set hidden         " unshown buffers are not closed when hidden
 set list           " show nice little characters
 set listchars=eol:¬,tab:»\ ,trail:·,extends:❯,precedes:❮,nbsp:␣
@@ -386,33 +357,19 @@ set nrformats+=alpha    " incr/decr alphabetic characters
 set nrformats-=octal    " numbers starting with zero aren't always octal
 set formatoptions+=j    " remove comment leaders when joining lines
 
+set backup          " save backups
+set backupdir-=.    " don't save the backup along with the file
+set undofile        " save undos (persistent undo)
+set swapfile        " use swapfiles
+
 " XXX: fix these
 set tabstop=8      " 
 set softtabstop=4  " 
 set expandtab      " 
 set shiftwidth=4   " 
 set shiftround     " use multiple of shiftwidth when indenting with < and >
-set autoindent     " 
 
 set lazyredraw     " do not redraw while executing commands
-set ttyfast        " I have a fast connection to my tty
-
-" FIXME:
-" if $TERM =~ 'st'
-"     " if !has('nvim')
-"     " set ttymouse=xterm
-"     " endif
-
-"     " termguicolors
-"     " set termguicolors
-"     let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-"     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-
-"     " guicursor-like
-"     " let &t_EI = "\<Esc>[0 q"
-"     " let &t_SI = "\<Esc>[5 q"
-"     " let &t_SR = "\<Esc>[3 q"
-" endif
 
 if executable('rg')
     set grepprg=rg\ --vimgrep
@@ -429,15 +386,11 @@ elseif executable('grep')
 endif
 
 set title           " set the terminal title
-set showcmd         " show command in the last line of the screen
-set incsearch       " search while you type
-set hlsearch        " highlight matched strings
 set splitright      " new vertical splits are put on the right
 set virtualedit=block  " allow virtual-block past the line end
 set colorcolumn=80  " a highlighted column at the 80 char mark
 set cursorline      " highlights the screen line of the cursor
 set showbreak=↪\    " shows up on a wrapped line
-set fillchars=vert:│   " used to separate vertical splits
 set completeopt=menu,menuone,longest
 set foldcolumn=2    " a 2-char wide column indicating open and closed folds
 set concealcursor=nc   " don't conceal the cursor line in visual and insert mode
