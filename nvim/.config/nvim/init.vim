@@ -284,7 +284,7 @@ call minpac#add('justinmk/vim-syntax-extra')
     augroup Waikiki
         au!
         au User setup echomsg 'in a Waikiki buffer'
-    augroup END
+    augroup end
 
     " call minpac#add('lervag/wiki.vim')
     " call minpac#add('lervag/wiki-ft.vim')
@@ -558,14 +558,6 @@ function! RelativeTo(path, ...)        " {{{2
 endfunction
 
 
-function! AskMakeDirs(dir)             " {{{2
-    let msg = "Some directories in the filepath don't exist.  Create them?"
-    if !isdirectory(a:dir) && confirm(msg, "&Yes\n&No") == 1
-        call mkdir(a:dir, 'p')
-    endif
-endfunction
-
-
 function! FoldText()                   " {{{2
 " https://coderwall.com/p/usd_cw
 
@@ -643,6 +635,23 @@ function! ToggleQuickFix(list, ...)
     let go_back = get(a:000, 0, 0)
     if go_back && winnr() != current_winnr | wincmd p | endif
 endfunction
+
+
+" askmkdir              {{{2
+" See also: http://code.arp242.net/auto_mkdir2.vim
+
+function! s:askmkdir(dir, no_confirm) abort
+    let l:msg = printf('%s: No such file or directory. Creating...', a:dir)
+    if !isdirectory(a:dir) && (a:no_confirm || confirm(l:msg))
+        call mkdir(a:dir, 'p')
+    endif
+endfunction
+
+augroup askmkdir
+    autocmd!
+    autocmd BufWritePre,FileWritePre *
+                \ call s:askmkdir(expand('<amatch>:p:h'), v:cmdbang)
+augroup end
 
 
 " {{{2 bufline
@@ -727,7 +736,7 @@ function! s:delayed_echo_bufline(delay)
             \ unlet s:save_ut        |
             \ call Bufline()  |
             \ autocmd! bufline_delayed
-    augroup END
+    augroup end
 endfunction
 
 augroup bufline
@@ -736,7 +745,7 @@ augroup bufline
     autocmd CursorHold * call Bufline()
     " events which output a message which should be immediately overwritten
     autocmd BufWinEnter,WinEnter,InsertLeave,VimResized * call s:delayed_echo_bufline(1)
-augroup END
+augroup end
 
 
 " {{{2 motioncounts
@@ -786,7 +795,7 @@ endfunction
 augroup motioncounts_autocmds
     autocmd!
     autocmd WinLeave,InsertEnter,CursorMoved,CursorHold * call s:clear_motion_counts()
-augroup END
+augroup end
 
 
 nnoremap <silent> <Plug>(motioncounts-w)  w:call ShowMotionCounts('w')<CR>
@@ -931,7 +940,7 @@ augroup rc_colors
     au ColorScheme * call Highlights()
     " TODO: consider using OptionSet event to check for options like
     "       termguicolors and reset the colorscheme
-augroup END
+augroup end
 
 " Lightline             {{{2
 function! SetupLightline(colorscheme)
@@ -1028,7 +1037,7 @@ endfunction
 " augroup rc_lightline
 "     au!
 "     au User ALELint call lightline#update()
-" augroup END
+" augroup end
 
 " call SetupLightline('wombat')
 
@@ -1058,7 +1067,7 @@ function! AirlineCustom()              " {{{3
         au!
         au QuickFixCmdPost [^l]*    let g:qf_pending = !IsQfWindowOpen()
         au Filetype qf              let g:qf_pending = 0
-    augroup END
+    augroup end
     call airline#parts#define_function('qf_pending', 'Airline_QfPending')
 
     let g:airline_section_y = airline#section#create(['finfo'])
@@ -1090,7 +1099,7 @@ let g:airline_theme_patch_func = 'AirlineCustomTheme'
 augroup rc_airline
     au!
     au User AirlineAfterInit call AirlineCustom()
-augroup END
+augroup end
 
 " {{{1 Filetypes
 " I'm using vim-go for Go and vim-syntax-extra for C
@@ -1115,22 +1124,19 @@ augroup rc_general      " {{{2
     au WinEnter * set   cursorline
     au WinLeave * set nocursorline
 
-    " Create directories if needed for new files
-    au BufNewFile * call AskMakeDirs(expand('%:h'))
-
     " Re-source .vimrc on save
     au BufWritePost $MYVIMRC nested source $MYVIMRC
-augroup END
+augroup end
 
 augroup ft_text         " {{{2
   au!
   au FileType text setlocal textwidth=78
-augroup END
+augroup end
 
 augroup ft_help         " {{{2
     au!
     au FileType help setlocal keywordprg=:help
-augroup END
+augroup end
 
 augroup ft_netrw        " {{{2
     au!
@@ -1146,12 +1152,12 @@ augroup ft_netrw        " {{{2
 
     au FileType netrw nnoremap <buffer> q :echohl WarningMsg<Bar>echo "q is deprecated, use gq instead"<Bar>echohl NONE<CR>
     au FileType netrw nnoremap <buffer><silent> gq :Rexplore<CR>
-augroup END
+augroup end
 
 augroup ft_vim          " {{{2
     au!
     au FileType vim setlocal keywordprg=:help
-augroup END
+augroup end
 
 augroup ft_python       " {{{2
     au!
@@ -1189,7 +1195,7 @@ augroup ft_python       " {{{2
     "             \ '\<\(while\|for\)\>:\<break\>:\<continue\>',
     "             \ '\<if\>:\<elif\>:\<else\>',
     "             \ '\<try\>:\<except\>:\<finally\>'], ',')
-augroup END
+augroup end
 
 augroup ft_go           " {{{2
     au!
@@ -1199,7 +1205,7 @@ augroup ft_go           " {{{2
                 \ softtabstop=4
                 \ shiftwidth=4
                 \ noexpandtab
-augroup END
+augroup end
 
 augroup ft_cpt          " {{{2
     au!
@@ -1217,7 +1223,7 @@ augroup ft_cpt          " {{{2
 
     au BufWritePost *.cpt u
     au BufWritePost *.cpt set nobin
-augroup END
+augroup end
 
 
 " {{{1 Mappings
