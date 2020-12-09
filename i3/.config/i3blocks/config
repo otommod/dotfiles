@@ -11,6 +11,9 @@ markup=pango
 instance=wlp4s6
 format=json
 
+[transmission.py]
+instance=transmission
+
 [pulsevol.py]
 interval=persist
 
