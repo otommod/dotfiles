@@ -71,6 +71,9 @@ mkdir -p "$RLWRAP_HOME"
 # For the 'less' pager
 export LESSHISTFILE="$HISTDIR/less"
 
+# SQLite
+export SQLITE_HISTORY="$HISTDIR/sqlite"
+
 # nodeJS
 export NODE_REPL_HISTORY="$HISTDIR/node"
 
