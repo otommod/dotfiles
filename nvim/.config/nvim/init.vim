@@ -49,7 +49,7 @@ call minpac#add('sgur/vim-editorconfig')
     " XXX: fix for NeoViM to allow `sudo' to work again.
     " NeoViM's `!' redirects stdin to a pipe and `sudo' doesn't like that. See
     "   https://github.com/neovim/neovim/issues/1716
-    call minpac#add('lambdalisue/suda.vim')
+    " call minpac#add('lambdalisue/suda.vim')
     " call minpac#add('tpope/vim-rsi')
     " call minpac#add('Konfekt/FastFold')
     " call minpac#add('justinmk/vim-ipmotion')
@@ -198,6 +198,7 @@ call minpac#add('justinmk/vim-syntax-extra')
     " call minpac#add('tmhedberg/SimpylFold')
 " Go                         {{{3
     call minpac#add('fatih/vim-go')
+    " call minpac#add('govim/govim', {'for': 'go'})  " XXX: NO NEOVIM SUPPORT
     " call minpac#add('arp242/gopher.vim', {'for': 'go'})
     " call minpac#add('rhysd/vim-goyacc')
 " C/C++                      {{{3
