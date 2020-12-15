@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+
+import configparser
+import os
+import os.path
+import sys
+import tempfile
+from functools import partial
+
+try:
+    from operator import attrgetter
+    import natsort
+
+    # This should correctly be `attrgetter("path")`.  However, that performs
+    # noticably worse.  And given that we only sort files from the same
+    # directory, they should be identical.
+    _dirent_name = attrgetter("name")
+    file_name_key = natsort.os_sort_keygen(key=_dirent_name)
+
+except ImportError:
+    from locale import LC_ALL, setlocale, strxfrm
+    setlocale(LC_ALL, "")
+
+    def file_name_key(dirent):
+        return strxfrm(dirent.name)
+
+XDG_CONFIG_HOME = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+
+
+def file_mtime_key(dirent):
+    return dirent.stat().st_mtime_ns
+
+
+def file_size_key(dirent):
+    return dirent.stat().st_size
+
+
+def file_ext_key(dirent):
+    _, ext = os.path.splitext(dirent.name)
+    return (ext, file_name_key(dirent))
+
+
+libfm_dir_settings = os.path.join(
+    XDG_CONFIG_HOME, "libfm", "dir-settings.conf")
+pcmanfm_conf = os.path.join(
+    XDG_CONFIG_HOME, "pcmanfm", "default", "pcmanfm.conf")
+
+def pcmanfm_sorted_get(d):
+    pcmanfm = configparser.ConfigParser()
+    # XXX: cannot set encoding error to sys.getfilesystemencodeerrors()
+    pcmanfm.read(pcmanfm_conf, encoding=sys.getfilesystemencoding())
+    default_prefs = pcmanfm.get("ui", "sort", raw=True, fallback="")
+
+    dir_settings = configparser.ConfigParser()
+    dir_settings.read(libfm_dir_settings, encoding=sys.getfilesystemencoding())
+
+    sort_key = file_name_key
+    reverse = False
+
+    d = os.path.abspath(d)
+    prefs = dir_settings.get(d, "Sort", raw=True, fallback=default_prefs)
+    for p in prefs.split(";"):
+        if p == "mtime":
+            sort_key = file_mtime_key
+        elif p == "size":
+            sort_key = file_size_key
+        elif p == "ext":
+            sort_key = file_ext_key
+        elif p == "descending":
+            reverse = True
+        elif p == "ascending":
+            reverse = False
+
+    return partial(sorted, key=sort_key, reverse=reverse)
+
+
+mvi_config_dir = os.path.join(XDG_CONFIG_HOME, "mpv-image-viewer")
+
+def mpv(files, starting_file=None):
+    index = 0
+    try:
+        if starting_file:
+            index = files.index(starting_file)
+    except ValueError:
+        pass
+
+    # m3u = os.memfd_create("m3u")
+    m3u = tempfile.TemporaryFile(mode="w+",
+                                 encoding=sys.getfilesystemencoding(),
+                                 errors=sys.getfilesystemencodeerrors())
+    m3u.write("#EXTM3U\n")
+    m3u.writelines(f + "\n" for f in files)
+    m3u.flush()
+
+    # We're using stdin for the playlist because the fd:// and fdclose://
+    # cannot work with relative file paths
+    os.dup2(m3u.fileno(), 0, inheritable=True)
+    os.execvp("mpv", ["mpv",
+                      "--config-dir=%s" % mvi_config_dir,
+                      "--playlist-start=%d" % index,
+                      "--playlist=-"])
+
+
+def main(argv):
+    files = argv[1:]
+    if len(files) != 1:
+        mpv(files)
+
+    selection = files[0]
+
+    d = selection
+    if not os.path.isdir(d):
+        d = os.path.normpath(os.path.dirname(selection))
+
+    sort = partial(sorted, key=file_name_key)
+
+    pcmanfm_sort = pcmanfm_sorted_get(d)
+    if pcmanfm_sort:
+        sort = pcmanfm_sort
+
+    files = [e.path for e in sort(e for e in os.scandir(d) if not e.is_dir())]
+    mpv(files, selection)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

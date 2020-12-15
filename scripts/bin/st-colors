@@ -1,0 +1,421 @@
+#!/usr/bin/env python3
+
+"""
+Usage: st-colors [options] [--] [INFILE | -] [OUTFILE | -]
+
+Options:
+    -I, --input-type=TYPE
+    -O, --output-type=TYPE
+
+Options for xresources
+    --no-cpp       Do not use the C preprocessor
+    --tmux         Tmux pass through
+"""
+
+import json
+import re
+import subprocess
+import sys
+from collections import namedtuple
+from itertools import chain
+
+import docopt
+
+try:
+    from plistlib import load as plist_load
+except ImportError:
+    from plistlib import readPList as plist_load
+
+
+class ColorScheme(object):
+    def __init__(self, values):
+        self._colors = {k: v for k, v in values.items()
+                        if isinstance(k, int)}
+        self._specials = {k: v for k, v in values.items()
+                          if k not in self._colors}
+
+    def __getitem__(self, index):
+        return self._colors[index]
+
+    def __iter__(self):
+        return iter(self._colors.items())
+
+    def __contains__(self, item):
+        if isinstance(item, int):
+            return item in self._colors.keys()
+        elif isinstance(item, str):
+            return item in self._colors.values()
+
+    def index(self, item, default=0):
+        if item not in self._colors.values():
+            return default
+        return {v: k for k, v in self._colors.items()}[item]
+
+    def get(self, key, default=''):
+        if isinstance(key, int):
+            return self._colors.get(key, default)
+        return self._specials.get(key, default)
+
+
+class Filter(object):
+    @classmethod
+    def can_handle(cls, fp):
+        return not fp.isatty() and fp.name.endswith(cls.extension)
+
+    def __init__(self, opts):
+        self.opts = opts
+
+
+class JSON(Filter):
+    extension = ".json"
+
+    def read(self, fp):
+        data = json.load(fp)
+        return ColorScheme({
+            **data["specials"],
+            **{i: c for i, c in enumerate(data["colors"]) if c}
+        })
+
+    def write(self, fp, csm):
+        json.dump({
+            "specials": csm._specials,
+            "colors": [csm.get(i) for i in range(max(csm._colors.keys()))],
+        }, fp, indent=2)
+        fp.write("\n")
+
+
+class XResourcesParser(Filter):
+    # The precise syntax for resources is (in ABNF, RFC 5234):
+    #
+    # resource-line    =  resource-spec / comment / include-file / empty-line
+    # resource-spec    =  *WSP resource-name *WSP ":" *WSP value
+    # resource-name    =  [binding] *( component binding ) component-name
+    # binding          =  *( "." / "*" )
+    # component        =  "?" / component-name
+    # component-name   =  1*( ALPHA / DIGIT / "_" / "-" )
+    # value            =  <any character except NUL or unescaped newline>
+    # comment          =  "!" <any character except NUL or newline>
+    # include-file     =  "#" *WSP %i"include" *WSP filename *WSP
+
+    extension = ".xresources"
+
+    Token = namedtuple("Token", "id string start end")
+    Stream = namedtuple("Stream", "string index")
+
+    LEXER_RE = re.compile(r"""
+            (?P<resourceName>
+                [.*]*       # starts with an optional binding
+                            # then potentially many component--binding pairs
+                (?:(?:\?|[a-zA-Z0-9_-]+)[.*]+)*
+                            # and ends with a component-name
+                (?P<componentName>[a-zA-Z0-9_-]+))
+            | (?P<colon>:)
+            | (?P<eol>\n)
+            | (?P<wsp>[ \t]+)
+            | (?P<comment>!.*)          # a '.' matches anything but a newline
+            | (?P<include>\#[ \t]*include[ \t]+.*)  # we don't handle includes
+        """, flags=re.VERBOSE)
+
+    VALUE_NL_RE = re.compile(r"(?<!\\)(?:\\\\)*(?=\n)|$")
+    VALUE_UNESCAPE_RE = re.compile(r"""
+            \\(?P<lit>[ \t\\])          # these are literal
+            | \\(?P<nl>n)               # gets turned into a newline
+            | \\(?P<oct>[0-7]{3})       # octal
+            | \\(?P<removed>\n|$)       # removed
+        """, flags=re.VERBOSE)
+
+    @classmethod
+    def _to_cpp(cls, fp):
+        proc = subprocess.Popen(["cpp", "-P"], stdin=fp,
+                                stdout=subprocess.PIPE,
+                                universal_newlines=True)
+        proc.wait()
+        return proc.stdout
+
+    @classmethod
+    def is_color(cls, name):
+        return cls.color_name(name) is not None
+
+    @classmethod
+    def color_name(cls, name):
+        if name.startswith("color") and name[5:].isdigit():
+            return int(name[5:])
+        elif name == "cursorColor":
+            return "cursor"
+        elif name in ("foreground", "background"):
+            return name
+
+    @classmethod
+    def color_value(cls, value):
+        # we don't try to parse the colors
+        return value.strip()
+
+    @classmethod
+    def error(cls, stream, errindex, msg):
+        raise ValueError("at line %d:%d: %s" % (
+            stream.string.count("\n", 0, errindex),
+            errindex - stream.string.rfind("\n", 0, errindex),
+            msg))
+
+    @classmethod
+    def lex(cls, stream):
+        if stream.index >= len(stream.string):
+            return stream, cls.Token("eof", "", stream.index, stream.index)
+
+        m = cls.LEXER_RE.match(stream.string, stream.index)
+        if not m:
+            cls.error(stream, stream.index,
+                      "unexpected '%s'" % stream.string[stream.index])
+
+        t = cls.Token(m.lastgroup, m.group(), stream.index, m.end()-1)
+        if t.id == "resourceName":
+            t = t._replace(string=m.group("componentName"))
+        return stream._replace(index=t.end+1), t
+
+    @classmethod
+    def lex_value(cls, stream):
+        # there's always a match; either an NL or the end of the string
+        i = cls.VALUE_NL_RE.search(stream.string, stream.index).end() - 1
+        s = cls.unescape_value(stream.string[stream.index:i])
+        t = cls.Token("value", s, stream.index, i)
+        return stream._replace(index=t.end+1), t
+
+    @classmethod
+    def unescape_value(cls, string):
+        def do_sub(m):
+            return {
+                "removed": lambda: "",
+                "nl": lambda: "\n",
+                "lit": lambda: m.group("lit"),
+                "oct": lambda: chr(int(m.group("oct"), base=8)),
+            }[m.lastgroup]()
+        return cls.VALUE_UNESCAPE_RE.sub(do_sub, string)
+
+    def read(self, fp):
+        if self.opts["cpp"]:
+            fp = self._to_cpp(fp)
+        stream = self.Stream(fp.read(), 0)
+
+        resources = {}
+        while True:
+            stream, t = self.lex(stream)
+            if t.id == "wsp":
+                stream, t = self.lex(stream)
+            if t.id == "resourceName":
+                name = t
+                next_stream, t = self.lex(stream)
+                if t.id == "wsp":
+                    stream = next_stream
+                stream, t = self.lex(stream)
+                if t.id != "colon":
+                    self.error(stream, t.start, "unexpected token '%s'" % t.id)
+                stream, value = self.lex_value(stream)
+                resources[name.string] = value.string
+
+            elif t.id == "eof":
+                break
+            elif t.id == "comment":
+                pass
+            elif t.id == "include":
+                pass
+
+            stream, t = self.lex(stream)
+            if t.id not in ("eol", "eof"):
+                self.error(stream, t.start, "unexpected token '%s'" % t.id)
+
+        return ColorScheme({self.color_name(k): self.color_value(v)
+                            for k, v in resources.items() if self.is_color(k)})
+
+
+class iTermColorScheme(Filter):
+    extension = ".itermcolors"
+
+    @classmethod
+    def _identify_color(cls, color):
+        pattern = r"Ansi (?P<num>\d{1,2})"
+        return number_match(pattern, color)
+
+    @classmethod
+    def _format_color(cls, color):
+        color = {k: round(v * 255) for k, v in color.items()}
+        return "#{red:02x}{green:02x}{blue:02x}".format(
+            red=color["Red Component"],
+            green=color["Green Component"],
+            blue=color["Blue Component"],
+        )
+
+    def read(self, fp):
+        plist = plist_load(fp)
+
+        colors = {self._identify_color(k): self._format_color(c)
+                  for k, c in plist.items()}
+        colors = {k: c for k, c in plist.items() if k != -1}
+        colors.update({
+            "foreground": self._format_color(plist["Foreground Color"]),
+            "background": self._format_color(plist["Background Color"]),
+            "cursor": self._format_color(plist["Cursor Color"]),
+        })
+
+        return ColorScheme(colors)
+
+
+class EscapeCodes(Filter):
+    @classmethod
+    def can_handle(cls, file):
+        return file.isatty()
+
+    def _format_color(self, i, c):
+        code = '\033]4;{0};{1}\033\\'.format(i, c)
+        if self.opts["tmux"]:
+            return code.replace("\033", "\033\033")
+        return code
+
+    def write(self, fp, csm):
+        all_colors = {k: v for k, v in csm}
+        all_colors.update({
+            i: csm.get(c) for i, c in [
+                (256, 'foreground'), (257, 'background'), (258, 'cursor')]
+            if csm.get(c)
+        })
+
+        if self.opts["tmux"]:
+            fp.write("\033Ptmux;")
+        fp.write("".join(self._format_color(i, c)
+                         for i, c in all_colors.items()) + '\n')
+        if self.opts["tmux"]:
+            fp.write("\033\\\\")
+
+
+class StHeaderFormat(Filter):
+    extension = ".h"
+
+    DEFAULTS_TEXT = "static unsigned int default{0} = {1};"
+
+    def __init__(self, opts):
+        super().__init__(opts)
+        self._foreground = None
+        self._background = None
+        self._cursor = None
+
+    def _needs_index(self, i):
+        return i > 0 and i-1 not in self.csm
+
+    def _format_color(self, i, c):
+        s = "\t"
+        if self._needs_index(i):
+            s += "[{0}] = "
+        s += "\"{1}\""
+
+        return s.format(i, c)
+
+    def _resolve_colors(self):
+        fg = csm.get("foreground", csm[7])
+        self._foreground = (self.csm.index(fg, 256), fg)
+
+        bg = csm.get("background", csm[0])
+        self._background = (self.csm.index(bg, 257), bg)
+
+        cs = csm.get("cursor", csm[3])
+        self._cursor = (self.csm.index(cs, 258), cs)
+
+    def _colorname(self):
+        o = []
+        o.append("static const char *colorname[] = {")
+        o.extend(self._format_color(i, c) for i, c in self.csm)
+        o.extend(
+            self._format_color(i, c) for i, c in (
+                self._foreground, self._background, self._cursor
+            ) if i not in self.csm
+        )
+        o.append("};\n")
+
+        return o
+
+    def _defaults(self):
+        append = (
+            lambda name, color: o.append(
+                self.DEFAULTS_TEXT.format(name, color[0])))
+
+        o = []
+        append("fg", self._foreground)
+        append("bg", self._background)
+        append("cs", self._cursor)
+
+        return o
+
+    def write(self, fp, csm):
+        self.csm = csm
+        self._resolve_colors()
+        fp.write("\n".join(chain(self._colorname(), self._defaults())))
+
+
+def die(fmt, *args):
+    print(fmt.format(*args), file=sys.stderr)
+    sys.exit(1)
+
+
+def number_match(pattern, text):
+    match = re.match(pattern, text)
+    if match:
+        return int(match.group("num"))
+    return -1
+
+
+def handle_file(opts, file_key, stream, type_key, mode="r"):
+    file = opts[file_key]
+    type_ = opts[type_key]
+
+    if file is None or file == "-":
+        file = stream
+    else:
+        file = open(file, mode)
+
+    if type_ is None:
+        for k, v in FILTERS.items():
+            if v.can_handle(file):
+                type_ = k
+                break
+        else:
+            die("Cannot autodetect {} for file '{}'.\n"
+                "Please specify one.", type_key, file.name)
+    else:
+        if type_ not in FILTERS.keys():
+            die("Not valid type: {}", type_)
+
+    opts[file_key] = file
+    opts[type_key] = type_
+
+
+def parse_options(args):
+    opts = docopt.docopt(__doc__, args)
+    opts = {k.lstrip('--'): v for k, v in opts.items()}
+
+    for k, v in opts.items():
+        if k.startswith("no-"):
+            opts[k[3:]] = not v
+            del opts[k]
+
+    handle_file(opts, "INFILE", sys.stdin, "input-type")
+    handle_file(opts, "OUTFILE", sys.stdout, "output-type", "w")
+
+    return opts
+
+
+FILTERS = {
+    "xresources":  XResourcesParser,
+    "itermcolors": iTermColorScheme,
+    "json":        JSON,
+    "header":      StHeaderFormat,
+    "escapecodes": EscapeCodes,
+}
+
+def main(args):
+    opts = parse_options(args)
+
+    infilter = FILTERS[opts["input-type"]](opts)
+    outfilter = FILTERS[opts["output-type"]](opts)
+
+    outfilter.write(opts["OUTFILE"], infilter.read(opts["INFILE"]))
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

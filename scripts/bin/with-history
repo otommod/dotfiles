@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# TODO: Allow a header (a number of lines of input will be printed before the history)
+# XXX: head(1) won't work for that; it reads many more lines than it needs to
+# because of buffering and there's no way to seek back in a pipe.  read(1)
+# seemed to work but it may depend on the shell.
+# XXX: if the command has "early" output tee(1) will write it to $HIST_FILE and
+# it may end up as input again since each command reads $HIST_FILE on its own.
+
+if [ $# -lt 2 ]; then
+    printf "usage: %s HISTORY_FILE CMD [ARGS...]\n" "$0" >&2
+    exit 1
+fi
+
+HIST_FILE="$1"
+shift
+
+{
+    sort "$HIST_FILE" | sort | uniq -c | sort -nr | \
+        # I hate this sed but I hate the output of uniq -c more; POSIX states
+        #
+        #   If the -c option is specified, the output file shall be empty or
+        #   each line shall be of the form:
+        #     "%d %s", <number of duplicates>, <line>
+        #
+        # but that's not what I'm seeing; it's a always indented with spaces so
+        # a cut won't work
+        sed -e 's/^[[:blank:]]*[[:digit:]]\+[[:blank:]]*//'
+
+    grep -xvFf "$HIST_FILE"
+} | "$@" | tee -a "$HIST_FILE"

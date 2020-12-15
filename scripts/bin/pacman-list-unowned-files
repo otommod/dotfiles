@@ -1,0 +1,11 @@
+#!/bin/sh
+
+owned_files="$(mktemp)"
+trap 'rm -rf "$owned_files"' EXIT
+
+pacman -Ql --quiet | sort | uniq >"$owned_files"
+
+# we give directories ending slashes because that's how pacman lists them
+# https://unix.stackexchange.com/a/4857
+find /etc /usr -type d -exec printf '%s/\n' '{}' + -or -print 2>/dev/null \
+    | sort | comm -23 - "$owned_files"

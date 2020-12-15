@@ -1,0 +1,54 @@
+#!/bin/sh
+
+progname=$(basename "$0")
+
+usage() {
+    printf "Usage: %s [FILES...]\n" "$progname"
+    printf "Compute base64 packed MD5 checksums as used by the 4chan API\n"
+}
+
+while getopts 'h' opt; do
+    case $opt in
+        h) usage; exit 0 ;;
+        ?) usage; exit 1 ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+unset IFS
+md5sum -- "$@" | while read -r digest filename; do
+        case "$digest" in
+            *[!a-fA-F0-9]*|'')
+                printf '%s: not a digest: %s\n' "$progname" "$digest"
+                continue ;;
+            *) ;;
+        esac
+
+        # We need to base64-encode the binary $digest, not its hexadecimal
+        # representation that md5sum returns.  Here's what we do:
+        #   - loop over the hex string in 2-char increments (bytes)
+        #   - turn the 2 hex chars to 3 octal chars
+        #   - turn the octal to binary
+        # The octal conversion is for portability; POSIX printf(1) only
+        # specifies octal to binary conversions.
+        while [ -n "$digest" ]; do
+            next_digest="${digest#??}"
+            byte="${digest%$next_digest}"
+            digest="$next_digest"
+
+            # From what I can gather, POSIX printf(1) understands hexadecimal
+            # integer constants
+            printf '%03o\n' "0x$byte"
+        done | while read -r oct; do
+            # I used a pipeline for this because it was noticably faster than
+            # command substitution
+            printf '%b' "\\$oct"
+
+            # We use tr(1) to delete any potential newlines including the
+            # trailing one.  This allows writting the filename in a separate
+            # printf(1) saving a command substitution for the output of this
+            # very pipeline
+        done | base64 | tr -d '\n'
+
+        printf '  %s\n' "$filename"
+    done

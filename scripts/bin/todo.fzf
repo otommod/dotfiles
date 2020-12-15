@@ -1,0 +1,366 @@
+#!/usr/bin/env python3
+
+import bisect
+import errno
+import locale
+import os
+import re
+import subprocess
+import sys
+from collections import defaultdict, namedtuple
+from datetime import datetime
+
+TODO_DIR = os.path.expanduser("~/Documents/todo")
+
+KEYMAPS = {
+    "new-todo": "ctrl-a",
+    "edit-todo": "enter",
+    "done-todo": "ctrl-d",
+
+    "show-projects": "ctrl-p",
+    "show-todos": "ctrl-p",
+
+    "new-project": "ctrl-a",
+    "edit-project": "enter",
+    "delete-project": "ctrl-d",
+}
+
+
+def strpdate(s, fmt):
+    return datetime.strptime(s, fmt).date()
+
+
+def lex_line(line):
+    patterns = r"""
+        (?P<completionMarker>^x\s+)
+        | (?P<priority>^\([A-Z]\)(?:\s+|$))
+        | (?P<date>(?:^|(?<=\s))\d\d\d\d-\d\d-\d\d(?=\s|$))
+            # A date is on a "whitespace" boundary; surrounded by whitespace or
+            # at the start and/or end
+        | (?P<context>(?:^|(?<=\s))@\S+)
+            # A context is preceded by whitespace and an at-sign
+        | (?P<project>(?:^|(?<=\s))\+\S+)
+            # Same with a project but with a plus-sign
+        | (?P<tag>(?:^|(?<=\s))\S+:\S+)
+            # A tag contains a colon between text
+    """
+
+    Token = namedtuple("Token", "type string start end")
+    matches = re.finditer(patterns, line, flags=re.VERBOSE)
+
+    i = 0
+    for m in matches:
+        if i < m.start():
+            yield Token("text", line[i:m.start()], i, m.start())
+
+        tok = Token(m.lastgroup, m.group(), m.start(), m.end())
+
+        # if m.lastgroup == "context" or m.lastgroup == "project":
+        #     tok["value"] = tok["string"][1:]
+        # if m.lastgroup == "tag":
+        #     tok["name"], _, tok["value"] = tok["string"].partition(":")
+        # if m.lastgroup == "priority":
+        #     tok["value"] = tok["string"].strip().strip("()")
+        # if m.lastgroup == "date":
+        #     try:
+        #         tok["value"] = strpdate(tok["string"], "%Y-%m-%d")
+        #     except ValueError:
+        #         # Not a date (e.g. 2018-20-54); regular text
+        #         tok["type"] = "text"
+
+        if tok.type == "date":
+            try:
+                strpdate(tok.string, "%Y-%m-%d")
+            except ValueError:
+                # Not a date (e.g. 2018-20-54); regular text
+                tok = tok._replace(type="text")
+
+        yield tok
+        i = m.end()
+
+    if i < len(line):
+        yield Token("text", line[i:], i, len(line))
+    yield Token("eol", "", -1, -1)
+
+
+def parse_line(line):
+    """A parser for the todo.txt format.
+
+    For the specification, see: https://github.com/todotxt/todo.txt
+    Some other working parsers are in the official Android todo.txt app, as
+    well as https://github.com/bram85/topydo for a Python one.
+    """
+    result = {
+        "string": line,
+        "completed": False,
+        "completionDate": None,
+        "priority": None,
+        "creationDate": None,
+        "projects": [],
+        "contexts": [],
+        "tags": defaultdict(list),
+    }
+
+    text = []
+    for t in lex_line(line):
+        if t.type == "completionMarker":
+            result["completed"] = True
+        if t.type == "date":
+            if text:
+                # dates can only come before any text
+                t = t._replace(type="text")
+            elif not result["completionDate"] and result["completed"]:
+                result["completionDate"] = strpdate(t.string, "%Y-%m-%d")
+            elif not result["creationDate"]:
+                result["creationDate"] = strpdate(t.string, "%Y-%m-%d")
+        if t.type == "priority":
+            result["priority"] = t.string.strip().strip("()")
+        if t.type == "context":
+            result["contexts"].append(t.string[1:])
+            t = t._replace(type="text")
+        if t.type == "project":
+            result["projects"].append(t.string[1:])
+            t = t._replace(type="text")
+        if t.type == "tag":
+            name, _, value = t.string.partition(":")
+            result["tags"][name].append(value)
+            t = t._replace(type="text")
+
+        if t.type == "text":
+            text.append(t.string)
+
+    if result["completed"] and "pri" in result["tags"]:
+        result["priority"] = result["tags"]["pri"]
+        del result["tags"]["pri"]
+
+    result["text"] = "".join(text)
+    return result
+
+
+def replace_line(filename, line_num, text):
+    # TODO: In order to protect the user's data, you'd have to copy the file
+    # into a temporary one, do any modifications on that and then put it back,
+    # in the place of the original, since on Unix write() is not atomic but
+    # rename() is.  However, this is not as obvious as it sounds.  You'd have
+    # to also copy the metadata (permissions, owner, modification times, etc)
+    # and special-handle symlinks.
+    # TODO: Could use mmap to make this more memory efficient (no need to
+    # read all the file first) but it has several special case (e.g. can't mmap
+    # empty files).
+    with open(filename, "r+") as fp:
+        lines = fp.readlines()
+        # We need to make sure that the line contains exactly one \n
+        lines[line_num] = text.rstrip("\n") + "\n"
+        # When write()ing to an index greater than the size of a file, the
+        # in-between indices are filled in with NULs.
+        # truncate() updates the size of the file but not the file pointer,
+        # which now probably points past the end of the file.
+        # So, a seek() is required to not create unwanted NULs if writing.
+        fp.truncate(0)
+        fp.seek(0)
+        fp.writelines(lines)
+
+
+def append_line(filename, text):
+    # TODO: see replace_line
+    binary = text.encode(locale.getpreferredencoding())
+    with open(filename, "a+b") as fp:
+        # We want to see whether the fild ends on a newline or not so we don't
+        # create empty lines.  However, when opening in text mode, python can't
+        # seek from the end of the file (multi-byte encodings don't make that
+        # easy), so we open in binary mode (and do the encoding ourselves).
+        try:
+            fp.seek(-1, 2)
+            if fp.read(1) != b"\n":
+                binary = b"\n" + binary
+        except OSError as e:
+            # If the file is empty the seek would be to a (absolute) negative
+            # position which causes an EINVAL, but it's okay; it's just an
+            # empty file.  In all other cases an actual error happened.
+            if e.errno != errno.EINVAL:
+                raise
+        fp.write(binary)
+
+
+def editor(filename, line=0):
+    line += 1  # 0-based
+    ed = os.getenv("VISUAL", os.getenv("EDITOR", "vi"))
+    if ed in ("vi", "vim", "emacs"):
+        args = ["+%d" % line, filename]
+    elif ed in ("subl", "atom"):
+        args = ["%s:%d" % (filename, line)]
+    else:
+        args = [filename]
+
+    # Per the docs: the arguments to the child process should start with the
+    # name of the command being run, but this is not enforced.
+    os.execvp(ed, [ed] + args)
+
+
+def color_line(parsed):
+    if parsed["completed"]:
+        return "\033[1;36m" + parsed["string"] + "\033[0m"
+    colored = parsed["string"]
+    colored = re.sub(r"@\S+", "\033[36m\\g<0>\033[0m", colored)
+    colored = re.sub(r"\+\S+", "\033[34m\\g<0>\033[0m", colored)
+    colored = re.sub(r"\S+:\S+", "\033[35m\\g<0>\033[0m", colored)
+    return colored
+
+
+def get_fzf_line(total_linenum, line_map, files):
+    i = bisect.bisect_right(line_map, total_linenum)
+    return (
+        files[i - 1],
+        total_linenum - line_map[i - 1],
+    )
+
+
+def expect(*keymaps):
+    return "--expect=%s" % (
+        ",".join(KEYMAPS[k] for k in keymaps if KEYMAPS[k] != "enter"))
+
+
+def fzf(choices, args=None):
+    cmd = ["fzf", "--ansi", "--no-clear", "--print-query"]
+    # TODO: provide a better interface for arguments
+    cmd.extend(args or None)
+
+    # TODO: consider using the check argument
+    proc = subprocess.run(cmd, input="\n".join(choices),
+                          stdout=subprocess.PIPE, universal_newlines=True)
+
+    out = proc.stdout.split("\n")
+    if proc.returncode == 130:
+        # the user aborted the selection (with ESC or similar)
+        sys.exit(0)
+    if proc.returncode == 2 or len(out) < 2:
+        # some error happened
+        sys.exit(1)
+
+    query, key, *selection = out
+    if not key:
+        key = "enter"
+    if "--multi" not in cmd:
+        selection = "" if not selection else selection[0]
+    return key, query, selection
+
+
+def show_projects(projects, opts):
+    key, query, selection = fzf(
+        projects, ["--prompt=Projects> ", expect("new-project", "edit-project",
+                                                 "delete-project",
+                                                 "show-todos")])
+
+    if key == KEYMAPS["show-todos"]:
+        run(opts)
+
+    elif key == KEYMAPS["edit-project"]:
+        if selection in projects:
+            editor(projects[selection])
+
+    elif key == KEYMAPS["new-project"]:
+        # TODO: create a new file
+        pass
+
+    elif key == KEYMAPS["delete-project"]:
+        # TODO: delete the file
+        pass
+
+
+def run(opts):
+    if not opts["files"]:
+        all_files = [f for f in os.scandir(opts["directory"]) if f.is_file()]
+        # FIXME: what if NotADirectoryError is thrown?
+    else:
+        all_files = opts["files"]
+
+    projects = {os.path.splitext(os.path.basename(f))[0]: f for f in all_files}
+
+    line_map = []
+    all_lines = []
+    for fname in all_files:
+        with open(fname) as fp:
+            startline = len(all_lines)
+            all_lines.extend(fp.readlines())
+            line_map.append(startline)
+
+    linenum_length = len(str(len(all_lines) - 1))
+    visible_lines = ["%0*d%s" % (linenum_length, n, color_line(p).strip("\n"))
+                     for n, l in enumerate(all_lines)
+                     for p in [parse_line(l)] if not p["completed"]
+                     and opts["contexts"].issubset(p["contexts"])
+                     and opts["projects"].issubset(p["projects"])]
+
+    key, query, selection = fzf(visible_lines, [
+        expect("new-todo", "edit-todo", "done-todo", "show-projects"),
+        "--delimiter=" + "[0-9]"*linenum_length, "--with-nth=2.."])
+
+    if key == KEYMAPS["show-projects"]:
+        show_projects(projects, opts)
+
+    elif key == KEYMAPS["new-todo"]:
+        # TODO: do we want to add a creation date?
+        # new_line = "{:%Y-%m-%d} {}".format(datetime.today(), query)
+
+        parsed = parse_line(query)
+        if parsed["projects"] and parsed["projects"][0] in projects:
+            append_line(projects[parsed["projects"][0]], query)
+        else:
+            append_line(os.path.join(TODO_DIR, "todo.txt"), query)
+
+    elif key == KEYMAPS["done-todo"]:
+        if not selection:
+            return
+        total_linenum = int(selection[:linenum_length])
+        assert 0 <= total_linenum < len(all_lines)
+
+        linetext = selection[linenum_length:]
+        fname, linenum = get_fzf_line(total_linenum, line_map, all_files)
+        parsed = parse_line(linetext)
+        assert not parsed["completed"]
+
+        done_line = "x {:%Y-%m-%d} {}".format(datetime.today(), linetext)
+        replace_line(fname, linenum, done_line)
+
+    elif key == KEYMAPS["edit-todo"]:
+        if not selection:
+            return
+        total_linenum = int(selection[:linenum_length])
+        assert 0 <= total_linenum < len(all_lines)
+
+        fname, linenum = get_fzf_line(total_linenum, line_map, all_files)
+        editor(fname, linenum)
+
+
+def parse_args(args):
+    opts = {
+        "projects": set(),
+        "contexts": set(),
+        "files": [],
+        "directory": TODO_DIR,  # TODO: allow setting the directory
+    }
+
+    for a in args:
+        if a.startswith("+"):
+            opts["projects"].add(a[1:])
+        elif a.startswith("@"):
+            opts["contexts"].add(a[1:])
+        else:
+            opts["files"].append(a)
+
+    return opts
+
+
+def main(args):
+    try:
+        run(parse_args(args[1:]))
+
+    finally:
+        # FIXME: kind of a hack; I could just use tput
+        import curses
+        curses.setupterm()
+        sys.stdout.buffer.write(curses.tigetstr("rmcup"))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

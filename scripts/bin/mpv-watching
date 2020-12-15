@@ -1,0 +1,34 @@
+#!/bin/sh
+
+read_watchlater() {
+    read -r line
+    case "$line" in
+        '# redirect entry') ;;
+        '# '*) basename "${line#'# '}" ;;
+    esac
+}
+
+read_watchlater_dir() {
+    set -- "$1"/[*] "$1"/*
+
+    # This is a way to detect "empty"
+    # https://unix.stackexchange.com/a/56087
+    # https://groups.google.com/g/comp.unix.shell/c/iUZbYixtbP8/m/TCaV-ejL1DUJ
+    case $* in
+        */'[*] '*/'*') ;;
+        *)
+            shift
+            for f; do read_watchlater <"$f"; done
+    esac
+}
+
+unset IFS
+: "${XDG_CONFIG_HOME:=$HOME/.config}"
+
+if [ -n "$MPV_HOME" ]; then
+    read_watchlater_dir "$MPV_HOME/watch_later"
+else
+    read_watchlater_dir "$XDG_CONFIG_HOME/mpv/watch_later"
+fi
+
+read_watchlater_dir "$HOME/.mpv/watch_later"

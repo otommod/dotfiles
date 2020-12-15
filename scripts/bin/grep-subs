@@ -1,0 +1,345 @@
+#!/usr/bin/env python
+"""
+usage:
+    grep-subs [-F] [-c|-l|-q] [-insvx] [--color WHEN] [-S STREAM]... PATTERN FILE...
+
+options:
+    -F, --fixed-strings       Treat the PATTERN as a string, not a regex.
+
+    -c, --count               Print only a count of matching lines per FILE.
+    -l, --files-with-matches  Print only the names of FILEs containing matches.
+    -q, --quiet               Don't print anything.  Return with 0 if the
+                                pattern was found, 1 if not found and 2 if an
+                                error happened.
+
+    -i, --ignore-case         Do not match case.
+    -n, --line-number         Show the timestamp of the matches.
+    -s, --no-messages         Suppress error messages.
+    -v, --invert-match        Only print lines that do not match the PATTERN.
+    -x, --line-regexp         Only match lines that match exactly.
+
+    -S, --sub-stream STREAM   Only search in the given subtitle stream for the
+                                pattern.  Can be given multiple times to
+                                specify several streams.  STREAM can be a
+                                number or 'S:<num>' which means the subtitle
+                                stream number or stream number (as given by
+                                ffprobe), a language specifier (e.g. en) or the
+                                special values 'ALL' and 'DEFAULT' to search in
+                                all the streams or those specified as default.
+                                Also, any stream specified as forced (e.g.
+                                foreign languages in an english movie) are
+                                always searched.  The default behavior is to
+                                only search the default subtitles.
+    --color WHEN              Show results in color.  WHEN can be auto, always
+                                or never.  'auto' only uses color on the
+                                terminal, not on files. [default: auto]
+
+    -h, --help                Show this help text and exit.
+"""
+
+import json
+import logging
+import re
+import sys
+from collections import namedtuple
+from datetime import datetime, time
+from functools import reduce
+from html.parser import HTMLParser
+from os import isatty
+from shutil import which
+from signal import SIG_DFL, SIGINT, SIGPIPE, signal
+from subprocess import PIPE, CalledProcessError, Popen, check_output
+
+import docopt
+import pysrt
+
+# Some functional niceties first
+fst = lambda t: t[0]
+snd = lambda t: t[1]
+
+def threading_first(init, *funcs):
+    def _call(x, f):
+        if callable(f):
+            return f(x)
+        return f[0](x, *f[1:])
+
+    return reduce(_call, funcs, init)
+
+def format_time(t, fmt):
+    return fmt.format(h=t.hour, m=t.minute, s=t.second, ms=t.microsecond//1e3)
+
+def plural(array):
+    return 's' if len(array) > 1 else ''
+
+
+def strip_tags(html):
+    class HTMLStripper(HTMLParser):
+        def __init__(self, *args, **kwargs):
+            super().__init__(self, *args, **kwargs)
+            self.text = []
+
+        def handle_data(self, data):
+            self.text.append(data)
+
+        def get_text(self):
+            return ''.join(self.text)
+
+    s = HTMLStripper(convert_charrefs=True)
+    s.feed(html)
+    return s.get_text()
+
+
+# Extending Python's regex implementation to be able to handle fixed string
+# patterns and inverse matches
+class REMatch(namedtuple('REMatch', 'string groups')):
+    REGroup = namedtuple('REGroup', 'index matched_text start end')
+
+    @classmethod
+    def from_match(cls, match):
+        groups = [cls.REGroup(i, match.group(i), *match.span(i))
+                  for i in range(0, len(match.groups()) + 1)]
+        return cls(match.string, groups)
+
+    @classmethod
+    def from_string(cls, string, match=None, start=0, end=None):
+        match = match or string
+        end = end or start + len(match)
+        return cls(string, [cls.REGroup(0, match, start, end)])
+
+    def color(self, color_func):
+        colored = ''
+        last_end = 0
+        for g in (self.groups[1:] or self.groups):
+            colored += self.string[last_end:g.start]
+            colored += color_func(colored, g.matched_text)
+            last_end = g.end
+        return colored + self.string[g.end:]
+
+
+class Regex(namedtuple('Regex',
+                       'pattern fixed ignore_case from_start inverse re')):
+    @classmethod
+    def new(cls, pattern, fixed, ignore_case, from_start, inverse):
+        regex = re.compile(pattern, re.I if ignore_case else 0)
+        return cls(pattern, fixed, ignore_case, from_start, inverse,
+                   regex if not fixed else None)
+
+    def _match_fixed(self, string):
+        if self.ignore_case:
+            start = string.lower().find(self.pattern.lower())
+        else:
+            start = string.find(self.pattern)
+        end = start + len(self.pattern)
+        match = REMatch.from_string(string, string[start:end], start)
+        return match if start > -1 else None
+
+    def _match_re(self, string):
+        match = self.re.search(string)
+        return REMatch.from_match(match) if match else None
+
+    def match(self, string):
+        match = (self._match_fixed if self.fixed else self._match_re)(string)
+        if self.from_start and match:
+            group0 = match.groups[0]
+            if group0.start != 0 or group0.end != len(string):
+                match = None
+        if self.inverse:
+            match = not bool(match) and REMatch.from_string(string)
+        return match
+
+
+# Wrappers around 'ffprobe' and 'ffmpeg'
+class SubStream(namedtuple('SubStream',
+                           'stream_index sub_index lang default forced')):
+    @classmethod
+    def from_json(cls, sub_index, json):
+        return cls(json['index'], sub_index,
+                   json.get('tags', {}).get('language'),
+                   json.get('disposition', {}).get('default') == 1,
+                   json.get('disposition', {}).get('forced') == 1)
+
+
+class FileInfo(namedtuple('FileInfo', 'filename duration subs')):
+    @classmethod
+    def from_json(cls, filename, json):
+        try:
+            duration = datetime.strptime(
+                json['format']['duration'], '%H:%M:%S.%f').time()
+        except KeyError:
+            duration = time.max
+        subs = [SubStream.from_json(i, j)
+                for i, j in enumerate(json['streams'], start=1)]
+        return cls(filename, duration, subs)
+
+
+def ffprobe(filename):
+    cmd = ('ffprobe', '-v', 'quiet',
+           '-sexagesimal', '-print_format', 'json',
+           '-show_format', '-show_streams', '-select_streams', 's',
+           filename)
+
+    try:
+        probing = check_output(cmd, universal_newlines=True)
+    except CalledProcessError:
+        return None
+    return FileInfo.from_json(filename, json.loads(probing))
+
+
+def ffmpeg(fileinfo, regex):
+    SubMatch = namedtuple('SubMatch', 'fileinfo streaminfo index time match')
+
+    for stream in fileinfo.subs:
+        stream_spec = '0:{}'.format(stream.stream_index)
+        cmd = ('ffmpeg', '-y', '-v', 'quiet',
+               '-i', fileinfo.filename, '-map', stream_spec, '-f', 'srt', '-')
+        with Popen(cmd, stdout=PIPE, universal_newlines=True) as proc:
+            for srt in pysrt.stream(proc.stdout):
+                match = regex.match(strip_tags(srt.text))
+                if match:
+                    yield SubMatch(fileinfo, stream, srt.index,
+                                   srt.start.to_time(), match)
+
+
+def rainbow_colors(starting_index=0, colors=range(31, 38)):
+    next_i = starting_index
+
+    def iner(full, s):
+        nonlocal next_i
+        if full.endswith('\033[0m') and next_i < len(colors)-1:
+            next_i += 1
+        else:
+            next_i = starting_index
+        return '\033[{}m{}\033[0m'.format(colors[next_i], s)
+
+    return iner
+
+
+def no_color():
+    return lambda full, s: s
+
+
+def parse_opts(args):
+    opts = docopt.docopt(__doc__, args, options_first=True)
+    opts = {k.strip('-'): v for k, v in opts.items()}
+
+    opts['color'] = (opts['color'] == 'always' or
+                     opts['color'] == 'auto' and isatty(sys.stdout.fileno()))
+    opts['PATTERN'] = Regex.new(opts['PATTERN'],
+                                opts['fixed-strings'], opts['ignore-case'],
+                                opts['line-regexp'],   opts['invert-match'])
+
+    return opts
+
+
+def select_streams(all_streams, requested):
+    def want_stream(stream, requested):
+        return ('DEFAULT' in requested and stream.default
+                or str(stream.sub_index) in requested
+                or stream.lang in requested
+                or 'S:' + str(stream.stream_index) in requested
+                or stream.forced
+                or 'ALL' in requested)
+
+    if not requested:
+        defaults = [s for s in all_streams if s.default]
+        return defaults[:1] or all_streams[:1], []
+
+    selected = [s for s in all_streams if want_stream(s, requested)]
+    not_found = [r for r in requested
+                 if all(not want_stream(s, [r]) for s in all_streams)]
+    return selected, not_found
+
+
+def text_segment(whole_text, segment_text, visible=True, color=None):
+    if not visible:
+        return whole_text
+    if whole_text[0]:
+        whole_text = (whole_text[0] + '|', whole_text[1] + 1)
+    segment_text = str(segment_text)
+    segment_len = len(segment_text)
+    if color:
+        segment_text = '\033[{}m{}\033[m'.format(color, segment_text)
+    return (whole_text[0] + segment_text, whole_text[1] + segment_len)
+
+
+def make_filename_segment(fname, opts):
+    return (text_segment, fname, len(opts['FILE']) > 1, opts['color'] and 32)
+
+
+def make_substream_segment(sub_index, opts):
+    return (text_segment,
+            sub_index, len(opts['sub-stream']) > 1, opts['color'] and 34)
+
+
+def make_time_segment(match_time, duration, opts):
+    timestamp = format_time(match_time, "{m:02}:{s:02}.{ms:03n}")
+    if duration >= time(hour=1):
+        timestamp = format_time(match_time, "{h:01}:{m:02}:{s:02}.{ms:03n}")
+    return (text_segment, timestamp, True, opts['color'] and 35)
+
+
+def match_segment(whole_text, match, use_color):
+    colors = rainbow_colors() if use_color else no_color()
+    header_len = whole_text[1] + 2
+    text = match.match.color(colors).replace('\n', '\n' + ' ' * header_len)
+    return whole_text[0] + ': ' + text
+
+
+def format_match(match, opts):
+    return threading_first(
+        ('', 0),
+        make_filename_segment(match.fileinfo.filename, opts),
+        make_substream_segment(match.streaminfo.sub_index, opts),
+        make_time_segment(match.time, match.fileinfo.duration, opts),
+        (match_segment, match, opts['color'] and not opts['invert-match']))
+
+
+def main(args):
+    opts = parse_opts(args)
+    log_level = logging.ERROR if opts['no-messages'] else logging.WARNING
+    logging.basicConfig(format='%(filename)s: %(message)s', level=log_level)
+    signal(SIGINT, SIG_DFL)
+    signal(SIGPIPE, SIG_DFL)
+
+    if not which('ffprobe') or not which('ffmpeg'):
+        logging.error("'ffprobe' and/or 'ffmpeg' not found in $PATH.")
+        return 2
+
+    found_any = False
+    error_happened = False
+    for f in opts['FILE']:
+        info = ffprobe(f)
+        if not info:
+            error_happened = True
+            logging.warning("Cannot recognize file '%s'", f)
+            continue
+
+        selected, not_found = select_streams(info.subs, opts['sub-stream'])
+        if not_found:
+            error_happened = True
+            logging.warning("Cannot find stream%s %s in file '%s'.",
+                            plural(not_found), ','.join(not_found), f)
+
+        found_in_file = False
+        info = info._replace(subs=selected)
+        for num, match in enumerate(ffmpeg(info, opts['PATTERN']), start=1):
+            found_in_file = True
+            if opts['files-with-matches'] or opts['quiet']:
+                break
+            if not opts['count']:
+                print(format_match(match, opts), flush=True)
+        found_any = found_any or found_in_file
+
+        fileseg = make_filename_segment(f, opts)
+        if opts['count']:
+            print(threading_first(('', 0), fileseg, (text_segment, num), fst),
+                  flush=True)
+        if opts['files-with-matches'] and found_in_file:
+            print(threading_first(('', 0), fileseg, fst), flush=True)
+        if opts['quiet'] and found_in_file:
+            break
+
+    return 2 if error_happened else 1 if not found_any else 0
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
