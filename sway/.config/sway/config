@@ -1,7 +1,5 @@
 # Default config for sway
 #
-# Copy this to ~/.config/sway/config and edit it to your liking.
-#
 # Read `man 5 sway` for a complete reference.
 
 ### Variables
@@ -94,14 +92,18 @@ for_window [class="^cmus$"] {
 
 bindsym $mod+c [class="^cmus$"] scratchpad show
 
-### Apearance
+### Appearance
 #
-#
+# Font for window titles. Will also be used by the bar unless a different font
+# is used in the bar {} block below.
 set $font SF Pro Display
 set $font_size 10
 font pango:$font $font_size
 
 titlebar_padding 6 3
+
+# smart_borders on
+hide_edge_borders smart
 
 for_window [shell="xwayland"] {
     title_format "%title :: %shell"
@@ -259,16 +261,16 @@ mode "resize" {
     # right will grow the containers width
     # up will shrink the containers height
     # down will grow the containers height
-    bindsym $left resize shrink width 10px
-    bindsym $down resize grow height 10px
-    bindsym $up resize shrink height 10px
-    bindsym $right resize grow width 10px
+    bindsym $left resize shrink width 10 px or 10 ppt
+    bindsym $down resize grow height 10 px or 10 ppt
+    bindsym $up resize shrink height 10 px or 10 ppt
+    bindsym $right resize grow width 10 px or 10 ppt
 
     # Ditto, with arrow keys
-    bindsym Left resize shrink width 10px
-    bindsym Down resize grow height 10px
-    bindsym Up resize shrink height 10px
-    bindsym Right resize grow width 10px
+    bindsym Left resize shrink width 10 px or 10 ppt
+    bindsym Down resize grow height 10 px or 10 ppt
+    bindsym Up resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow width 10 px or 10 ppt
 
     # Return to default mode
     bindsym Return mode "default"
