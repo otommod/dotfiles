@@ -72,6 +72,10 @@ input "type:keyboard" {
 
 ### Startup programs
 #
+# dex
+# Follow the XDG autostart spec
+exec dex -ae foo
+
 # wlsunset
 # Wayland replacement for Redshift
 # Athens, Greece
@@ -100,7 +104,7 @@ set $font SF Pro Display
 set $font_size 10
 font pango:$font $font_size
 
-titlebar_padding 6 3
+titlebar_padding 4 2
 
 # smart_borders on
 hide_edge_borders smart
@@ -303,11 +307,11 @@ bar {
     # status_command while date +'%Y-%m-%d %l:%M:%S %p'; do sleep 1; done
     status_command i3blocks
 
-    colors {
-        statusline #ffffff
-        background #323232
-        inactive_workspace #32323200 #32323200 #5c5c5c
-    }
+    # colors {
+    #     statusline #ffffff
+    #     background #323232
+    #     inactive_workspace #32323200 #32323200 #5c5c5c
+    # }
 }
 
 include /etc/sway/config.d/*
