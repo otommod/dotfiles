@@ -81,12 +81,9 @@ input "type:keyboard" {
 # Follow the XDG autostart spec
 exec dex -ae foo
 
-# wlsunset
+# gammastep
 # Wayland replacement for Redshift
-# Athens, Greece
-set $latitude 37.97
-set $longitude 23.72
-exec wlsunset -l $latitude -L $longitude
+exec signal-usr-toggle gammastep
 
 # exec cmus-i3
 exec st -c cmus -g 160x48 -e cmus

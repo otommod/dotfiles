@@ -1,0 +1,26 @@
+#!/usr/bin/sh
+
+exec "$@" &
+
+pid=$!
+is_on=true
+
+on() {
+  if ! $is_on; then
+    kill -USR1 "$pid"
+    is_on=true
+  fi
+  wait
+}
+
+off() {
+  if $is_on; then
+    kill -USR1 "$pid"
+    is_on=false
+  fi
+  wait
+}
+
+trap "on" USR1
+trap "off" USR2
+wait
