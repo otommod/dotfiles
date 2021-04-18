@@ -49,9 +49,10 @@ output * bg ~/.config/wallpaper fill
 # This will lock your screen after 300 seconds of inactivity, then turn off
 # your displays after another 300 seconds, and turn your screens back on when
 # resumed. It will also lock your screen before your computer goes to sleep.
+set $mouse singing-gundi
 exec swayidle -w \
-        timeout 600 'swaymsg "output * dpms off"; ratbagctl singing-gundi led 0 set mode off' \
-             resume 'swaymsg "output * dpms  on"; ratbagctl singing-gundi led 0 set mode cycle'
+        timeout 600 'swaymsg "output * dpms off"; ratbagctl $mouse led 0 set mode off' \
+             resume 'swaymsg "output * dpms  on"; ratbagctl $mouse led 0 set mode cycle duration 8000'
 
 ### Input configuration
 #
@@ -71,6 +72,7 @@ input "type:keyboard" {
     xkb_layout us,gr
     xkb_variant altgr-intl,
     xkb_options grp:lalt_lshift_toggle,grp_led:scroll,caps:escape,shift:both_capslock_cancel,lv3:ralt_switch_multikey,eurosign:e,nbsp:level3
+    xkb_numlock enabled
 }
 
 ### Startup programs
