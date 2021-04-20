@@ -52,7 +52,7 @@ export EDITOR=nvim
 
 export TERMINAL=st
 
-export BROWSER=chromium
+export BROWSER=firefox
 
 # Set the default Less options.
 # Mouse-wheel scrolling has been disabled by -X (disable screen clearing).
