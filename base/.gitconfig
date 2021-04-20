@@ -83,3 +83,5 @@
 	# Print out the refs of any commits shown in the log
 	# https://git-scm.com/docs/git-log#git-log---decorateshortfullautono
 	decorate = short
+[init]
+	defaultBranch = main
