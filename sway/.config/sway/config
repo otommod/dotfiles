@@ -12,14 +12,14 @@ set $down j
 set $up k
 set $right l
 # Your preferred terminal emulator
-set $term st
+set $term foot
 # Your preferred application launcher
 # Note: pass the final command to swaymsg so that the resulting window can be opened
 # on the original workspace that the command was run on.
 # set $menu dmenu_path | dmenu | xargs swaymsg exec --
-set $menu st -c launcher -e sh -c 'dmenu_path | with-history "$HISTDIR/dmenu_run" fzf --tiebreak=index | xargs -r swaymsg exec --'
+set $menu foot -a launcher sh -c 'dmenu_path | with-history "$HISTDIR/dmenu_run" fzf --tiebreak=index | xargs -r swaymsg exec --'
 
-for_window [class="launcher"] {
+for_window [app_id="^launcher$"] {
     floating enabled
     border pixel 3
 }
@@ -85,18 +85,16 @@ exec dex -ae foo
 # Wayland replacement for Redshift
 exec signal-usr-toggle gammastep
 
-# exec cmus-i3
-exec st -c cmus -g 160x48 -e cmus
+# cmus
+exec foot -a cmus cmus
 
-for_window [class="^cmus$"] {
+for_window [app_id="^cmus$"] {
   floating enable
-  # resize set width 60 ppt height 60 ppt
+  resize set width 60 ppt height 60 ppt
   move scratchpad
-  # [class="^cmus$"] scratchpad show
-  # [class="^cmus$"] move scratchpad
 }
 
-bindsym $mod+c [class="^cmus$"] scratchpad show
+bindsym $mod+c [app_id="^cmus$"] scratchpad show
 
 ### Appearance
 #

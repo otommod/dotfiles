@@ -5,5 +5,7 @@ case "$TERM" in
 esac
 
 if command -v dircolors >/dev/null 2>&1; then
-    [ -r ~/.colors/dircolors ] && eval "$(dircolors -b ~/.colors/dircolors)"
+    # XXX: env TERM=xterm-256color is a fix for foot
+    # https://codeberg.org/dnkl/foot/wiki#no-colors-in-ls-output
+    [ -r ~/.colors/dircolors ] && eval "$(env TERM=xterm-256color dircolors -b ~/.colors/dircolors)"
 fi

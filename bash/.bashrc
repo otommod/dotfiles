@@ -62,6 +62,28 @@ function __prompt_set_title {
 
 PROMPT_COMMAND+="; __prompt_set_title"
 
+# {{{2 OSC 7
+# OSC 7 notifies the terminal of the current directory for the purposes of
+# opening new tabs
+
+# https://codeberg.org/dnkl/foot/wiki#bash-and-zsh
+_urlencode() {
+	local length="${#1}"
+	for (( i = 0; i < length; i++ )); do
+		local c="${1:$i:1}"
+		case $c in
+			%) printf '%%%02X' "'$c" ;;
+			*) printf "%s" "$c" ;;
+		esac
+	done
+}
+
+osc7_cwd() {
+	printf '\e]7;file://%s%s\e\\' "$HOSTNAME" "$(_urlencode "$PWD")"
+}
+
+PROMPT_COMMAND+="; osc7_cwd"
+
 # {{{1 Settings
 # check the window size after each command and, if necessary, update the values
 # of LINES and COLUMNS.
