@@ -33,8 +33,4 @@ $if mode=emacs
 "\C-p": history-search-backward
 "\C-n": history-search-forward
 
-# Move in whole shell words with Meta-Ctrl-{f,b}
-"\e\C-f": shell-forward-word
-"\e\C-b": shell-backward-word
-
 $endif
