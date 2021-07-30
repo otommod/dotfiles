@@ -901,6 +901,10 @@ au FileType python setlocal omnifunc=jedi#completions
 let g:EclimCompletionMethod = 'omnifunc'
 
 " {{{1 Appearance
+if $COLORTERM == "truecolor" || $COLORTERM == "24bit"
+  set termguicolors
+endif
+
 colorscheme badwolf
 let g:airline_theme = 'bubblegum'
 
