@@ -12,6 +12,8 @@ if command -v systemd-cat >/dev/null 2>&1; then
 fi
 exec 2>~/.xsession-errors
 
+export XDG_SESSION_TYPE=x11
+
 [ -f /etc/xprofile ] && . /etc/xprofile
 [ -f ~/.xprofile ] && . ~/.xprofile
 
