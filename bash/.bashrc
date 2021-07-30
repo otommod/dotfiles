@@ -23,6 +23,10 @@ bind 'Space: magic-space'
 . ~/.shrc.d/polyglot/polyglot.sh
 bind 'set show-mode-in-prompt off'
 
+# print a bell to get notified when the command ends
+PROMPT_COMMAND+="; printf '\a'"
+
+# {{{2 git
 if [ -f /usr/share/git/git-prompt.sh ]; then
     . /usr/share/git/git-prompt.sh
 
@@ -37,10 +41,7 @@ if [ -f /usr/share/git/git-prompt.sh ]; then
     }
 fi
 
-# print a bell to get notified when the command ends
-PROMPT_COMMAND+="; printf '\a'"
-
-# set the title
+# {{{2 terminal title
 function __prompt_set_title {
     # Set the title.  This is done by PS1 because we want to access the
     # prompt escapes for the title.  The escape code for setting the title is
@@ -48,27 +49,26 @@ function __prompt_set_title {
     # where
     #       ESC ] is OSC (Operating System Command)
     #       ESC \ is ST (String Terminator)
-    # Unfortunately, st only seems to support BEL as the terminating sequence.
     # see also
     #       console_codes(4)
 
     if [[ -n $SSH_CONNECTION ]]; then
         # print the username and hostname when through SSH
-        PS1+='\[\e]0;\u@\h: \w\a\]'
+        PS1+='\[\e]0;\u@\h: \w\e\\\]'
     else
-        PS1+='\[\e]0;\w\a\]'
+        PS1+='\[\e]0;\w\e\\\]'
     fi
 }
 
 PROMPT_COMMAND+="; __prompt_set_title"
 
 # {{{1 Settings
-# check the window size after each command and, if necessary,
-# update the values of LINES and COLUMNS.
+# check the window size after each command and, if necessary, update the values
+# of LINES and COLUMNS.
 shopt -s checkwinsize
 
-# If set, the pattern "**" used in a pathname expansion context will
-# match all files and zero or more directories and subdirectories.
+# If set, the pattern "**" used in a pathname expansion context will match all
+# files and zero or more directories and subdirectories.
 #shopt -s globstar
 
 # {{{2 History
