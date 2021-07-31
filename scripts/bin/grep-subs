@@ -75,7 +75,7 @@ def plural(array):
 def strip_tags(html):
     class HTMLStripper(HTMLParser):
         def __init__(self, *args, **kwargs):
-            super().__init__(self, *args, **kwargs)
+            super().__init__(*args, **kwargs)
             self.text = []
 
         def handle_data(self, data):
