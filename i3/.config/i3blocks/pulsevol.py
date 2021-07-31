@@ -160,7 +160,7 @@ def on_state_change(ctx, userdata):
     if (state == 5              # PA_CONTEXT_FAILED
             or state == 6):     # PA_CONTEXT_TERMINATED
         # XXX:
-        print("vol Crashed", flush=True)
+        print("vol pulseaudio server crashed", flush=True)
         sys.exit(1)
 
     if state == 4:              # PA_CONTEXT_READY:
@@ -190,7 +190,7 @@ def subscription(ctx, event, index, userdata):
 @pa_sink_info_cb_t
 def on_get_sink_info(ctx, sink_info, is_last, userdata):
     if is_last < 0:
-        print(pa_strerror(pa_context_errno(ctx)))
+        print("vol", pa_strerror(pa_context_errno(ctx)))
         return
 
     if is_last or not sink_info:

@@ -2,15 +2,18 @@
 
 import signal
 import sys
+def die(msg):
+    print("music-artist", flush=True)
+    print("music-title", msg, flush=True)
+    sys.exit(1)
+
 
 try:
     import gi
     from gi.repository import GLib, Gio
 
 except ImportError:
-    print("music-artist", flush=True)
-    print("music-title No python-gobject found", flush=True)
-    sys.exit(1)
+    die("python-gobject not installed")
 
 
 def on_properties_changed(proxy, changed, invalidated):
@@ -23,16 +26,24 @@ def on_properties_changed(proxy, changed, invalidated):
 
 def on_owner_changed(proxy, _):
     if proxy.props.g_name_owner is None:
-        print("music-artist", flush=True)
-        print("music-title playerctld crashed", flush=True)
-        sys.exit(1)
+        die("playerctld crashed")
 
 
 def print_status(metadata):
     if metadata is None:
         metadata = {}
-    print("music-artist", metadata.get("xesam:artist", [""])[0], flush=True)
-    print("music-title", metadata.get("xesam:title", ""), flush=True)
+
+    artist = metadata.get("xesam:artist")
+    if artist and isinstance(artist[0], str):
+        print("music-artist", artist[0].replace("\n", ""), flush=True)
+    else:
+        print("music-artist", flush=True)
+
+    title = metadata.get("xesam:title")
+    if isinstance(title, str):
+        print("music-title", title.replace("\n", ""), flush=True)
+    else:
+        print("music-title", flush=True)
 
 
 def on_exit_signal():
@@ -52,9 +63,7 @@ def main(argv):
     proxy.connect("g-properties-changed", on_properties_changed)
 
     if proxy.props.g_name_owner is None:
-        print("music-artist", flush=True)
-        print("music-title playerctld not found", flush=True)
-        return 1
+        die("playerctld not found")
 
     metadata = proxy.get_cached_property("Metadata")
     if metadata is not None:

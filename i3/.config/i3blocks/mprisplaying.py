@@ -15,7 +15,7 @@ try:
     from gi.repository import GLib, Gio
 
 except ImportError:
-    die("No python-gobject")
+    die("python-gobject not installed")
 
 
 def on_properties_changed(proxy, changed, invalidated):
