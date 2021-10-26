@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+
+import sys
+import fcntl
+import heapq
+import json
+import os
+from os.path import join as pathjoin
+import selectors
+import subprocess
+import time
+
+
+XDG_CONFIG_HOME = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+
+def meminfo():
+    def helper(line):
+        label, value, *units = line.split(maxsplit=2)
+        yield label.rstrip(":"), int(value)
+
+    with open("/proc/meminfo") as fp:
+        while True:
+            yield {label: value
+                   for line in fp
+                   for label, value in helper(line)}
+            fp.seek(0)
+
+
+def net_statistics(iface, fname):
+    with open(pathjoin("/sys/class/net", iface, "statistics", fname)) as fp:
+        for val in fp:
+            yield int(val)
+            fp.seek(0)
+
+
+def timestamped_ns(iterable):
+    for val in iterable:
+        yield time.monotonic_ns(), val
+
+
+def deriv_reciprocal_ns(iterable):
+    NS_PER_SECOND = 10**9
+    ts_old, val_old = 0, 0
+    for ts, val in timestamped_ns(iterable):
+        yield ((ts - ts_old) // (val - val_old)  # don't divide by zero
+               if val != val_old else NS_PER_SECOND)
+        ts_old, val_old = ts, val
+
+
+def transmission(instance):
+    completed_proc = subprocess.run(
+        [pathjoin(XDG_CONFIG_HOME, "sway/transmission.py")],
+        env={"instance": instance}, text=True, capture_output=True)
+    return completed_proc.stdout.strip()
+
+
+def memusage():
+    for mem in meminfo():
+        unused = mem.get('MemAvailable', 0) / mem.get('MemTotal', 1)
+        yield f"mem {100*(1 - unused):2.0f}%"
+
+
+def bandwidth(iface):
+    ns_per_byte = 10**6
+    rx_iter = deriv_reciprocal_ns(net_statistics(iface, "rx_bytes"))
+    tx_iter = deriv_reciprocal_ns(net_statistics(iface, "tx_bytes"))
+
+    for rx, tx in zip(rx_iter, tx_iter):
+        yield f"down {ns_per_byte // rx} up {ns_per_byte // tx}"
+
+
+def setblocking(fileobj, flag):
+    oldf = fcntl.fcntl(fileobj, fcntl.F_GETFL)
+    fcntl.fcntl(fileobj, fcntl.F_SETFL,
+                (oldf & ~os.O_NONBLOCK) if flag else (oldf | os.O_NONBLOCK))
+
+
+class RepeatingIter:
+    def __init__(self, interval, iter):
+        self.interval = interval
+        self.iter = iter
+
+    def __call__(self):
+        return next(self.iter)
+
+
+class RepeatingCall:
+    def __init__(self, interval, func, *args, **kwargs):
+        self.interval = interval
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        return self.func(*self.args, **self.kwargs)
+
+
+class Proc:
+    def __init__(self, *cmd, **bar_props):
+        self.proc = subprocess.Popen(cmd, text=True, stdout=subprocess.PIPE)
+        self.bar_props = bar_props
+
+
+slots = [
+    Proc(pathjoin(XDG_CONFIG_HOME, "sway/mpris"),
+         markup="pango"),
+    RepeatingIter(5, memusage()),
+    RepeatingIter(5, bandwidth("wlan0")),
+    # RepeatingCall(5, transmission, "transmission"),
+    Proc(pathjoin(XDG_CONFIG_HOME, "sway/pulsevol")),
+    RepeatingCall(30, time.strftime, "%a %d %b %Y %H:%M"),
+]
+
+
+def main(args):
+    print("{ \"version\": 1 }", flush=True)
+    print("[[]", flush=True)
+    # ]
+
+    with selectors.DefaultSelector() as selector:
+
+        outs = []
+        q = []
+        now = time.monotonic()
+
+        for i, info in enumerate(slots):
+
+            if isinstance(info, Proc):
+                setblocking(info.proc.stdout, False)
+                selector.register(info.proc.stdout, selectors.EVENT_READ, (info, i))
+                outs.append({"full_text": "", **info.bar_props})
+
+            else:
+                heapq.heappush(q, (now + info.interval, i, info))
+                outs.append(info())
+
+        while True:
+            timeout = q[0][0] - now
+
+            for key, _ in selector.select(timeout):
+                info, i = key.data
+
+                if info.proc.poll() is None:
+                    outs[i]["full_text"] = info.proc.stdout.read().strip()
+
+                else:
+                    selector.unregister(key.fileobj)
+                    outs[i] = {"full_text": "crashed", "background": "#ff0000"}
+
+            now = time.monotonic()
+            while q[0][0] < now:
+                _, i, info = heapq.heappop(q)
+
+                outs[i] = info()
+                heapq.heappush(q, (now + info.interval, i, info))
+
+            print(",", end="")
+            print(json.dumps([o if isinstance(o, dict) else {"full_text": o}
+                              for o in outs]), flush=True)
+
+main(sys.argv)
