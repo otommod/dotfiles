@@ -1,1 +1,4 @@
-../../../i3/.config/i3blocks/mpris
+#!/bin/sh
+
+exec playerctl -F -p playerctld metadata \
+	-f '<span foreground="red">{{markup_escape(artist)}}</span> {{markup_escape(title)}}'

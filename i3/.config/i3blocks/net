@@ -1,9 +1,0 @@
-#!/bin/sh
-
-read -r rx_now <"/sys/class/net/$instance/statistics/rx_bytes"
-read -r tx_now <"/sys/class/net/$instance/statistics/tx_bytes"
-
-printf '{"full_text": "down %4d up %3d", "rx_old": %d, "tx_old": %d}\n' \
-    $(( (rx_now - ${rx_old-$rx_now}) / (interval * 1024) )) \
-    $(( (tx_now - ${tx_old-$tx_now}) / (interval * 1024) )) \
-    "$rx_now" "$tx_now"
