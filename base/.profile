@@ -94,15 +94,6 @@ mkdir -p ~/.local/share/tig
 
 
 # {{{1 XDG_CONFIG_HOME
-# The '~/.httpie' config dir is always created but it's not at all needed, so
-# at least move if out of the way.
-export HTTPIE_CONFIG_DIR=${XDG_CONFIG_HOME:-"$HOME/.config"}/httpie
-mkdir -p "$HTTPIE_CONFIG_DIR"
-
-# I don't care much for elinks configs either.
-export ELINKS_CONFDIR=${XDG_CONFIG_HOME:-"$HOME/.config"}/elinks
-mkdir -p "$ELINKS_CONFDIR"
-
 # The logs, at least, the channel logs, can be set to go to $HISTDIR with
 #     /set logger.file.path "${env:HISTDIR}/weechat"
 # The program logs always go to $WEECHAT_HOME/weechat.log.
