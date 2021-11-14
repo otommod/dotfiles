@@ -130,10 +130,11 @@ def main(argv):
     #
     # If `selection` is just a filename (not a relative path), it won't be
     # found in `[e.path for e in files]`
-    if selection_dir == "." and not selection.startswith(b"./"):
+    if selection_dir == "." and not selection.startswith("./"):
         paths = [e.name for e in files]
     else:
         paths = [e.path for e in files]
+
     mpv(paths, selection)
 
 
