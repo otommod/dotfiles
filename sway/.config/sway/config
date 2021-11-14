@@ -49,10 +49,11 @@ output * bg ~/.config/wallpaper fill
 # This will lock your screen after 300 seconds of inactivity, then turn off
 # your displays after another 300 seconds, and turn your screens back on when
 # resumed. It will also lock your screen before your computer goes to sleep.
+
 set $mouse singing-gundi
 exec swayidle -w \
         timeout 600 'swaymsg "output * dpms off"; ratbagctl $mouse led 0 set mode off' \
-             resume 'swaymsg "output * dpms  on"; ratbagctl $mouse led 0 set mode cycle duration 8000'
+        resume 'swaymsg "output * dpms on"; ratbagctl $mouse led 0 set mode cycle duration 8000'
 
 ### Input configuration
 #
@@ -85,17 +86,22 @@ seat "seat0" {
 # Follow the XDG autostart spec
 exec dex -ae foo
 
-# gammastep
+# wlsunset
 # Wayland replacement for Redshift
-exec signal-usr-toggle gammastep
+set {
+    # Athens, Greece
+    $latitude 37.97
+    $longitude 23.72
+}
+exec wlsunset -l $latitude -L $longitude
 
 # cmus
 exec foot -a cmus cmus
 
 for_window [app_id="^cmus$"] {
-  floating enable
-  resize set width 60 ppt height 60 ppt
-  move scratchpad
+    floating enable
+    resize set width 60 ppt height 60 ppt
+    move scratchpad
 }
 
 bindsym $mod+c [app_id="^cmus$"] scratchpad show
