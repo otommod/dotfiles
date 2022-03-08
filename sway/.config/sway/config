@@ -14,12 +14,9 @@ set $right l
 # Your preferred terminal emulator
 set $term foot
 # Your preferred application launcher
-# Note: pass the final command to swaymsg so that the resulting window can be opened
-# on the original workspace that the command was run on.
-# set $menu dmenu_path | dmenu | xargs swaymsg exec --
 set $menu foot -a launcher sh -c 'dmenu_path | with-history "$HISTDIR/dmenu_run" fzf --tiebreak=index | xargs -r swaymsg exec --'
 
-for_window [app_id="^launcher$"] {
+for_window [app_id="launcher"] {
     floating enabled
     border pixel 3
 }
@@ -110,7 +107,7 @@ bindsym $mod+c [app_id="^cmus$"] scratchpad show
 #
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
-set $font SF Pro Display
+set $font Inter
 set $font_size 10
 font pango:$font $font_size
 
@@ -147,7 +144,7 @@ for_window [shell="xwayland"] {
     bindsym $mod+Shift+c reload
 
     # Exit sway (logs you out of your Wayland session)
-    bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -b 'Yes, exit sway' 'swaymsg exit'
+    bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
 
 #
 # Moving around:

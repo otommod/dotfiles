@@ -50,8 +50,6 @@ export PAGER=less
 
 export EDITOR=nvim
 
-export TERMINAL=st
-
 export BROWSER=firefox
 
 # Set the default Less options.
