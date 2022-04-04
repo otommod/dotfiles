@@ -158,8 +158,10 @@
 
       ; {{{2 Warm and fuzzy
       ; (use :junegunn/fzf)
-      (use :junegunn/fzf.vim)
-      (use :brettbuddin/fzf-quickfix)
+      ; (use :junegunn/fzf.vim)
+      ; (use :brettbuddin/fzf-quickfix)
+      (use {1 :ibhagwan/fzf-lua
+            :requires [:kyazdani42/nvim-web-devicons]})
 
       ; {{{2 Alignment
       ; " call minpac#add('tommcdo/vim-lion')
@@ -494,50 +496,52 @@
        {:virtual_text {:prefix ""} :signs true :update_in_insert false}))
 
 ; {{{1 Mappings
+(def-keymap expr :j "(v:count ? 'j' : 'gj')")
+(def-keymap expr :k "(v:count ? 'k' : 'gk')")
+(def-keymap :gV "`[v`]")
+(def-keymap-n :<BS> :<C-^>)
+
 ; fixes
 (def-keymap-v :> :>gv)
 (def-keymap-v :< :<gv)
 
-(def-keymap expr :j "(v:count? 'j' : 'gj')")
-(def-keymap expr :k "(v:count? 'k' : 'gk')")
-(def-keymap :gV "`[v`]")
-(def-keymap-n :<BS> :<C-^>)
-(def-keymap-n :gb "<Cmd>ls<CR>:b<Space>")
-
-; Use :tjump instead of :tag
+; use :tjump instead of :tag
 (def-keymap-n "<C-]>" "g<C-]>")
 (def-keymap-v "<C-]>" "g<C-]>")
 (def-keymap-n "<C-W><C-]>" "<C-W>g<C-]>")
 
-; (def-keymap-n expr :<Space> "foldlevel('.') ? 'za': ' '")
+; XXX: Neovim cannot handle this
+; (set-keymap :c :w!! "w !sudo tee % >/dev/null")
+
+(set vim.g.mapleader " ")
+
+(def-keymap-n :<C-p> "<Cmd>FzfLua files<CR>")
+(def-keymap-n :gb "<Cmd>FzfLua buffers<CR>")
+
+(def-keymap-n :<leader>b "<Cmd>FzfLua buffers<CR>")
+(def-keymap-n :<leader>f "<Cmd>FzfLua files<CR>")
+(def-keymap-n :<leader>o "<Cmd>FzfLua oldfiles<CR>")
+
+; (def-keymap-n :<leader>q "<Cmd>lua ToggleQuickFix('c')<CR>")
+; (def-keymap-n :<leader>l "<Cmd>lua ToggleQuickFix('l')<CR>")
+
+(def-keymap-n :<leader>q "<Cmd>FzfLua quickfix<CR>")
+(def-keymap-n :<leader>l "<Cmd>FzfLua loclist<CR>")
+
+(def-keymap-n :<leader>k "<Cmd>lua wordhl.highlight 'n'<CR>")
+(def-keymap-v :<leader>k "<Cmd>lua wordhl.highlight 'v'<CR>")
+(def-keymap-n :<leader>K "<Cmd>lua wordhl.unhighlight()<CR>")
 
 ; bookmarks
-(def-keymap-n :<leader>.v "<Cmd>e $MYVIMRC<CR>")
+(def-keymap-n :<leader>.v "<Cmd>e ~/.config/nvim/init.fnl<CR>")
 (def-keymap-n :<leader>.b "<Cmd>e ~/.bashrc<CR>")
 (def-keymap-n :<leader>.z "<Cmd>e ~/.zshrc<CR>")
 (def-keymap-n :<leader>.t "<Cmd>e ~/.tmux.conf<CR>")
 (def-keymap-n :<leader>.g "<Cmd>e ~/.gitconfig<CR>")
 
-; XXX: Neovim cannot handle this
-; (set-keymap :c :w!! "w !sudo tee % >/dev/null")
-
-; {{{1 Plugin Mappings
 (def-rec-keymap :sa "<Plug>(operator-surround-append)")
 (def-rec-keymap :sd "<Plug>(operator-surround-delete)")
 (def-rec-keymap :sr "<Plug>(operator-surround-replace)")
-
-; (def-rec-keymap :w "<Plug>(motioncounts-w)")
-; (def-rec-keymap :b "<Plug>(motioncounts-b)")
-
-(def-keymap-n :<C-p> "<Cmd>FZF<CR>")
-(def-keymap-n :gb "<Cmd>Buffers<CR>")
-
-; (def-keymap-n :<leader>q "<Cmd>lua ToggleQuickFix('c')<CR>")
-; (def-keymap-n :<leader>l "<Cmd>lua ToggleQuickFix('l')<CR>")
-
-(def-keymap-n :<leader>k "<Cmd>lua wordhl.highlight 'n'<CR>")
-(def-keymap-v :<leader>k "<Cmd>lua wordhl.highlight 'v'<CR>")
-(def-keymap-n :<leader>K "<Cmd>lua wordhl.unhighlight()<CR>")
 
 ; {{{1 Treesittter
 (let [ts-config (require :nvim-treesitter.configs)]
@@ -632,6 +636,8 @@
         (vim.cmd "command! -buffer -nargs=? -complete=dir LspAddWorkspaceFolder lua vim.lsp.buf.add_workspace_folder(<f-args>)")
         (vim.cmd "command! -buffer -nargs=? -complete=dir LspRemoveWorkspaceFolder lua vim.lsp.buf.remove_workspace_folder(<f-args>)"))
       (when caps.document_symbol
+        (def-keymap-n :<leader>s "<Cmd>FzfLua lsp_document_symbols<CR>")
+        (def-keymap-n :<leader>S "<Cmd>FzfLua lsp_live_workpace_symbols<CR>")
         (vim.cmd "command! -buffer LspDocumentSymbol lua vim.lsp.buf.document_symbol()"))
       (when caps.goto_definition
         (vim.cmd "command! -buffer LspDefinition lua vim.lsp.buf.definition()"))
