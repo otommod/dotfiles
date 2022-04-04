@@ -43,6 +43,7 @@
       ; " call minpac#add('simnalamburt/vim-mundo')
       (use :mbbill/undotree)
 
+      (use :folke/tokyonight.nvim)
       (use :lifepillar/vim-solarized8)
       ; low-color themes
       ; https://github.com/mcchrish/vim-no-color-collections
@@ -63,7 +64,7 @@
       ; " call minpac#add('andymass/vim-matchup')
 
       ; " call minpac#add('justinmk/vim-sneak')
-      ; (use :unblevable/quick-scope)
+      ; " call minpac#add('unblevable/quick-scope')
       ; " call minpac#add('Lokaltog/vim-easymotion')
       ; " call minpac#add('jeetsukumaran/vim-indentwise')
 
@@ -88,6 +89,9 @@
       (use :tpope/vim-rsi)
       ; " call minpac#add('Konfekt/FastFold')
       (use :ap/vim-you-keep-using-that-word)
+
+      ; XXX: see https://github.com/neovim/neovim/issues/12587
+      (use :antoinemadec/FixCursorHold.nvim)
 
       ; {{{2 File explorers
       (use :tpope/vim-vinegar)
@@ -420,6 +424,8 @@
     (set vim.opt.grepformat "%f:%l:%m")))
 
 ; {{{1 Plugin options
+(set vim.g.cursorhold_updatetime 100)
+
 ; {{{2 netrw
 (set vim.g.netrw_altfile true)
 (augroup rc-netrw
