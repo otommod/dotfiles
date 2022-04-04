@@ -659,19 +659,23 @@
   (neorg.setup
     {:load {:core.defaults {}
             :core.norg.concealer {}
+            :core.norg.completion {:config {:engine :nvim-cmp}}
             :core.norg.dirman {:config
                                {:workspaces
-                                {:my_workspace "~/neorg"}
+                                {:home_neorg "~/neorg"}
                                 }}
-            :core.norg.completion {:config
-                                   {:engine :nvim-cmp}}
+            :core.gtd.base {:config {:workspace :home_neorg}}
             }}))
 
 (let [parsers (require :nvim-treesitter.parsers)
       parser-configs (parsers.get_parser_configs)]
-  (set parser-configs.norg
-       {:install_info {:url "https://github.com/nvim-neorg/tree-sitter-norg"
-                       :files ["src/parser.c" "src/scanner.cc"]
+  (set parser-configs.norg_meta
+       {:install_info {:url "https://github.com/nvim-neorg/tree-sitter-norg-meta"
+                       :files ["src/parser.c"]
+                       :branch :main}})
+  (set parser-configs.norg_table
+       {:install_info {:url "https://github.com/nvim-neorg/tree-sitter-norg-table"
+                       :files ["src/parser.c"]
                        :branch :main}}))
 
 ; {{{1 Python
