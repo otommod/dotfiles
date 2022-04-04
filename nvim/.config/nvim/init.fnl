@@ -21,8 +21,8 @@
   (autocmd BufWritePost "init.fnl"
            "++nested call v:lua.compile_fennel_file(stdpath('config') .. '/init.fnl', stdpath('config') .. '/init.lua') | source $MYVIMRC"))
 
-(let [packer-install-path (.. (vim.fn.stdpath :data) :/site/pack/packer/start/packer.nvim)]
-  (when (not (vim.fn.isdirectory packer-install-path))
+(let [packer-install-path (.. (vim.fn.stdpath :data) "/site/pack/packer/start/packer.nvim")]
+  (when (not= (vim.fn.isdirectory packer-install-path) 1)
     (vim.fn.system ["git" "clone" "--depth" "1" "https://github.com/wbthomason/packer.nvim" packer-install-path])))
 
 (let [packer (require :packer)
@@ -309,7 +309,7 @@
       (set match-add? false)
       (vim.fn.matchdelete m.id)))
   (when match-add?
-    (let [wordhls (icollect [hl _ (pairs hl-defs)]
+    (let [wordhls (icollect [hl (pairs hl-defs)]
                     (when (wordhl.hl-group? hl) hl))]
       (table.sort wordhls)
       (vim.fn.matchadd (. wordhls 1) pattern))))
@@ -675,53 +675,8 @@
                        :branch :main}}))
 
 ; {{{1 Python
-(fn _G.rc_ft_python_includeexpr [import]
-  (var path-parts [])
-  (var state :none)
-  (each [p (vim.gsplit import "." true)]
-    (match [p state]
-      ["" :none] (set state :relative)
-      ["" :relative] (table.insert path-parts "..")
-      ["" :regular] (error "unexpected '.' in middle of import")
-      _ (do
-          (set state :regular)
-          (table.insert path-parts p))))
-  (table.concat path-parts "/"))
-
 (fn _G.rc_ft_python []
-  (set vim.opt_local.tabstop 8)
-  (set vim.opt_local.softtabstop 4)
-  (set vim.opt_local.shiftwidth 4)
-  (set vim.opt_local.textwidth 79)
-  (set vim.opt_local.expandtab true)
-  (set vim.opt_local.autoindent true)
-  (set vim.opt_local.suffixesadd :.py)
-  (set vim.opt_local.include
-       (.. "^\\s*import\\s\\+\\zs[_.[:alnum:]]\\+\\ze"
-           "|" "^\\s*from\\s\\+\\zs[_.[:alnum:]]\\+\\ze\\s\\+import"))
-
-  ; This next pattern, courtesy of wushee on #vim on freenode, can find
-  ; multi-import lines, matching each package separately, i.e. in:
-  ;     import foo, bar
-  ; it would match both foo and bar.  However, it can't work like that as
-  ; the value of 'include'.  AFAICT (from vim's code), vim will only ever
-  ; consider the first match on each a line to be an include.  Pity.
-  ; au FileType python let &l:include = join([
-  ;             \ '\(^\s*import .*\)\@<=\zs[_.[:alnum:]]\+\ze',
-  ;             \ '^\s*from\s\+\zs[_.[:alnum:]]\+\ze\s\+import'], '\|')
-
-  ; matchit.vim support for Python
-  ; Unfortunately, this is not so easy for Python because it doesn't use
-  ; explicit end-block delimiters; see https://vi.stackexchange.com/q/13209
-  ; au FileType python let b:match_words = join([
-  ;             \ '\<def\>:\<return\>',
-  ;             \ '\<\(while\|for\)\>:\<break\>:\<continue\>',
-  ;             \ '\<if\>:\<elif\>:\<else\>',
-  ;             \ '\<try\>:\<except\>:\<finally\>'], ',')
-
-  (set vim.opt_local.includeexpr "v:lua.rc_ft_python_includeexpr(v:fname)")
-
-  (let [py-cmd "import sys; print(*[p for p in sys.path if p], sep='\\n')"
+  (let [py-cmd "import sys\nfor p in sys.path:\n if p: print(p)"
         (ok? py-path) (pcall vim.fn.systemlist ["python3" "-c" py-cmd])]
     (when ok?
       (set vim.opt_local.path ["." (unpack py-path)]))))
@@ -747,11 +702,6 @@
   (autocmd FileType :fennel "lua rc_ft_fennel()"))
 
 (set vim.g.sexp_filetypes :fennel)
-
-; {{{1 VimL
-(augroup rc-help
-  (autocmd FileType :vim "setlocal keywordprg=:help")
-  (autocmd FileType :help "setlocal keywordprg=:help"))
 
 ; {{{1 TODO
 ; {{{2 Finalize on some TODO file format
