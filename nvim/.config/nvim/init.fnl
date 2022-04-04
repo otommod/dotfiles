@@ -129,7 +129,8 @@
       (use :kosayoda/nvim-lightbulb)
       (use :ray-x/lsp_signature.nvim)
       ; (use :weilbith/nvim-lsp-smag)
-      (use :nvim-lua/lsp-status.nvim)
+      ; (use :nvim-lua/lsp-status.nvim)
+      (use :jose-elias-alvarez/null-ls.nvim)
 
       ; {{{2 Treesitter
       (use :nvim-treesitter/nvim-treesitter)
@@ -479,6 +480,17 @@
 (augroup rc-terminal
   (autocmd TermOpen "*" "setlocal foldcolumn=0 signcolumn=no"))
 
+(vim.fn.sign_define :DiagnosticSignError {:text "" :texthl :DiagnosticSignError :numhl :DiagnosticError})
+(vim.fn.sign_define :DiagnosticSignWarn {:text "" :texthl :DiagnosticSignWarn :numhl :DiagnosticWarn})
+(vim.fn.sign_define :DiagnosticSignInfo {:text "" :texthl :DiagnosticSignInfo :numhl :DiagnosticInfo})
+(vim.fn.sign_define :DiagnosticSignHint {:text "" :texthl :DiagnosticSignHint :numhl :DiagnosticHint})
+
+; set default diagnostics virtual text prefix
+(set vim.lsp.handlers.textDocument/publishDiagnostics
+     (vim.lsp.with
+       vim.lsp.diagnostic.on_publish_diagnostics
+       {:virtual_text {:prefix ""} :signs true :update_in_insert false}))
+
 ; {{{1 Mappings
 ; fixes
 (def-keymap-v :> :>gv)
@@ -556,18 +568,12 @@
 
 ; {{{1 LSP
 (let [lsp-config (require :lspconfig)
+      null-ls (require :null-ls)
       lsp-signature (require :lsp_signature)
       lsp-cmp (require :cmp_nvim_lsp)
       flags {:debounce_text_changes 150}
       capabilities (-> (vim.lsp.protocol.make_client_capabilities)
-                       (lsp-cmp.update_capabilities))
-      enabled-servers [:clangd
-                       :bashls
-                       :pyright
-                       ; :pyls
-                       :gopls
-                       :ocamllsp
-                       :tsserver]]
+                       (lsp-cmp.update_capabilities))]
 
   (fn on_attach [client bufnr]
     (lsp-signature.on_attach)
@@ -587,16 +593,27 @@
     (def-keymap-n (buffer bufnr) :<space>wr "<Cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>")
     (def-keymap-n (buffer bufnr) :<space>wl "<Cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>")
     (def-keymap-n (buffer bufnr) :<space>rn "<Cmd>lua vim.lsp.buf.rename()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>e "<Cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>")
-    (def-keymap-n (buffer bufnr) "[w" "<Cmd>lua vim.lsp.diagnostic.goto_prev()<CR>")
-    (def-keymap-n (buffer bufnr) "]w" "<Cmd>lua vim.lsp.diagnostic.goto_next()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>q "<Cmd>lua vim.lsp.diagnostic.set_loclist()<CR>")
+    (def-keymap-n (buffer bufnr) :<space>e "<Cmd>lua vim.diagnostic.open_float()<CR>")
+    (def-keymap-n (buffer bufnr) "[w" "<Cmd>lua vim.diagnostic.goto_prev()<CR>")
+    (def-keymap-n (buffer bufnr) "]w" "<Cmd>lua vim.diagnostic.goto_next()<CR>")
+    (def-keymap-n (buffer bufnr) :<space>q "<Cmd>lua vim.diagnostic.setloclist()<CR>")
     (def-keymap-n (buffer bufnr) :<space>f "<Cmd>lua vim.lsp.buf.formatting()<CR>")
     (def-keymap-n (buffer bufnr) :<space>ca "<Cmd>lua vim.lsp.buf.code_action()<CR>")
     (def-keymap-n (buffer bufnr) :gA "<Cmd>lua vim.lsp.buf.code_action()<CR>")
     (def-keymap (mode x) (buffer bufnr) :gA "<Cmd>lua vim.lsp.buf.range_code_action()<CR>")
 
+    (augroup rc-lsp-lightbulb
+      (autocmd CursorHold CursorHoldI "*" "lua require 'nvim-lightbulb'.update_lightbulb()"))
+
     (let [caps client.resolved_capabilities]
+      (when caps.code_lens
+        (augroup rc-lsp-codelens
+          (autocmd InsertLeave :<buffer> "lua vim.lsp.codelens.refresh()")
+          (autocmd InsertLeave :<buffer> "lua vim.lsp.codelens.display()")))
+      (when caps.document_highlight
+        (augroup rc-lsp-document-highlight
+          (autocmd CursorHold CursorHoldI "*" "lua vim.lsp.buf.document_highlight() ")
+          (autocmd CursorMoved "*" "lua vim.lsp.buf.clear_references() ")))
       (when caps.document_formatting
         (vim.cmd "command! -buffer LspFormat lua vim.lsp.buf.formatting()"))
       (when caps.rename
@@ -624,11 +641,20 @@
         (vim.cmd "command! -buffer LspImplementation lua vim.lsp.buf.implementation()"))
       ))
 
-  (each [_ srv (ipairs enabled-servers)]
-    ((. lsp-config srv :setup) {: on_attach : capabilities : flags})))
+  (null-ls.setup {: on_attach
+                  :sources [; null-ls.builtins.diagnostics.eslint
+                            ; null-ls.builtins.code_actions.eslint
+                            null-ls.builtins.diagnostics.shellcheck
+                            null-ls.builtins.code_actions.shellcheck
+                            null-ls.builtins.code_actions.gitrebase
+                            ]})
 
-(augroup rc-lsp
-  (autocmd CursorHold CursorHoldI "*" "lua require 'nvim-lightbulb'.update_lightbulb()"))
+  (lsp-config.clangd.setup {: on_attach : capabilities : flags})
+  (lsp-config.pyright.setup {: on_attach : capabilities : flags})
+  (lsp-config.gopls.setup {: on_attach : capabilities : flags})
+  (lsp-config.ocamllsp.setup {: on_attach : capabilities : flags})
+  (lsp-config.tsserver.setup {: on_attach : capabilities : flags})
+  )
 
 ; {{{1 Autocomplete
 (let [cmp (require :cmp)]
