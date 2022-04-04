@@ -34,6 +34,56 @@
       ; {{{1 Plugins
       (use :editorconfig/editorconfig-vim)
 
+      (use :tpope/vim-repeat)
+      (use :tpope/vim-unimpaired)
+      (use :tpope/vim-commentary)
+      ; " call minpac#add('tpope/vim-projectionist')
+      ; " call minpac#add('tpope/vim-dispatch')
+
+      ; " call minpac#add('simnalamburt/vim-mundo')
+      (use :mbbill/undotree)
+
+      (use :lifepillar/vim-solarized8)
+      ; low-color themes
+      ; https://github.com/mcchrish/vim-no-color-collections
+      (use :pbrisbin/vim-colors-off)
+      (use :jeffkreeftmeijer/vim-dim)
+
+      ; (use :Olical/conjure)
+      ; " call minpac#add('metakirby5/codi.vim')
+
+      ; (use :mg979/vim-visual-multi)
+      ; " call minpac#add('mtth/scratch.vim')
+
+      ; " call minpac#add('romainl/vim-qf')
+      ; " call minpac#add('romainl/vim-qlist')
+      ; " call minpac#add('kevinhwang91/nvim-bqf')
+
+      ; runtime macros/matchit.vim
+      ; " call minpac#add('andymass/vim-matchup')
+
+      ; " call minpac#add('justinmk/vim-sneak')
+      ; (use :unblevable/quick-scope)
+      ; " call minpac#add('Lokaltog/vim-easymotion')
+      ; " call minpac#add('jeetsukumaran/vim-indentwise')
+
+      ; " call minpac#add('tommcdo/vim-exchange')
+      ; " call minpac#add('matze/vim-move')
+      ; " call minpac#add('zirrostig/vim-schlepp')
+      ; " call minpac#add('natemaia/DragVisuals')
+
+      ; " call minpac#add('LucHermitte/lh-tags')
+      ; " call minpac#add('xuhdev/SingleCompile')
+      ; call minpac#add('ludovicchabant/vim-gutentags')
+
+      ; call minpac#add('vim-pandoc/vim-pandoc-syntax')
+      ; call minpac#add('vim-pandoc/vim-pandoc')
+      ; call minpac#add('vim-pandoc/vim-pandoc-after')
+      ; " call minpac#add('dhruvasagar/vim-table-mode')
+      ; " call minpac#add('clarke/vim-renumber')
+
+      (use :takac/vim-hardtime)
+
       ; {{{2 Fixes
       (use :tpope/vim-rsi)
       ; " call minpac#add('Konfekt/FastFold')
@@ -112,109 +162,13 @@
       ; " call minpac#add('godlygeek/tabular')
       ; " call minpac#add('junegunn/vim-easy-align')
 
-      ; {{{2 Autocompletion
-      ; (use :ajh17/VimCompletesMe)
-      ; (use :lifepillar/vim-mucomplete)
-
-      (use :hrsh7th/nvim-cmp)
-      (use :hrsh7th/cmp-buffer)
-      (use :hrsh7th/cmp-nvim-lsp)
-      ; (use :hrsh7th/cmp-path)
-      ; (use :hrsh7th/cmp-cmdline)
-      (use :hrsh7th/vim-vsnip)
-
-      ; {{{2 LSP
-      (use :neovim/nvim-lspconfig)
-      ; (use :glepnir/lspsaga.nvim)
-      (use :kosayoda/nvim-lightbulb)
-      (use :ray-x/lsp_signature.nvim)
-      ; (use :weilbith/nvim-lsp-smag)
-      ; (use :nvim-lua/lsp-status.nvim)
-      (use :jose-elias-alvarez/null-ls.nvim)
-
-      ; {{{2 Treesitter
-      (use :nvim-treesitter/nvim-treesitter)
-      (use :nvim-treesitter/nvim-treesitter-textobjects)
-      ; (use :p00f/nvim-ts-rainbow)
-      (use :nvim-treesitter/playground)
-
-      ; {{{2 Filetype specific
-      ; XXX: Needs to be after all the other syntax plugins
-      ; NeoViM, at least, as of February 2020, loads package plugins in the
-      ; reverse order that it finds them.  That's why I give it a weird name to
-      ; force it to the top when sorted lexicographically.
-      ; (use :sheerun/vim-polyglot {:name :00-vim-polyglot})
-
-      ; {{{3 Go
-      ; (use :fatih/vim-go {:for :go})
-      ; (use :arp242/gopher.vim {:for :go})
-      ; (use :rhysd/vim-goyacc)
-
-      ; {{{3 Lisps
-      (let [lisp-filetypes [:clojure :fennel]]
-        (use {1 :guns/vim-sexp :ft lisp-filetypes}))
-
-      ; {{{3 XML/HTML
-      (let [xml-filetypes [:xml :html :htmldjango :jinja2]]
-        (use {1 :gregsexton/MatchTag :ft xml-filetypes}))
-
-      ; }}}2
-
-      ; (use :liuchengxu/vim-which-key)
-      (use :tpope/vim-unimpaired)
-
-      ; " call minpac#add('metakirby5/codi.vim')
-      ; " call minpac#add('simnalamburt/vim-mundo')
-      (use :mbbill/undotree)
-
-      (use :sainnhe/sonokai)
-      (use :sainnhe/everforest)
-      (use :lifepillar/vim-solarized8)
-      (use :joshdick/onedark.vim)
-      ; (use :rafi/awesome-vim-colorschemes)
-
-      (use :Olical/conjure)
-      (use :mg979/vim-visual-multi)
-
-      (use :liuchengxu/vista.vim)
-
-      ; " call minpac#add('mtth/scratch.vim')
-      ; " call minpac#add('tpope/vim-projectionist')
-      ; " call minpac#add('tpope/vim-dispatch')
-      ; " call minpac#add('neomake/neomake')
-
-      ; " call minpac#add('romainl/vim-qf')
-      ; " call minpac#add('romainl/vim-qlist')
-
-      ; runtime macros/matchit.vim
-      ; " call minpac#add('andymass/vim-matchup')
-
-      (use :tpope/vim-repeat)
-      (use :tpope/vim-commentary)
-
-      ; " call minpac#add('justinmk/vim-sneak')
-      ; (use :unblevable/quick-scope)
-      ; " call minpac#add('Lokaltog/vim-easymotion')
-      ; " call minpac#add('jeetsukumaran/vim-indentwise')
-
-      ; " call minpac#add('tommcdo/vim-exchange')
-      ; " call minpac#add('matze/vim-move')
-      ; " call minpac#add('zirrostig/vim-schlepp')
-      ; " call minpac#add('natemaia/DragVisuals')
-
-      ; call minpac#add('vim-pandoc/vim-pandoc-syntax')
-      ; call minpac#add('vim-pandoc/vim-pandoc')
-      ; call minpac#add('vim-pandoc/vim-pandoc-after')
-      ; " call minpac#add('dhruvasagar/vim-table-mode')
-      ; " call minpac#add('clarke/vim-renumber')
-
+      ; {{{2 Org-mode-like/Wiki
       (use {1 :nvim-neorg/neorg
             :requires [:nvim-lua/plenary.nvim
                        :nvim-treesitter/nvim-treesitter]})
 
-      ; " call minpac#add('vimoutliner/vimoutliner')
-      ; " call minpac#add('lukaszkorecki/workflowish')
       ; " call minpac#add('fmoralesc/vim-pad')
+      ; " call minpac#add('vimoutliner/vimoutliner')
 
       ; " call minpac#add('vimwiki/vimwiki')
       ; " call minpac#add('tbabej/taskwiki')
@@ -235,11 +189,53 @@
       ; " call minpac#add('lervag/wiki-ft.vim')
       ; let g:wiki_root = '~/Documents/notes'
 
-      ; " call minpac#add('LucHermitte/lh-tags')
-      ; " call minpac#add('xuhdev/SingleCompile')
-      ; call minpac#add('ludovicchabant/vim-gutentags')
+      ; {{{2 Autocompletion
+      ; (use :ajh17/VimCompletesMe)
+      ; (use :lifepillar/vim-mucomplete)
 
-      (use :takac/vim-hardtime))))
+      (use :hrsh7th/nvim-cmp)
+      (use :hrsh7th/cmp-buffer)
+      (use :hrsh7th/cmp-nvim-lsp)
+      ; (use :hrsh7th/cmp-path)
+      ; (use :hrsh7th/cmp-cmdline)
+      (use :hrsh7th/vim-vsnip)
+
+      ; {{{2 LSP
+      (use :neovim/nvim-lspconfig)
+      ; (use :glepnir/lspsaga.nvim)
+      (use :kosayoda/nvim-lightbulb)
+      (use :ray-x/lsp_signature.nvim)
+      ; (use :weilbith/nvim-lsp-smag)
+      ; (use :nvim-lua/lsp-status.nvim)
+      (use :jose-elias-alvarez/null-ls.nvim)
+
+      (use :liuchengxu/vista.vim)
+
+      ; {{{2 Treesitter
+      (use {1 :nvim-treesitter/nvim-treesitter
+            :run ":TSUpdate"})
+      (use :nvim-treesitter/nvim-treesitter-textobjects)
+      ; (use :p00f/nvim-ts-rainbow)
+      (use :nvim-treesitter/playground)
+
+      ; {{{2 Filetype specific
+      ; XXX: Needs to be after all the other syntax plugins
+      ; NeoViM, at least, as of February 2020, loads package plugins in the
+      ; reverse order that it finds them.  That's why I give it a weird name to
+      ; force it to the top when sorted lexicographically.
+      ; (use {1 :sheerun/vim-polyglot :as :00-vim-polyglot})
+
+      ; XML/HTML
+      (use :gregsexton/MatchTag)
+
+      ; Lisps
+      (use :guns/vim-sexp)
+
+      ; Go
+      ; (use {1 :fatih/vim-go :ft :go})
+      ; (use {1 :arp242/gopher.vim :ft :go})
+      ; (use :rhysd/vim-goyacc)
+      )))
 
 ; {{{1 Personal plugins
 ; {{{2 askmkdir
