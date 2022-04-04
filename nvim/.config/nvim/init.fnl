@@ -117,8 +117,8 @@
       ; (use :lifepillar/vim-mucomplete)
 
       (use :hrsh7th/nvim-cmp)
+      (use :hrsh7th/cmp-buffer)
       (use :hrsh7th/cmp-nvim-lsp)
-      ; (use :hrsh7th/cmp-buffer)
       ; (use :hrsh7th/cmp-path)
       ; (use :hrsh7th/cmp-cmdline)
       (use :hrsh7th/vim-vsnip)
@@ -632,32 +632,27 @@
 
 ; {{{1 Autocomplete
 (let [cmp (require :cmp)]
-  (cmp.setup {:snippet {; REQUIRED - you must specify a snippet engine
-                        :expand (fn [args] (vim.fn.vsnip#anonymous args.body))}
+  (fn add-newline []
+    (let [[row column] (vim.api.nvim_win_get_cursor 0)]
+      (vim.api.nvim_buf_set_lines 0 row row true [""])
+      (vim.api.nvim_win_set_cursor 0 [(+ row 1) 0])))
+
+  (fn cmp-cr [fallback]
+    (when (not (cmp.confirm {:behavior cmp.ConfirmBehavior.Insert} add-newline))
+      (fallback)))
+
+  (cmp.setup {:snippet {:expand #(vim.fn.vsnip#anonymous $.body)}
+              :mapping {:<CR> cmp-cr
+                        :<Tab> (cmp.mapping.select_next_item)
+                        :<S-Tab> (cmp.mapping.select_prev_item)}
               :preselect cmp.PreselectMode.None
-              ; :mapping
-              ; {:<C-p> (cmp.mapping.select_prev_item)
-              ;  :<C-n> (cmp.mapping.select_next_item)
-              ;  :<C-d> (cmp.mapping.scroll_docs -4)
-              ;  :<C-f> (cmp.mapping.scroll_docs 4)
-              ;  ;  :<C-y> cmp.config.disable
-              ;  ;  :<C-e> (cmp.mapping {:i (cmp.mapping.abort)
-              ;  ;                       :c (cmp.mapping.close)})
-              ;  :<C-e> (cmp.mapping.close)
-              ;  :<C-Space> (cmp.mapping.complete)
-              ;  :<CR> (cmp.mapping.confirm {:behavior cmp.ConfirmBehavior.Replace
-              ;                              :select true})
-              ;  :<Tab> (fn [fallback]
-              ;           (if
-              ;             (cmp.visible) (cmp.select_next_item)
-              ;             (fallback)))
-              ;  :<S-Tab> (fn [fallback]
-              ;             (if
-              ;               (cmp.visible) (cmp.select_prev_item)
-              ;               (fallback)))}
-              :sources (cmp.config.sources [{:name :nvim_lsp}
-                                            {:name :neorg}]
-                                           [{:name :buffer}])}))
+              :sources (cmp.config.sources [{:name :nvim_lsp}]
+                                           [{:name :buffer}])})
+
+  ; Set configuration for specific filetype.
+  (cmp.setup.filetype :norg
+                      {:sources (cmp.config.sources
+                                  [{:name :neorg}])}))
 
 ; {{{1 Neorg
 (let [neorg (require :neorg)]
@@ -773,17 +768,6 @@
 ; Kind of like what GNOME does nowadays, or guide-key in emacsland.
 ;   * hecal3/vim-leader-guide
 ;   * sunaku/vim-shortcut
-;
-; {{{2 Solve autocomplete once and for all!
-; Here's the usual suspects
-;   * ervandew/supertab
-;   * Valloric/YouCompleteMe
-;   * Shougo/neocomplete.vim
-;   * Shougo/deoplete.nvim
-; And here's some less well known ones
-;   * ajh17/VimCompletesMe
-;   * maralla/completor.vim
-;   * roxma/nvim-completion-manager
 ;
 ; {{{2 Functions' arglist 'expansion'
 ;   * FooSoft/vim-argwrap
