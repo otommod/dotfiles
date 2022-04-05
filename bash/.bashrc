@@ -67,19 +67,21 @@ PROMPT_COMMAND+="; __prompt_set_title"
 # opening new tabs
 
 # https://codeberg.org/dnkl/foot/wiki#bash-and-zsh
-_urlencode() {
-	local length="${#1}"
-	for (( i = 0; i < length; i++ )); do
-		local c="${1:$i:1}"
-		case $c in
-			%) printf '%%%02X' "'$c" ;;
-			*) printf "%s" "$c" ;;
-		esac
-	done
-}
+# based on https://codeberg.org/dnkl/foot/issues/975
+function osc7_cwd() {
+  printf '\e]7;file://%s' "$HOSTNAME"
 
-osc7_cwd() {
-	printf '\e]7;file://%s%s\e\\' "$HOSTNAME" "$(_urlencode "$PWD")"
+  # URL-encode the `$PWD`
+  local i c strlen=${#PWD}
+  for (( i = 0; i < strlen; i++ )); do
+    c=${PWD:$i:1}
+    case "$c" in
+      [-._~/a-zA-Z0-9]) printf '%s' "$c" ;;
+      *) printf '%%%02X' "$c" ;;
+    esac
+  done
+
+  printf '\e\\'
 }
 
 PROMPT_COMMAND+="; osc7_cwd"
