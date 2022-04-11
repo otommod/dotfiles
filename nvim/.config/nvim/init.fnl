@@ -545,7 +545,15 @@
 
 ; {{{1 Treesittter
 (let [ts-config (require :nvim-treesitter.configs)]
-  (ts-config.setup {:ensure_installed :maintained
+  (ts-config.setup {:ensure_installed
+                    [:bash :fish :make :c :cpp :python
+                     :html :css :javascript :jsdoc :json :http
+                     :go :gomod :gowork
+                     :ocaml :ocaml_interface :ocamllex
+                     :fennel :lua :vim :query
+                     :norg :norg_meta :norg_table
+                     :comment :regex :ledger
+                     ]
                     :highlight {:enable true}
                     ; :indent {:enable true}
                     ; :rainbow {:enable true :extended_mode true}
