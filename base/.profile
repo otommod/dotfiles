@@ -11,13 +11,6 @@ if [ -d ~/.profile.d ]; then
     unset f
 fi
 
-
-# {{{1 Golang
-# Use Go modules; I'm not sure if this is needed after Go 1.13
-export GOPATH="$HOME/go"
-export GO111MODULE=on
-
-
 # {{{1 PATH
 # Taken mostly from Arch Linux's /etc/profile
 prependpath() {
@@ -33,7 +26,6 @@ prependpath "$HOME/.local/bin"
 command -v go >/dev/null && \
     prependpath "${GOPATH:-$HOME/go}/bin"
 
-
 # XXX: by default python uses ~/.local/bin, so dunno if this is needed
 # if command -v python3 >/dev/null; then
 #     python3 -c 'import sys, site; sys.stdout.write(site.USER_BASE + "/bin")'
@@ -44,19 +36,15 @@ command -v go >/dev/null && \
 export PATH
 unset prependpath
 
-
 # {{{1 Default programs
 export PAGER=less
-
 export EDITOR=nvim
-
 export BROWSER=firefox
 
-# Set the default Less options.
+# Set the default `less` options.
 # Mouse-wheel scrolling has been disabled by -X (disable screen clearing).
 # Remove -X and -F (exit if the content fits on one screen) to enable it.
 export LESS='-F -g -i -M -R -S -w -X -z-4'
-
 
 # {{{1 History
 export HISTDIR="$HOME/.hist"
@@ -90,14 +78,7 @@ export PYTHONHISTORY="$HISTDIR/python"
 # least put it out of the way.
 mkdir -p ~/.local/share/tig
 
-
 # {{{1 XDG_CONFIG_HOME
-# The logs, at least, the channel logs, can be set to go to $HISTDIR with
-#     /set logger.file.path "${env:HISTDIR}/weechat"
-# The program logs always go to $WEECHAT_HOME/weechat.log.
-export WEECHAT_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}/weechat
-mkdir -p "$WEECHAT_HOME"
-
 # IPython
 export IPYTHONDIR=${XDG_CONFIG_HOME:-"$HOME/.config"}/ipython
 mkdir -p "$IPYTHONDIR"
@@ -105,12 +86,10 @@ mkdir -p "$IPYTHONDIR"
 # ripgrep will read it's config file only if this variable is defined
 export RIPGREP_CONFIG_PATH=${XDG_CONFIG_HOME:-"$HOME/.config"}/ripgreprc
 
-
 # {{{1 XDG_DATA_HOME
 # pylint data files
 export PYLINTHOME=${XDG_DATA_HOME:-"$HOME/.local/share"}/pylint
 mkdir -p "$PYLINTHOME"
-
 
 # {{{1 Game saves
 export SAVESDIR=~/.saves
