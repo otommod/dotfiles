@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 usage:
     grep-subs [-F] [-c|-l|-q] [-insvx] [--color WHEN] [-S STREAM]... PATTERN FILE...
