@@ -6,16 +6,15 @@
 	# https://git-scm.com/docs/git-config#git-config-useruseConfigOnly
 	useConfigOnly = true
 
+[init]
+	defaultBranch = main
+
 [credential]
 	# Use git credential-cache to temporarily store passwords
 	# https://git-scm.com/docs/gitcredentials#gitcredentials-helper
 	helper = cache
 
 [alias]
-	# TODO:
-	#   * http://www.gitalias.com/
-	#   * https://github.com/myfreeweb/dotfiles/blob/master/dev-base/gitconfig
-
 	# git git git whatever works
 	git = !git
 
@@ -27,12 +26,6 @@
 
 	# A prettier log
 	lg = log --graph --pretty='%Cred%h%Creset -%C(yellow)%d%Creset %s (%Cblue%an%Creset %Cgreen%cr%Creset)'
-
-[status]
-	# Show a summary of commits for modified submodules
-	submoduleSummary = true
-	# Recursively traverse untracked directories to display all contents
-	showUntrackedFiles = all
 
 [pull]
 	# Only allow fast-forward merges when pulling
@@ -50,38 +43,38 @@
 	# via https://groups.google.com/forum/#!topic/binary-transparency/f-BI4o8HZW0
 	fsckobjects = true
 
-[diff]
-	# Use initials for (c)ommit, (i)ndex and (w)work tree instead of a/b
-	mnemonicPrefix = true
-
 [merge]
+	tool = nvim-fugitive
 	# Create merge commits when merging
 	ff = false
 	# Display common-ancestor blocks in conflict hunks
 	conflictStyle = diff3
 
 [mergetool]
-	# Don't prompt before launching the mergetool
-	prompt = false
 	# Don't keep any of git's backup files after the mergetool exits
 	keepBackup = false
-	# Don't keep any of git's temporary files after the mergetool exits
-	keepTemporaries = false
-	# Put the temporary files in a temporary directory
-	writeToTemp = true
+
+[mergetool "nvim-fugitive"]
+	cmd = nvim +Gdiffsplit! \"$MERGED\"
 
 [rerere]
 	# TODO:
 	# enabled = true
 
-[color]
-	# Use color when isatty(stdout)
-	ui = auto
+[diff]
+	algorithm = histogram
+	# Use initials for (c)ommit, (i)ndex and (w)work tree instead of a/b
+	mnemonicPrefix = true
+
+[status]
+	# Show a summary of commits for modified submodules
+	submoduleSummary = true
+	# Recursively traverse untracked directories to display all contents
+	showUntrackedFiles = all
+
 [log]
 	# Abbreviate commit hashes whenever possible/relevant
 	abbrevCommit = true
 	# Print out the refs of any commits shown in the log
 	# https://git-scm.com/docs/git-log#git-log---decorateshortfullautono
 	decorate = short
-[init]
-	defaultBranch = main
