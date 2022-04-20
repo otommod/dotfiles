@@ -45,24 +45,22 @@ libfm_dir_settings = os.path.join(
 pcmanfm_conf = os.path.join(
     XDG_CONFIG_HOME, "pcmanfm", "default", "pcmanfm.conf")
 
-def pcmanfm_sort(dirname):
-    pcmanfm = configparser.ConfigParser(inline_comment_prefixes=None,
-                                        interpolation=None)
+def pcmanfm_sorted_args(dirname):
+    pcmanfm = configparser.ConfigParser(inline_comment_prefixes=None)
     pcmanfm.read(pcmanfm_conf)
-    pcmanfm_prefs = pcmanfm.get("ui", "sort", fallback="name;ascending")
+    default_sort = pcmanfm.get("ui", "sort", raw=True, fallback="name;ascending")
 
-    dir_settings = configparser.ConfigParser(inline_comment_prefixes=None,
-                                             interpolation=None)
+    dir_settings = configparser.ConfigParser(inline_comment_prefixes=None)
     with open(libfm_dir_settings, "r",
               encoding=sys.getfilesystemencoding(),
               errors=sys.getfilesystemencodeerrors()) as fp:
         dir_settings.read_file(fp, source=libfm_dir_settings)
 
-    dirname = os.path.abspath(dirname)
-    dir_prefs = dir_settings.get(dirname, "sort", fallback=pcmanfm_prefs)
+    dir_sort = dir_settings.get(os.path.abspath(dirname), "Sort",
+                                raw=True, fallback=default_sort)
 
     key, reverse = file_name_key, False
-    for p in dir_prefs.split(";"):
+    for p in dir_sort.split(";"):
         if p == "mtime":
             key = file_mtime_key
         elif p == "size":
@@ -90,7 +88,6 @@ def mpv(files, starting_file=None):
     except ValueError:
         pass
 
-    # m3u = os.memfd_create("m3u")
     m3u = tempfile.TemporaryFile(mode="w+",
                                  encoding=sys.getfilesystemencoding(),
                                  errors=sys.getfilesystemencodeerrors())
@@ -115,15 +112,15 @@ def main(argv):
     selection = argv[1]
     selection_dir = os.path.dirname(selection) or "."
 
-    s = os.stat(selection)
-    if stat.S_ISDIR(s.st_mode):
+    st = os.stat(selection)
+    if stat.S_ISDIR(st.st_mode):
         selection_dir = selection
+
+    sort_key, sort_reverse = pcmanfm_sorted_args(selection_dir)
 
     with os.scandir(selection_dir) as dp:
         files = [e for e in dp if not e.is_dir()]
-
-    sort_key, sort_reverse = pcmanfm_sort(selection_dir)
-    files.sort(key=sort_key, reverse=sort_reverse)
+        files.sort(key=sort_key, reverse=sort_reverse)
 
     # `scandir()` always returns relative paths.  In other words:
     #     all(e.path.startswith("./") for e in scandir("."))
