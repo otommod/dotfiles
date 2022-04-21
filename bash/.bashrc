@@ -6,11 +6,7 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-# XXX: env TERM=xterm-256color is a fix for foot
-# https://codeberg.org/dnkl/foot/wiki#no-colors-in-ls-output
-command -v dircolors >/dev/null 2>&1 &&
-  [[ -r ~/.dir_colors ]] &&
-  eval "$(env TERM=xterm-256color dircolors -b ~/.dir_colors)"
+command -v dircolors >/dev/null 2>&1 && eval "$(dircolors -b ~/.dir_colors)"
 
 # do history expansion when space entered
 bind 'Space: magic-space'

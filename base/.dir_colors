@@ -1,0 +1,274 @@
+# Based on and inspired by:
+# * https://github.com/seebi/dircolors-solarized
+# * https://github.com/karoliskoncevicius/dircolors-moonshine
+# * https://github.com/arcticicestudio/nord-dircolors
+
+TERM alacritty
+TERM ansi
+TERM dvtm
+TERM dvtm-256color
+TERM foot
+TERM konsole
+TERM konsole-256color
+TERM linux
+TERM putty
+TERM putty-256color
+TERM screen
+TERM screen-256color
+TERM screen-256color-bce
+TERM screen-bce
+TERM st
+TERM st-256color
+TERM st-meta
+TERM st-meta-256color
+TERM tmux
+TERM tmux-256color
+TERM vt100
+TERM xterm
+TERM xterm-256color
+TERM xterm-kitty
+
+# files/directories
+NORMAL  00      # global default
+FILE    00      # regular file
+DIR     34      # directory
+
+# symlinks
+LINK    35      # a link
+ORPHAN  05;41   # a link to a nonexistent file
+MISSING 05;41   # the nonexistent file
+
+# special files
+FIFO    00;45      # pipe
+SOCK    00;45      # socket
+BLK     00;45      # block device
+CHR     00;45      # character device
+
+# special permissions
+SETUID  01;04                       # a file/directory with the setuid bit set
+SETGID  01;04                       # a file/directory with the setgid bit set
+OTHER_WRITABLE 01;04;34             # an other-writable directory
+STICKY  44                          # a directory with the sticky bit set
+STICKY_OTHER_WRITABLE 01;04;44      # both of the above
+
+# executables
+EXEC    01;31
+*a.out  31
+.app    31
+.cmd    31
+.com    31
+.exe    31
+
+# plain text
+.txt    32
+
+# text documents
+.0      32
+.1      32
+.2      32
+.3      32
+.4      32
+.5      32
+.6      32
+.7      32
+.8      32
+.9      32
+.bib    32
+.md     32
+.norg   32
+.org    32
+.rmd    32
+.Rmd    32
+.rst    32
+.tex    32
+
+# configuration/data files
+.conf   32
+.csv    32
+.ini    32
+.json   32
+.yaml   32
+.yml    32
+*rc     32
+
+# source code
+.c      92
+.cc     92
+.clj    92
+.cpp    92
+.csh    92
+.css    92
+.cxx    92
+.el     92
+.erb    92
+.fnl    92
+.go     92
+.h      92
+.hpp    92
+.hs     92
+.htm    92
+.html   92
+.HTML   92
+.java   92
+.js     92
+.jsm    92
+.jsx    92
+.l      92
+.lua    92
+.m      92
+.ml     92
+.mli    92
+.mll    92
+.mly    92
+.php    92
+.pl     92
+.PL     92
+.pm     92
+.py     92
+.r      92
+.R      92
+.rb     92
+.rs     92
+.sass   92
+.scss   92
+.sh     92
+.sql    92
+.ts     92
+.tsx    92
+.vim    92
+.xhtml  92
+.xml    92
+.y      92
+.zig    92
+.zsh    92
+
+# special source files
+*Makefile 01;92
+
+# binary documents
+.doc    36
+.docx   36
+.dvi    36
+.epub   36
+.odp    36
+.ods    36
+.odt    36
+.otp    36
+.ots    36
+.ott    36
+.pdf    36
+.PDF    36
+.pps    36
+.ppsx   36
+.ppt    36
+.pptx   36
+.ps     36
+.psd    36
+.xcf    36
+.xls    36
+.xlsx   36
+
+# images
+.avif   33
+.bmp    33
+.eps    33
+.gif    33
+.ico    33
+.jp2    33
+.jpeg   33
+.jpg    33
+.JPG    33
+.mng    33
+.pbm    33
+.pgm    33
+.png    33
+.PNG    33
+.ppm    33
+.svg    33
+.svgz   33
+.tif    33
+.tiff   33
+.xbm    33
+.xpm    33
+.xwd    33
+.yuv    33
+
+# videos
+.avi    93
+.divx   93
+.flv    93
+.m2ts   93
+.m4v    93
+.mkv    93
+.mov    93
+.MOV    93
+.mp4    93
+.mp4v   93
+.mpeg   93
+.mpg    93
+.ogm    93
+.ogv    93
+.ogx    93
+.qt     93
+.swf    93
+.webm   93
+.wmv    93
+
+# audio files
+.aac    02;33
+.ape    02;33
+.flac   02;33
+.m4a    02;33
+.mid    02;33
+.midi   02;33
+.mp3    02;33
+.oga    02;33
+.ogg    02;33
+.opus   02;33
+.wav    02;33
+
+# archives, compressed
+.7z     01;35
+.apk    01;35
+.bin    01;35
+.bz     01;35
+.bz2    01;35
+.cpio   01;35
+.deb    01;35
+.dmg    01;35
+.gz     01;35
+.iso    01;35
+.jar    01;35
+.lz     01;35
+.lzh    01;35
+.lzma   01;35
+.rar    01;35
+.rpm    01;35
+.tar    01;35
+.taz    01;35
+.tbz    01;35
+.tbz2   01;35
+.tgz    01;35
+.tlz    01;35
+.txz    01;35
+.tz     01;35
+.xz     01;35
+.z      01;35
+.Z      01;35
+.zip    01;35
+.zst    01;35
+
+# "unimportant" files (logs and backups)
+*#      02;37
+*~      02;37
+.bak    02;37
+.cache  02;37
+.class  02;37
+.log    02;37
+.o      02;37
+.old    02;37
+.orig   02;37
+.part   02;37
+.pyc    02;37
+.swo    02;37
+.swp    02;37
