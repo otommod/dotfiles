@@ -4,32 +4,14 @@
 (import-macros {: augroup
                 : def-keymap : def-keymap-n : def-keymap-v
                 : def-rec-keymap
-                } :vim-macros)
-
-(fn _G.compile_fennel_file [fnl-filename lua-filename]
-  (assert (not= fnl-filename lua-filename))
-  (let [compiler (require :fennel)]
-    (set debug.traceback compiler.traceback)
-    (with-open [fnl-file (io.open fnl-filename)
-                lua-file (io.open lua-filename :w)]
-      (->> (fnl-file:read "*a")
-           (compiler.compileString)
-           (pick-values 1)
-           (lua-file:write)))))
-
-(augroup rc-reload
-  (autocmd BufWritePost "init.fnl"
-           "++nested call v:lua.compile_fennel_file(stdpath('config') .. '/init.fnl', stdpath('config') .. '/init.lua') | source $MYVIMRC"))
-
-(let [packer-install-path (.. (vim.fn.stdpath :data) "/site/pack/packer/start/packer.nvim")]
-  (when (not= (vim.fn.isdirectory packer-install-path) 1)
-    (vim.fn.system ["git" "clone" "--depth" "1" "https://github.com/wbthomason/packer.nvim" packer-install-path])))
+                } :rc.macros)
 
 (let [packer (require :packer)
       use packer.use]
   (packer.startup
     (fn []
       (use :wbthomason/packer.nvim)
+      (use :rktjmp/hotpot.nvim)
 
       ; {{{1 Plugins
       (use :editorconfig/editorconfig-vim)
@@ -533,7 +515,7 @@
 (def-keymap-n :<leader>K "<Cmd>lua wordhl.unhighlight()<CR>")
 
 ; bookmarks
-(def-keymap-n :<leader>.v "<Cmd>e ~/.config/nvim/init.fnl<CR>")
+(def-keymap-n :<leader>.v "<Cmd>e ~/.config/nvim/fnl/rc.fnl<CR>")
 (def-keymap-n :<leader>.b "<Cmd>e ~/.bashrc<CR>")
 (def-keymap-n :<leader>.z "<Cmd>e ~/.zshrc<CR>")
 (def-keymap-n :<leader>.t "<Cmd>e ~/.tmux.conf<CR>")
