@@ -457,6 +457,9 @@
   (autocmd ColorScheme "*" "lua rc_highlights()")
   (autocmd OptionSet :termguicolors "lua rc_highlights()"))
 
+(let [bufline (require :bufline)]
+  (bufline.setup))
+
 (augroup rc-yank
   (autocmd TextYankPost "*" "lua vim.highlight.on_yank {timeout = 600}"))
 
