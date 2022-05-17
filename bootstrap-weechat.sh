@@ -88,6 +88,13 @@ while getopts 'hk:' flag; do
     esac
 done
 
+if [ -n "$keepass_db" ]; then
+    mkdir ~/.secrets
+    chmod 0700 ~/.secrets
+    keepassxc-cli attachment-export "$keepass_db" irc.oftc.net \
+        oftc.pem ~/.secrets/oftc.pem
+fi
+
 # TODO: change `irc.default_server.username` and `irc.default_server.nicks`
 # TODO: try using `keepasxc-proxy` to avoid typing my password 6 separate times
 # TODO: try using `keepasxc-proxy` somehow as WEECHAT_PASSPHRASE
@@ -109,20 +116,20 @@ import_weechat <<'EOF'
 /secure set libera_pass $(keepass password irc.libera.chat)
 /secure set libera_user $(keepass username irc.libera.chat)
 /secure set libera_nicks $(keepass nicknames irc.libera.chat)
-/secure set oftc_pass $(keepass password irc.oftc.net)
+/secure set oftc_cert_pass $(keepass cert-password irc.oftc.net)
 /secure set oftc_nicks $(keepass nicknames irc.oftc.net)
 
-/server add libera irc.libera.chat/6697 -ssl -autoconnect
+/server add libera irc.libera.chat/6697 -ssl -ssl_verify -autoconnect
 /set irc.server.libera.nicks ${sec.data.libera_nicks}
 /set irc.server.libera.sasl_mechanism PLAIN
 /set irc.server.libera.sasl_username ${sec.data.libera_user}
 /set irc.server.libera.sasl_password ${sec.data.libera_pass}
 /set irc.server.libera.autojoin "#archlinux,#foot,#fennel,#neovim"
 
-/server add oftc irc.oftc.net/6697 -ssl -autoconnect
+/server add oftc irc.oftc.net/6697 -ssl -ssl_verify -autoconnect
 /set irc.server.oftc.nicks ${sec.data.oftc_nicks}
-/set irc.server.oftc.command "/msg NickServ IDENTIFY ${sec.data.oftc_pass}"
-/set irc.server.oftc.command_delay 5
+/set irc.server.oftc.ssl_cert "~/.secrets/oftc.pem"
+/set irc.server.oftc.ssl_password ${sec.data.oftc_cert_pass}
 /set irc.server.oftc.autojoin "#alpine-linux,#suckless"
 
 /filter addreplace irc_smart * irc_smart_filter *
