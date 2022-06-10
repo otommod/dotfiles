@@ -86,10 +86,5 @@ mkdir -p "$IPYTHONDIR"
 # ripgrep will read it's config file only if this variable is defined
 export RIPGREP_CONFIG_PATH=${XDG_CONFIG_HOME:-"$HOME/.config"}/ripgreprc
 
-# {{{1 XDG_DATA_HOME
-# pylint data files
-export PYLINTHOME=${XDG_DATA_HOME:-"$HOME/.local/share"}/pylint
-mkdir -p "$PYLINTHOME"
-
 # {{{1 Game saves
 export SAVESDIR=~/.saves
