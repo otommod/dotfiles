@@ -46,6 +46,11 @@ export BROWSER=firefox
 # Remove -X and -F (exit if the content fits on one screen) to enable it.
 export LESS='-F -g -i -M -R -S -w -X -z-4'
 
+# Let `man` use real italics.
+# See https://jdebp.uk/Softwares/nosh/italics-in-manuals.html#Debian
+export GROFF_SGR=yes
+export MANROFFOPT='-- -P -i'
+
 # {{{1 History
 export HISTDIR="$HOME/.hist"
 mkdir -p "$HISTDIR"
