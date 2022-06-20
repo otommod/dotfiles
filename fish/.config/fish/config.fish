@@ -14,5 +14,12 @@ if status is-login
 end
 
 if status is-interactive
-  # Commands to run in interactive sessions can go here
+  function notify_bell --on-event fish_prompt
+    echo -en "\a"
+  end
+
+  # https://codeberg.org/dnkl/foot/wiki#jumping-between-prompts
+  function mark_prompt_start --on-event fish_prompt
+    echo -en "\e]133;A\e\\"
+  end
 end
