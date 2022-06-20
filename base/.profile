@@ -4,12 +4,11 @@
 # ~/.profile
 #
 
-if [ -d ~/.profile.d ]; then
-    for f in ~/.profile.d/?*.sh; do
-        [ -x "$f" ] && . "$f"
-    done
-    unset f
-fi
+for f in ~/.profile.d/*.sh; do
+    # shellcheck source=/dev/null
+    [ -x "$f" ] && . "$f"
+done
+unset f
 
 # {{{1 PATH
 # Taken mostly from Arch Linux's /etc/profile
@@ -23,15 +22,12 @@ prependpath() {
 prependpath "$HOME/bin"
 prependpath "$HOME/.local/bin"
 
+# XXX: by default python uses ~/.local/bin so this is probably not needed
+# if command -v python3 >/dev/null && \
+#     prependpath "$(python3 -m site --user-base)/bin"
+
 command -v go >/dev/null && \
     prependpath "${GOPATH:-$HOME/go}/bin"
-
-# XXX: by default python uses ~/.local/bin, so dunno if this is needed
-# if command -v python3 >/dev/null; then
-#     python3 -c 'import sys, site; sys.stdout.write(site.USER_BASE + "/bin")'
-# or just
-#     "$(python3 -m site --user-base)/bin"
-# fi
 
 export PATH
 unset prependpath
@@ -41,6 +37,7 @@ export PAGER=less
 export EDITOR=nvim
 export BROWSER=firefox
 
+# {{{1 Settings
 # Set the default `less` options.
 # Mouse-wheel scrolling has been disabled by -X (disable screen clearing).
 # Remove -X and -F (exit if the content fits on one screen) to enable it.
@@ -51,15 +48,30 @@ export LESS='-F -g -i -M -R -S -w -X -z-4'
 export GROFF_SGR=yes
 export MANROFFOPT='-- -P -i'
 
+# {{{1 XDG_CONFIG_HOME
+# IPython
+export IPYTHONDIR="${XDG_CONFIG_HOME:-$HOME/.config}/ipython"
+
+# The python interpreter runs $PYTHONSTARTUP when started in interactive mode.
+# We can use this to set the history file to $PYTHONHISTORY.  It mostly works;
+# the -i flag suppresses running $PYTHONSTARTUP. See also the `site` module,
+# responsible for readline support since python 3.4.  It will try importing a
+# `usercustomize` module; can be used for customization but it needs to be in
+# the python path which is different between versions and systems.
+export PYTHONSTARTUP="${XDG_CONFIG_HOME:-$HOME/.config}/pythonrc"
+
+# ripgrep will read its config file only if this variable is defined
+export RIPGREP_CONFIG_PATH="${XDG_CONFIG_HOME:-$HOME/.config}/ripgreprc"
+
 # {{{1 History
 export HISTDIR="$HOME/.hist"
 mkdir -p "$HISTDIR"
 
-# Where the 'rlwrap' utility writes its history
+# Where the `rlwrap` utility writes its history
 export RLWRAP_HOME="$HISTDIR/rlwrap"
 mkdir -p "$RLWRAP_HOME"
 
-# For the 'less' pager
+# The `less` pager
 export LESSHISTFILE="$HISTDIR/less"
 
 # SQLite
@@ -68,28 +80,9 @@ export SQLITE_HISTORY="$HISTDIR/sqlite"
 # nodeJS
 export NODE_REPL_HISTORY="$HISTDIR/node"
 
-# The python interpreter runs $PYTHONSTARTUP at the, well, startup in
-# interactive mode.  It's there that we set the history file to $PYTHONHISTORY,
-# it's can't be done any other way.  This is not a complete solution: if python
-# is run with the -i flag, $PYTHONSTARTUP is not run but 'import site' is,
-# which is what loads readline and the history (only in python 3.4 and later).
-# One could write a 'usercustomize' module, however you'd need to place it
-# somewhere in the python path which is different between versions and systems.
-export PYTHONSTARTUP="$HOME/.pythonrc"
-export PYTHONHISTORY="$HISTDIR/python"
+# See $PYTHONSTARTUP
+export PYTHON_REPL_HISTORY="$HISTDIR/python"
 
-# 'tig' will write to ~/.tig_history unless ~/.local/share/tig exists and is a
-# directory.  There doesn't seem to be a way to write it where I want so at
-# least put it out of the way.
-mkdir -p ~/.local/share/tig
-
-# {{{1 XDG_CONFIG_HOME
-# IPython
-export IPYTHONDIR=${XDG_CONFIG_HOME:-"$HOME/.config"}/ipython
-mkdir -p "$IPYTHONDIR"
-
-# ripgrep will read it's config file only if this variable is defined
-export RIPGREP_CONFIG_PATH=${XDG_CONFIG_HOME:-"$HOME/.config"}/ripgreprc
-
-# {{{1 Game saves
-export SAVESDIR=~/.saves
+# `tig` uses ~/.tig_history unless the $XDG_DATA_HOME/tig directory exists.
+# There's no way to move it anywhere else so at least hide it there.
+mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/tig"

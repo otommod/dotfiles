@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
+
 def load_history():
     import os, atexit
     try:
-        import readline, rlcompleter
+        import readline
     except ImportError:
         return
 
-    histfile = os.getenv("PYTHONHISTORY")
+    histfile = os.getenv("PYTHON_REPL_HISTORY")
     if histfile is None:
         return
 
@@ -20,8 +22,6 @@ def load_history():
         # history.
         readline.add_history("# I hate ~/.python_history with a passion")
 
-    # default history len is -1 (infinite), which may grow unruly
-    readline.set_history_length(1000)
     atexit.register(readline.write_history_file, histfile)
 
 load_history()
