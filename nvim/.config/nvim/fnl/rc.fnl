@@ -1,7 +1,8 @@
 ; vim:fdm=marker:
 
 ; {{{1 Prelude
-(import-macros {: augroup
+(import-macros {: set-opt : set-hl
+                : augroup
                 : def-keymap : def-keymap-n : def-keymap-v
                 : def-rec-keymap
                 } :rc.macros)
@@ -314,98 +315,92 @@
       (vim.fn.matchdelete m.id))))
 
 ; {{{1 Settings
-(set vim.opt.number true)   ; display line numbers
-; (set vim.opt.relativenumber true)
+(set-opt number)   ; display line numbers
+; (set-opt relativenumber)
 
-(set vim.opt.mouse :a)      ; enable mouse for all modes (Normal, Insert, etc)
+(set-opt ignorecase)   ; ignores case when searching
+(set-opt smartcase)    ; only match case when it exists
 
-(set vim.opt.ignorecase true)   ; ignores case when searching
-(set vim.opt.smartcase true)    ; only match case when it exists
+(set-opt list)     ; show nice little characters
+(set-opt listchars
+         {:eol "¬" :tab "» " :trail "·" :extends "❯" :precedes "❮" :nbsp "␣"})
+(set-opt showbreak "↪ ")    ; shows up on a wrapped line
+(set-opt breakindent)
 
-(set vim.opt.list true)     ; show nice little characters
-(set vim.opt.listchars
-     {:eol "¬" :tab "» " :trail "·" :extends "❯" :precedes "❮" :nbsp "␣"})
-(set vim.opt.showbreak "↪ ")    ; shows up on a wrapped line
-(set vim.opt.breakindent true)
-
-(set vim.opt.scrolloff 5)       ; always keep the cursor 5 lines from the end of the screen
-(set vim.opt.sidescrolloff 8)   ; XXX: ???
+(set-opt scrolloff 5)       ; always keep the cursor 5 lines from the end of the screen
+(set-opt sidescrolloff 8)   ; XXX: ???
 
 (vim.opt.nrformats:append :alpha)   ; incr/decr alphabetic characters
 
-(set vim.opt.undofile true)     ; save undos (persistent undo)
-(set vim.opt.backup true)
+(set-opt undofile)     ; save undos (persistent undo)
+(set-opt backup)
 (vim.opt.backupdir:remove ".")
 
-(set vim.opt.shiftwidth 2)
-(set vim.opt.tabstop 8)
-(set vim.opt.softtabstop 4)
+(set-opt shiftwidth 2)
+(set-opt tabstop 8)
+(set-opt softtabstop 4)
 
-(set vim.opt.smartindent true)
-(set vim.opt.expandtab true)
-(set vim.opt.shiftround true)   ; use multiple of shiftwidth when indenting with < and >
+(set-opt smartindent)
+(set-opt expandtab)
+(set-opt shiftround)   ; use multiple of shiftwidth when indenting with < and >
 
 ; Wildcompltetion
-(set vim.opt.wildmode [:longest:full :full])    ; command-line completion
-(vim.opt.wildignore:append
-  [
-   "*/.git/*" "*/.hg/*" "*/.svn/*"  ; version control directories
-   "*.DS_Store"                     ; OS X things
-   "*.sw?"                          ; vim swap files
+(set-opt wildmode [:longest:full :full])    ; command-line completion
+(set-opt wildignore
+         [
+          "*/.git/*" "*/.hg/*" "*/.svn/*"     ; version control directories
+          "*.sw?"                             ; vim swap files
 
-   ; Binary files
-   "*.o" "*.obj" "*.exe" "*.dll"        ; object files
-   "*.pyc" "*.pyo" "*/__pycache__/*"    ; Python bytecode
-   "*.class"                            ; Java bytecode
+          ; Binary files
+          "*.o" "*.obj" "*.exe" "*.dll"       ; object files
+          "*.pyc" "*.pyo" "*/__pycache__/*"   ; Python bytecode
+          "*.class"                           ; Java bytecode
 
-   "*.mp3" "*.flac"                 ; music files
-   "*.jp?g" "*.png" "*.gif" "*.bmp" ; images
-   "*.mkv" "*.mp4" "*.avi"          ; videos
+          ; Media files
+          "*.mp3" "*.flac"                    ; music files
+          "*.jp?g" "*.png" "*.gif" "*.bmp"    ; images
+          "*.mkv" "*.mp4" "*.avi"             ; videos
 
-   ; Archives
-   "*.tar"                      ; tar archives
-   "*.tar.gz" "*.tgz"           ; gzip compresser archives
-   "*.tar.bz2" "*.tbz" "*.tbz2" ; bzip2 compressed archives
-   "*.tar.xz" "*.txz"           ; xz compressed archives
-   "*.zip" "*.rar"              ; other archives
-   ])
+          ; Archives
+          "*.tar"                             ; tar archives
+          "*.tar.gz" "*.tgz"                  ; gzip compresser archives
+          "*.tar.bz2" "*.tbz" "*.tbz2"        ; bzip2 compressed archives
+          "*.tar.xz" "*.txz"                  ; xz compressed archives
+          "*.zip" "*.rar" "*.7z"              ; other archives
+          ])
 
 ; Terminal settings
-(set vim.opt.title true)       ; set the terminal title
-(set vim.opt.lazyredraw true)  ; do not redraw while executing commands
+(set-opt title)       ; set the terminal title
+(set-opt lazyredraw)  ; do not redraw while executing commands
 (when (or (= vim.env.COLORTERM :truecolor)
           (= vim.env.COLORTERM :24bit))
-  (set vim.opt.termguicolors true))
+  (set-opt termguicolors))
 
-(set vim.opt.splitright true)     ; new vertical splits are put on the right
-(set vim.opt.virtualedit :block)  ; allow virtual-block past the line end
-(set vim.opt.colorcolumn "80")    ; a highlighted column at the 80 char mark
-(set vim.opt.cursorline true)     ; highlights the screen line of the cursor
-(set vim.opt.concealcursor "nc")  ; don't conceal the cursor line in visual and insert mode
-(set vim.opt.foldcolumn "2")      ; a 2-char wide column indicating open and closed folds
-(set vim.opt.signcolumn "auto:2") ; at most 2-char wide sign column only when there's signs
+(set-opt splitright)          ; new vertical splits are put on the right
+(set-opt virtualedit :block)  ; allow virtual-block past the line end
+(set-opt colorcolumn "80")    ; a highlighted column at the 80 char mark
+(set-opt cursorline)          ; highlights the screen line of the cursor
+(set-opt concealcursor :nc)   ; don't conceal the cursor line in visual and insert mode
+(set-opt foldcolumn "2")      ; a 2-char wide column indicating open and closed folds
+(set-opt signcolumn "auto:2") ; at most 2-char wide sign column only when there's signs
 
-; (set vim.opt.completeopt [:menuone :longest])
-(set vim.opt.completeopt [:noinsert :menuone :noselect])
+; (set-opt completeopt [:menuone :longest])
+(set-opt completeopt [:noinsert :menuone :noselect])
 
-(set vim.opt.diffopt [:filler :internal :algorithm:histogram :indent-heuristic])
+(set-opt diffopt [:filler :internal :algorithm:histogram :indent-heuristic])
 
 (if
   (= (vim.fn.executable :rg) 1)
   (do
-    (set vim.opt.grepprg "rg --vimgrep")
-    (set vim.opt.grepformat "%f:%l:%c:%m,%f:%l:%m"))
-  (= (vim.fn.executable :ag) 1)
-  (do
-    (set vim.opt.grepprg "ag --vimgrep")
-    (set vim.opt.grepformat "%f:%l:%c:%m,%f:%l:%m"))
+    (set-opt grepprg "rg --vimgrep")
+    (set-opt grepformat "%f:%l:%c:%m,%f:%l:%m"))
   (and
     ; `pcall` protects against the command not existing
     (pcall vim.fn.system ["grep" "--version"])
     (= vim.v.shell_error 0))
   (do
-    (set vim.opt.grepprg "grep -nH -r")
-    (set vim.opt.grepformat "%f:%l:%m")))
+    (set-opt grepprg "grep -nH -r")
+    (set-opt grepformat "%f:%l:%m")))
 
 ; {{{1 Plugin options
 (set vim.g.cursorhold_updatetime 100)
@@ -421,29 +416,21 @@
 
 ; {{{1 Appearance
 (fn _G.rc_highlights []
-  (vim.cmd "colorscheme solarized8_flat")
+  (vim.cmd.colorscheme :solarized8_flat)
 
-  (vim.cmd "hi WhitespaceEOL ctermfg=white ctermbg=red guibg=#592929")
-
-  ; (vim.cmd "hi! def WordHL01 gui=bold guifg=white guibg=#e6261f")
-  ; (vim.cmd "hi! def WordHL02 gui=bold guifg=white guibg=#eb7532")
-  ; (vim.cmd "hi! def WordHL03 gui=bold guifg=white guibg=#f7d038")
-  ; (vim.cmd "hi! def WordHL04 gui=bold guifg=white guibg=#a3e048")
-  ; (vim.cmd "hi! def WordHL05 gui=bold guifg=white guibg=#49da9a")
-  ; (vim.cmd "hi! def WordHL06 gui=bold guifg=white guibg=#34bbe6")
-  ; (vim.cmd "hi! def WordHL07 gui=bold guifg=white guibg=#4355db")
-  ; (vim.cmd "hi! def WordHL08 gui=bold guifg=white guibg=#d23be7")
+  (set-hl WhitespaceEOL {:fg :White :bg :Firebrick :ctermbg :Red})
 
   ; XXX: add cterm fallbacks
-  (vim.cmd "hi! def WordHL01 gui=bold guifg=white guibg=#d53e4f")
-  (vim.cmd "hi! def WordHL02 gui=bold guifg=white guibg=#f46d43")
-  (vim.cmd "hi! def WordHL03 gui=bold guifg=black guibg=#fdae61")
-  (vim.cmd "hi! def WordHL04 gui=bold guifg=black guibg=#fee08b")
-  (vim.cmd "hi! def WordHL05 gui=bold guifg=black guibg=#ffffbf")
-  (vim.cmd "hi! def WordHL06 gui=bold guifg=black guibg=#e6f598")
-  (vim.cmd "hi! def WordHL07 gui=bold guifg=black guibg=#abdda4")
-  (vim.cmd "hi! def WordHL08 gui=bold guifg=white guibg=#66c2a5")
-  (vim.cmd "hi! def WordHL09 gui=bold guifg=white guibg=#3288bd")
+  ; https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=9
+  (set-hl WordHL01 {:fg :Black :bg :#a6cee3 :bold 1})
+  (set-hl WordHL02 {:fg :White :bg :#1f78b4 :bold 1})
+  (set-hl WordHL03 {:fg :Black :bg :#b2df8a :bold 1})
+  (set-hl WordHL04 {:fg :White :bg :#33a02c :bold 1})
+  (set-hl WordHL05 {:fg :Black :bg :#fb9a99 :bold 1})
+  (set-hl WordHL06 {:fg :White :bg :#e31a1c :bold 1})
+  (set-hl WordHL07 {:fg :Black :bg :#fdbf6f :bold 1})
+  (set-hl WordHL08 {:fg :Black :bg :#ff7f00 :bold 1})
+  (set-hl WordHL09 {:fg :Black :bg :#cab2d6 :bold 1})
 
   ; XXX: https://github.com/norcalli/nvim-colorizer.lua/issues/35#issuecomment-725850831
   (set package.loaded.colorizer nil)
