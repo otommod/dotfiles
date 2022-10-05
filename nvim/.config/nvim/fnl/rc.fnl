@@ -1,8 +1,8 @@
 ; vim:fdm=marker:
 
 ; {{{1 Prelude
-(import-macros {: set-opt : set-hl
-                : augroup
+(import-macros {: set-opt : set-opt-local : set-hl
+                : def-augroup : def-autocmd
                 : def-keymap : def-keymap-n : def-keymap-v
                 : def-rec-keymap
                 } :rc.macros)
@@ -230,19 +230,17 @@
 ; {{{2 askmkdir
 ; See also: http://code.arp242.net/auto_mkdir2.vim
 
-(global askmkdir {})
-
-(fn askmkdir.mkdir [dir confirm?]
-  (when
-    (and
-      (not= (vim.fn.isdirectory dir) 1)
-      (or
-        (not= confirm? 1)
-        (= (vim.fn.confirm (.. dir ": No such file or directory.  Creating...")) 1)))
-    (vim.fn.mkdir dir :p)))
-
-(augroup rc-askmkdir
-  (autocmd BufWritePre FileWritePre "*" "lua askmkdir.mkdir(vim.fn.expand('<afile>:p:h'), vim.v.cmdbang == 0)"))
+(do
+  (fn user-accepts? [question] (= 1 (vim.fn.confirm question)))
+  (fn directory-exists? [path] (= 1 (vim.fn.isdirectory path)))
+  (fn ask-to-make-missing-dir [{: file}]
+    (let [force-create? (= vim.v.cmdbang 1)
+          dirname (vim.fn.fnamemodify file ":p:h")]
+      (when (and (not (directory-exists? dirname))
+                 (or force-create?
+                     (user-accepts? (.. dirname ": No such file or directory.  Creating..."))))
+        (vim.fn.mkdir dirname :p))))
+  (def-augroup rc-askmkdir [:BufWritePre :FileWritePre] ask-to-make-missing-dir))
 
 ; {{{2 wordhl
 ; Simple plugin to highlight specific words or sentences
@@ -407,15 +405,15 @@
 
 ; {{{2 netrw
 (set vim.g.netrw_altfile true)
-(augroup rc-netrw
-  (autocmd FileType :netrw "nnoremap <buffer><silent> gq <Cmd>Rexplore<CR>"))
+(def-augroup rc-netrw
+             (:FileType :netrw) "nnoremap <buffer><silent> gq <Cmd>Rexplore<CR>")
 
 ; {{{2 bufline
 (set vim.g.bufline_separator "  ")
 ; (set vim.g.bufline_fmt_fnamemodify ":p:~:.:gs#\v/(.)[^/]*\ze/#/\1#")
 
 ; {{{1 Appearance
-(fn _G.rc_highlights []
+(fn highlights []
   (vim.cmd.colorscheme :solarized8_flat)
 
   (set-hl WhitespaceEOL {:fg :White :bg :Firebrick :ctermbg :Red})
@@ -439,22 +437,22 @@
     (each [_ bufnr (ipairs (vim.api.nvim_list_bufs))]
       (colorizer.attach_to_buffer bufnr))))
 
-(rc_highlights)
-(augroup rc-highlights
-  (autocmd ColorScheme "*" "lua rc_highlights()")
-  (autocmd OptionSet :termguicolors "lua rc_highlights()"))
+(def-augroup rc-highlights
+             :VimEnter highlights
+             :ColorScheme highlights
+             (:OptionSet :termguicolors) highlights)
 
 (let [bufline (require :bufline)]
   (bufline.setup))
 
-(augroup rc-yank
-  (autocmd TextYankPost "*" "lua vim.highlight.on_yank {timeout = 600}"))
+(def-augroup rc-yank
+             :TextYankPost #(vim.highlight.on_yank {:timeout 600}))
 
-(augroup rc-whitespace
-  (autocmd VimEnter WinNew "*" "call matchadd('WhitespaceEOL', '\\s\\+$')"))
+(def-augroup rc-whitespace
+             [:VimEnter :WinNew] #(vim.fn.matchadd :WhitespaceEOL "\\s\\+$"))
 
-(augroup rc-terminal
-  (autocmd TermOpen "*" "setlocal foldcolumn=0 signcolumn=no"))
+(def-augroup rc-terminal
+             :TermOpen "setlocal foldcolumn=0 signcolumn=no")
 
 (vim.fn.sign_define :DiagnosticSignError {:text "" :texthl :DiagnosticSignError :numhl :DiagnosticError})
 (vim.fn.sign_define :DiagnosticSignWarn {:text "" :texthl :DiagnosticSignWarn :numhl :DiagnosticWarn})
@@ -585,14 +583,14 @@
     (def-keymap (mode x) (buffer bufnr) :gA "<Cmd>lua vim.lsp.buf.range_code_action()<CR>")
 
     (let [bulb (require :nvim-lightbulb)]
-      (vim.api.nvim_create_autocmd [:CursorHold :CursorHoldI] {:buffer bufnr :callback bulb.update_lightbulb}))
+      (def-autocmd ([:CursorHold :CursorHoldI] (buffer bufnr)) bulb.update_lightbulb))
 
     (let [caps client.server_capabilities]
       (when caps.documentHighlightProvider
-        (vim.api.nvim_create_autocmd [:CursorHold :CursorHoldI] {:buffer bufnr :callback vim.lsp.buf.document_highlight})
-        (vim.api.nvim_create_autocmd :CursorMoved {:buffer bufnr :callback vim.lsp.buf.clear_references}))
+        (def-autocmd ([:CursorHold :CursorHoldI] (buffer bufnr)) vim.lsp.buf.document_highlight)
+        (def-autocmd (:CursorMoved (buffer bufnr)) vim.lsp.buf.clear_references))
       (when caps.codeLensProvider
-        (vim.api.nvim_create_autocmd [:BufEnter :CursorHold :InsertLeave] {:buffer bufnr :callback vim.lsp.codelens.refresh}))
+        (def-autocmd ([:BufEnter :CursorHold :InsertLeave] (buffer bufnr)) vim.lsp.codelens.refresh))
       (when caps.definitionProvider
         (vim.cmd "command! -buffer LspDefinition lua vim.lsp.buf.definition()"))
       (when caps.typeDefinitionProvider
@@ -686,14 +684,13 @@
                        :branch :main}}))
 
 ; {{{1 Python
-(fn _G.rc_ft_python []
+(fn ft-python []
   (let [py-cmd "import sys\nfor p in sys.path:\n if p: print(p)"
         (ok? py-path) (pcall vim.fn.systemlist ["python3" "-c" py-cmd])]
     (when ok?
-      (set vim.opt_local.path ["." (unpack py-path)]))))
+      (set-opt-local path ["." (unpack py-path)]))))
 
-(augroup rc-ft-python
-  (autocmd FileType :python "lua rc_ft_python()"))
+(def-augroup rc-ft-python (:FileType :python) ft-python)
 
 ; {{{1 Fennel
 (do
@@ -770,25 +767,22 @@
         (:call prev-indent fn-name) (+ prev-indent (length fn-name) 2)
         _ 0))))
 
-(fn _G.rc_ft_fennel []
-  (set vim.opt_local.softtabstop 2)
-  (set vim.opt_local.shiftwidth 2)
-  (set vim.opt_local.expandtab true)
-  (set vim.opt_local.indentkeys ["!" :o :O])
-  (set vim.opt_local.suffixesadd :.fnl)
+(fn ft-fennel []
+  (set-opt-local softtabstop 2)
+  (set-opt-local shiftwidth 2)
+  (set-opt-local expandtab)
+  (set-opt-local indentkeys ["!" :o :O])
+  (set-opt-local suffixesadd :.fnl)
   ; XXX: (set vim.opt_local.include "require")
-  (set vim.opt_local.iskeyword
+  (set-opt-local iskeyword
        ["33-255" "^(" "^)" "^{" "^}" "^[" "^]" "^\"" "^'" "^~" "^;" "^," "^@-@" "^`" "^." "^:"])
   (vim.opt_local.formatoptions:remove :t)
-  (set vim.opt_local.comments "n:;")
-  (set vim.opt_local.commentstring "; %s")
-  (set vim.opt_local.indentexpr "v:lua.rc_ft_fennel_indentexpr(v:lnum)")
-  )
-
-(augroup rc-ft-fennel
-  (autocmd FileType :fennel "lua rc_ft_fennel()"))
+  (set-opt-local comments "n:;")
+  (set-opt-local commentstring "; %s")
+  (set-opt-local indentexpr "v:lua.rc_ft_fennel_indentexpr(v:lnum)"))
 
 (set vim.g.sexp_filetypes :fennel)
+(def-augroup rc-ft-fennel (:FileType :fennel) ft-fennel)
 
 ; {{{1 TODO
 ; {{{2 Finalize on some TODO file format

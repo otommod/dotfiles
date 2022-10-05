@@ -1,24 +1,48 @@
 (fn nil? [x] (= x nil))
+(fn string? [x] (= (type x) :string))
+
 (fn set-opt [name value]
   `(tset vim.opt ,(tostring name) ,(if (nil? value) true value)))
+(fn set-opt-local [name value]
+  `(tset vim.opt_local ,(tostring name) ,(if (nil? value) true value)))
+
 (fn set-hl [name value] `(vim.api.nvim_set_hl 0 ,(tostring name) ,value))
 
-(fn autocmd [...]
-  (let [given-args [...]]
-    (assert (>= (length given-args) 3) "autocmd events, pattern or cmd missing")
-    (let [cmd (table.remove given-args)
-          pattern (table.remove given-args)
-          events (icollect [_ ev (ipairs given-args)] (tostring ev))]
-    (table.concat ["autocmd" (table.concat events ",") pattern cmd] " "))))
+(fn create-autocmd [event-filter callback ?group-id]
+  (var events event-filter)
+  (var opts {})
+  (when (list? event-filter)
+    (set events (. event-filter 1))
+    (let [pattern (. event-filter 2)]
+      (if (and (list? pattern) (= (. pattern 1) `buffer))
+          (set opts.buffer (. pattern 2))
+          (set opts.pattern pattern))))
+  (if (string? callback)
+      (set opts.command callback)
+      (set opts.callback callback))
+  (when (not= ?group-id nil)
+    (set opts.group ?group-id))
+  `(vim.api.nvim_create_autocmd ,events ,opts))
 
-(fn augroup [name ...]
-  (var cmd [(.. "augroup " (tostring name))])
-  (table.insert cmd "autocmd!")
-  (each [_ aucmd (ipairs [...])]
-    (assert (and (list? aucmd) (= (. aucmd 1) `autocmd)) "augroup expected autocmds")
-    (table.insert cmd (autocmd (unpack aucmd 2))))
-  (table.insert cmd "augroup end")
-  (list `vim.cmd (table.concat cmd "\n")))
+(fn group-by [n seq]
+  (fn f [seq i]
+    (let [i (+ i n)
+          j (+ i n -1)]
+      (when (< i (length seq))
+        (values i (unpack seq i j)))))
+  (values f seq (- 1 n)))
+
+(fn even? [x] (= (% x 2) 0))
+
+(fn create-augroup [name opts ...]
+  (assert (even? (select :# ...)) "augroup: an autocmd is missing its command/callback")
+  `(let [group-id# (vim.api.nvim_create_augroup ,(tostring name) ,opts)]
+     ,(icollect [_ event-filter callback (group-by 2 [...])]
+        (create-autocmd event-filter callback `group-id#))))
+
+(fn def-autocmd [event-filter callback] (create-autocmd event-filter callback))
+(fn def-augroup [name ...] (create-augroup name {} ...))
+(fn def-augroup* [name ...] (create-augroup name {:clean false} ...))
 
 (fn def-rec-keymap [...]
   (let [args [...]
@@ -43,8 +67,8 @@
 (fn def-keymap-n [...] (def-keymap `(mode n) ...))
 (fn def-keymap-v [...] (def-keymap `(mode v) ...))
 
-{: set-opt : set-hl
- : augroup
+{: set-opt : set-opt-local : set-hl
+ : def-augroup : def-augroup* : def-autocmd
  : def-keymap : def-keymap-n : def-keymap-v
  : def-rec-keymap
  }
