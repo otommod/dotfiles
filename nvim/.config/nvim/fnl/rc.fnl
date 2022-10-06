@@ -701,84 +701,86 @@
                    "collect" true "icollect" true "accumulate" true})
 
   (fn symbol-at [line pos]
-    (: (line:sub pos) :match "[^%s]+"))
+    (-> line
+        (: :sub pos)
+        (: :match "[^%s]+")))
 
   (fn find-string-start [line end-quote-pos]
     (var quote-pos nil)
     (var state :in-string)
-    (for [i (- end-quote-pos 1) 1 -1 :until (= state :none)]
-      (match (values (line:sub i i) state)
-        ("\"" _) (do (set quote-pos (- i 1))
+    (for [pos (- end-quote-pos 1) 1 -1 &until (= state :end)]
+      (match (values (line:sub pos pos) state)
+        ("\"" _) (do (set quote-pos (- pos 1))
                      (set state :maybe-quote))
         ("\\" :maybe-quote) (set state :escaped-quote)
         ("\\" :escaped-quote) (set state :maybe-quote)
-        (_ :maybe-quote) (set state :none)
+        (_ :maybe-quote) (set state :end)
         _ (set state :in-string)))
     quote-pos)
 
-  (fn line-indent-type [line i stack]
-    (let [c (line:sub i i)
+  (fn line-indent-type [stack line pos]
+    (let [c (line:sub pos pos)
           delimiter (. stack (length stack))]
-      (if (= i 0) nil
-          (= c "\"") (let [string-start (find-string-start line i)]
+      (if (= pos 0) nil
+          ;; if we find a new string, try finding its starting quote
+          (= c "\"") (let [string-start (find-string-start line pos)]
                        (when string-start
-                         (line-indent-type line string-start stack)))
+                         (line-indent-type stack line string-start)))
           ;; if we find the delimiter we're looking for, stop looking
           (= c delimiter) (do (table.remove stack)
-                              (line-indent-type line (- i 1) stack))
+                              (line-indent-type stack line (- pos 1)))
           ;; if we find a new form, start looking for the delimiter that begins it
           (. delimiters c) (do (table.insert stack (. delimiters c))
-                               (line-indent-type line (- i 1) stack))
+                               (line-indent-type stack line (- pos 1)))
           ;; if we're looking for a delimiter, skip everything till we find it
-          delimiter (line-indent-type line (- i 1) stack)
+          delimiter (line-indent-type stack line (- pos 1))
           ;; if we hit an opening table char, we're in a table!
-          (or (= c "[") (= c "{")) (values :table i)
+          (or (= c "[") (= c "{")) (values :table pos)
           ;; if we hit an open paren, we're in a call!
-          (= c "(") (values :call i (symbol-at line (+ i 1)))
-          (line-indent-type line (- i 1) stack))))
+          (= c "(") (values :call pos (symbol-at line (+ pos 1)))
+          (line-indent-type stack line (- pos 1)))))
 
   (fn find-comment-start [line]
     (var semicolon-pos nil)
-    (var state :none)
-    (for [i 1 (length line) :until semicolon-pos]
-      (match (values (line:sub i i) state)
-        (";" :none) (set semicolon-pos (- i 1))
+    (var state :normal)
+    (for [pos 1 (length line) &until semicolon-pos]
+      (match (values (line:sub pos pos) state)
+        (";" :normal) (set semicolon-pos (- pos 1))
         (_ :escaping) (set state :in-string)
         ("\\" :in-string) (set state :escaping)
-        ("\"" :in-string) (set state :none)
-        ("\"" :none) (set state :in-string)))
+        ("\"" :in-string) (set state :normal)
+        ("\"" :normal) (set state :in-string)))
     semicolon-pos)
 
-  (fn indent-type [lines line-num stack]
+  (fn indent-type [stack lines line-num]
     (let [line (. lines line-num)
           line-length (or (find-comment-start line) (length line))]
-      (match (line-indent-type line line-length stack)
-        (:table i) (values :table i)
-        (:call i fn-name) (if (. specials fn-name)
-                              (values :special (- i 1))
-                              (values :call (- i 1) fn-name))
-        (where _ (> line-num 1)) (indent-type lines (- line-num 1) stack))))
+      (match (line-indent-type stack line line-length)
+        (:table pos) (values :table pos)
+        (:call pos fn-name) (if (. specials fn-name)
+                              (values :special (- pos 1))
+                              (values :call (- pos 1) fn-name))
+        (where _ (> line-num 1)) (indent-type stack lines (- line-num 1)))))
 
   (fn _G.rc_ft_fennel_indentexpr [line-num]
     (let [lines (vim.api.nvim_buf_get_lines 0 0 line-num true)]
-      (match (indent-type lines (- line-num 1) [])
+      (match (indent-type [] lines (- line-num 1))
         (:table delimiter-pos) delimiter-pos
         (:special prev-indent) (+ prev-indent 2)
         (:call prev-indent fn-name) (+ prev-indent (length fn-name) 2)
         _ 0))))
 
 (fn ft-fennel []
-  (set-opt-local softtabstop 2)
-  (set-opt-local shiftwidth 2)
   (set-opt-local expandtab)
-  (set-opt-local indentkeys ["!" :o :O])
-  (set-opt-local suffixesadd :.fnl)
-  ; XXX: (set vim.opt_local.include "require")
+  (set-opt-local shiftwidth 2)
+  (set-opt-local softtabstop 2)
+  (set-opt-local suffixesadd ".fnl")
   (set-opt-local iskeyword
-       ["33-255" "^(" "^)" "^{" "^}" "^[" "^]" "^\"" "^'" "^~" "^;" "^," "^@-@" "^`" "^." "^:"])
-  (vim.opt_local.formatoptions:remove :t)
+                 ["33-255" "^(" "^)" "^{" "^}" "^[" "^]" "^\"" "^'" "^~" "^;" "^," "^@-@" "^`" "^." "^:"])
+  (set-opt-local include "(\\s*require")
   (set-opt-local comments "n:;")
   (set-opt-local commentstring "; %s")
+  (set-opt-local indentkeys ["!^F" :o :O])
   (set-opt-local indentexpr "v:lua.rc_ft_fennel_indentexpr(v:lnum)"))
 
 (set vim.g.sexp_filetypes :fennel)
