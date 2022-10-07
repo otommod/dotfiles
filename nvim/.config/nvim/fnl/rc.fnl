@@ -153,6 +153,7 @@
 
       ; {{{2 Org-mode-like/Wiki
       (use {1 :nvim-neorg/neorg
+            :run ":Neorg sync-parsers"
             :requires [:nvim-lua/plenary.nvim
                        :nvim-treesitter/nvim-treesitter]})
 
@@ -203,8 +204,6 @@
       ; {{{2 Treesitter
       (use {1 :nvim-treesitter/nvim-treesitter
             :run ":TSUpdate"})
-      (use :nvim-treesitter/nvim-treesitter-textobjects)
-      ; (use :p00f/nvim-ts-rainbow)
       (use :nvim-treesitter/playground)
 
       ; {{{2 Filetype specific
@@ -516,39 +515,16 @@
 ; {{{1 Treesittter
 (let [ts-config (require :nvim-treesitter.configs)]
   (ts-config.setup {:ensure_installed
-                    [:bash :fish :make :c :cpp :python
-                     :html :css :javascript :jsdoc :json :http
+                    [:fennel :lua :vim :help :query
+                     :fish :bash :make :c :cpp :python :regex :comment
+                     :html :css :javascript :jsdoc :json :http :sql
                      :go :gomod :gowork
                      :ocaml :ocaml_interface :ocamllex
-                     :fennel :lua :vim :query
-                     :norg :norg_meta :norg_table
-                     :comment :regex :ledger
                      ]
-                    :highlight {:enable true}
+                    ; XXX: https://github.com/neovim/tree-sitter-vimdoc/issues/23
+                    :highlight {:enable true :disable [:help]}
                     ; :indent {:enable true}
-                    ; :rainbow {:enable true :extended_mode true}
-                    :textobjects
-                    {
-                     ; :textobjects {:select {:enable true
-                     ;                        :keymaps {:af "@function.outer"
-                     ;                                  :if "@function.inner"
-                     ;                                  :ac "@call.outer"
-                     ;                                  :ic "@call.inner"
-                     ;                                  :ab "@block.outer"
-                     ;                                  :ib "@block.inner"
-                     ;                                  :as "@statement.outer"
-                     ;                                  :is "@statement.inner"}} }
-                     :move {:enable true
-                            :set_jumps true  ; whether to set jumps in the jumplist
-                            :goto_next_start {"]m" "@function.outer"
-                                              "]]" "@class.outer"}
-                            :goto_next_end {"]M" "@function.outer"
-                                            "][" "@class.outer"}
-                            :goto_previous_start {"[m" "@function.outer"
-                                                  "[[" "@class.outer"}
-                            :goto_previous_end {"[M" "@function.outer"
-                                               "[]" "@class.outer"}}
-                    }}))
+                    }))
 
 ; {{{1 LSP
 (let [lsp-config (require :lspconfig)
@@ -665,23 +641,11 @@
     {:load {:core.defaults {}
             :core.norg.concealer {}
             :core.norg.completion {:config {:engine :nvim-cmp}}
-            :core.norg.dirman {:config
-                               {:workspaces
-                                {:home_neorg "~/neorg"}
-                                }}
-            :core.gtd.base {:config {:workspace :home_neorg}}
+            ; :core.norg.dirman {:config {:workspaces
+            ;                             {:home "~/Documents/neorg"}
+            ;                             }}
+            ; :core.gtd.base {:config {:workspace :home}}
             }}))
-
-(let [parsers (require :nvim-treesitter.parsers)
-      parser-configs (parsers.get_parser_configs)]
-  (set parser-configs.norg_meta
-       {:install_info {:url "https://github.com/nvim-neorg/tree-sitter-norg-meta"
-                       :files ["src/parser.c"]
-                       :branch :main}})
-  (set parser-configs.norg_table
-       {:install_info {:url "https://github.com/nvim-neorg/tree-sitter-norg-table"
-                       :files ["src/parser.c"]
-                       :branch :main}}))
 
 ; {{{1 Python
 (fn ft-python []
