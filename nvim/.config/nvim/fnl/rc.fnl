@@ -3,224 +3,217 @@
 ; {{{1 Prelude
 (import-macros {: set-opt : set-opt-local : set-hl
                 : def-augroup : def-autocmd
-                : def-keymap : def-keymap-n : def-keymap-v
-                : def-rec-keymap
+                : def-rec-keymap : def-keymap : def-keymap-n : def-keymap-v
+                : def-packer-plugins
                 } :rc.macros)
 
-(let [packer (require :packer)]
-  (packer.startup
-    (fn [use]
-      (use :wbthomason/packer.nvim)
-      (use :rktjmp/hotpot.nvim)
+; {{{1 Plugins
+(def-packer-plugins (require :packer)
+  :rktjmp/hotpot.nvim
+  :editorconfig/editorconfig-vim
 
-      ; {{{1 Plugins
-      (use :editorconfig/editorconfig-vim)
+  :tpope/vim-repeat
+  :tpope/vim-unimpaired
+  :tpope/vim-commentary
+  ; :tpope/vim-projectionist
+  ; :tpope/vim-dispatch
 
-      (use :tpope/vim-repeat)
-      (use :tpope/vim-unimpaired)
-      (use :tpope/vim-commentary)
-      ; " call minpac#add('tpope/vim-projectionist')
-      ; " call minpac#add('tpope/vim-dispatch')
+  ; :mbbill/undotree
+  ; :simnalamburt/vim-mundo
 
-      ; " call minpac#add('simnalamburt/vim-mundo')
-      (use :mbbill/undotree)
+  ; :Olical/conjure
+  ; :metakirby5/codi.vim
 
-      ; (use :Olical/conjure)
-      ; " call minpac#add('metakirby5/codi.vim')
+  ; :mg979/vim-visual-multi
+  ; :mtth/scratch.vim
 
-      ; (use :mg979/vim-visual-multi)
-      ; " call minpac#add('mtth/scratch.vim')
+  ; :romainl/vim-qf
+  ; :romainl/vim-qlist
+  ; :kevinhwang91/nvim-bqf
 
-      ; " call minpac#add('romainl/vim-qf')
-      ; " call minpac#add('romainl/vim-qlist')
-      ; " call minpac#add('kevinhwang91/nvim-bqf')
+  ; runtime macros/matchit.vim
+  ; :andymass/vim-matchup
 
-      ; runtime macros/matchit.vim
-      ; " call minpac#add('andymass/vim-matchup')
+  ; :justinmk/vim-sneak
+  ; :unblevable/quick-scope
+  ; :Lokaltog/vim-easymotion
+  ; :jeetsukumaran/vim-indentwise
 
-      ; " call minpac#add('justinmk/vim-sneak')
-      ; " call minpac#add('unblevable/quick-scope')
-      ; " call minpac#add('Lokaltog/vim-easymotion')
-      ; " call minpac#add('jeetsukumaran/vim-indentwise')
+  ; :tommcdo/vim-exchange
+  ; :matze/vim-move
+  ; :zirrostig/vim-schlepp
+  ; :natemaia/DragVisuals
 
-      ; " call minpac#add('tommcdo/vim-exchange')
-      ; " call minpac#add('matze/vim-move')
-      ; " call minpac#add('zirrostig/vim-schlepp')
-      ; " call minpac#add('natemaia/DragVisuals')
+  ; :LucHermitte/lh-tags
+  ; :xuhdev/SingleCompile
+  ; :ludovicchabant/vim-gutentags
 
-      ; " call minpac#add('LucHermitte/lh-tags')
-      ; " call minpac#add('xuhdev/SingleCompile')
-      ; call minpac#add('ludovicchabant/vim-gutentags')
+  ; :vim-pandoc/vim-pandoc-syntax
+  ; :vim-pandoc/vim-pandoc
+  ; :vim-pandoc/vim-pandoc-after
+  ; :dhruvasagar/vim-table-mode
+  ; :clarke/vim-renumber
 
-      ; call minpac#add('vim-pandoc/vim-pandoc-syntax')
-      ; call minpac#add('vim-pandoc/vim-pandoc')
-      ; call minpac#add('vim-pandoc/vim-pandoc-after')
-      ; " call minpac#add('dhruvasagar/vim-table-mode')
-      ; " call minpac#add('clarke/vim-renumber')
+  :takac/vim-hardtime
 
-      (use :takac/vim-hardtime)
+  ; {{{2 Fixes
+  :tpope/vim-rsi
+  :ap/vim-you-keep-using-that-word
 
-      ; {{{2 Fixes
-      (use :tpope/vim-rsi)
-      (use :ap/vim-you-keep-using-that-word)
+  ; {{{2 File explorers
+  :tpope/vim-vinegar
+  ; :justinmk/vim-dirvish
 
-      ; {{{2 File explorers
-      (use :tpope/vim-vinegar)
-      ; (use :justinmk/vim-dirvish)
+  ; {{{2 Window management
+  ; :szw/vim-ctrlspace
+  ; :t9md/vim-choosewin
+  ; :dhruvasagar/vim-zoom
+  :troydm/zoomwintab.vim
 
-      ; {{{2 Window management
-      ; " call minpac#add('szw/vim-ctrlspace')
-      ; " call minpac#add('t9md/vim-choosewin')
-      ; " call minpac#add('dhruvasagar/vim-zoom')
-      (use :troydm/zoomwintab.vim)
+  ; {{{2 Eye candy
+  :ishan9299/nvim-solarized-lua
 
-      ; {{{2 Eye candy
-      (use :ishan9299/nvim-solarized-lua)
+  ; low-color themes
+  ; see https://github.com/mcchrish/vim-no-color-collections
+  :pbrisbin/vim-colors-off
+  :jeffkreeftmeijer/vim-dim
 
-      ; low-color themes
-      ; https://github.com/mcchrish/vim-no-color-collections
-      (use :pbrisbin/vim-colors-off)
-      (use :jeffkreeftmeijer/vim-dim)
+  ; (:NvChad/nvim-colorizer.lua
+  ;  :config #((. (require :colorizer) :setup)))
+  ; TODO: add mappings for the color picker
+  (:uga-rosa/ccc.nvim
+   :config #((. (require :ccc) :setup) {:highlighter {:auto_enable true}}))
 
-      ; (use {1 :NvChad/nvim-colorizer.lua
-      ;       :config #((. (require :colorizer) :setup))})
-      ; TODO: add mappings for the color picker
-      (use {1 :uga-rosa/ccc.nvim :config-module :ccc
-            :config #((. (require :ccc) :setup) {:highlighter {:auto_enable true}})})
+  ; TODO: I could write one of those and combine it with wordhl
+  ; :RRethy/vim-illuminate
+  ; :itchyny/vim-cursorword
+  ; :qstrahl/vim-matchmaker
 
-      ; " TODO: I could write one of those (vim-illuminate, vim-cursorword, vim-matchmaker) and combine it with wordhl
-      ; call minpac#add('RRethy/vim-illuminate')
-      ; " call minpac#add('itchyny/vim-cursorword')
-      ; " call minpac#add('qstrahl/vim-matchmaker')
+  ; {{{2 VCSs
+  :tpope/vim-fugitive
+  :tpope/vim-rhubarb
 
-      ; {{{2 VCSs
-      (use :tpope/vim-fugitive)
-      (use :tpope/vim-rhubarb)
+  ; :mhinz/vim-signify
+  (:lewis6991/gitsigns.nvim
+   :config
+   (fn []
+     (let [gitsigns (require :gitsigns)]
+       (gitsigns.setup {:numhl true})
+       (vim.api.nvim_set_keymap :n "]c" "" {:callback gitsigns.next_hunk})
+       (vim.api.nvim_set_keymap :n "[c" "" {:callback gitsigns.prev_hunk}))))
 
-      ; " call minpac#add('mhinz/vim-signify')
-      (use {1 :lewis6991/gitsigns.nvim
-            :config
-            (fn []
-              (let [gitsigns (require :gitsigns)]
-                (gitsigns.setup {:numhl true})
-                (vim.api.nvim_set_keymap :n "]c" "" {:callback gitsigns.next_hunk})
-                (vim.api.nvim_set_keymap :n "[c" "" {:callback gitsigns.prev_hunk})))})
+  ; {{{2 Search enhancements
+  ; :wincent/ferret
+  ; :mhinz/vim-grepper
+  ; :pelodelfuego/vim-swoop
+  ; :romainl/vim-cool
 
-      ; {{{2 Search enhancements
-      ; " call minpac#add('wincent/ferret')
-      ; " call minpac#add('mhinz/vim-grepper')
-      ; " call minpac#add('pelodelfuego/vim-swoop')
-      ; " call minpac#add('romainl/vim-cool')
+  ; {{{2 Objects & Operators
+  ; :tpope/vim-surround
+  ; :machakann/vim-sandwich
+  (:rhysd/vim-operator-surround
+   :requires [:kana/vim-textobj-user :kana/vim-operator-user])
 
-      ; {{{2 Objects & Operators
-      ; " call minpac#add('tpope/vim-surround')
-      ; " call minpac#add('machakann/vim-sandwich')
-      (use {1 :rhysd/vim-operator-surround
-            :requires [:kana/vim-textobj-user
-                       :kana/vim-operator-user]})
+  ; Text objects
+  ; :kana/vim-textobj-indent
+  ; :glts/vim-textobj-comment
+  ; :reedes/vim-textobj-quote
+  ; :thinca/vim-textobj-between
+  ; :AndrewRadev/sideways.vim
+  :PeterRincker/vim-argumentative
+  ; :adriaanzon/vim-textobj-matchit
+  ; :lucapette/vim-textobj-underscore
+  ; :coderifous/textobj-word-column.vim
+  ; :jeetsukumaran/vim-pythonsense
+  ; :bps/vim-textobj-python
+  ; :rbonvall/vim-textobj-latex
+  ; XXX: I like the 'next' object stuff, dunno about the rest
+  ; :wellle/targets.vim
 
-      ; Text objects
-      ; " call minpac#add('kana/vim-textobj-indent')
-      ; " call minpac#add('glts/vim-textobj-comment')
-      ; " call minpac#add('reedes/vim-textobj-quote')
-      ; " call minpac#add('thinca/vim-textobj-between')
-      ; " call minpac#add('AndrewRadev/sideways.vim')
-      (use :PeterRincker/vim-argumentative)
-      ; " call minpac#add('adriaanzon/vim-textobj-matchit')
-      ; " call minpac#add('lucapette/vim-textobj-underscore')
-      ; " call minpac#add('coderifous/textobj-word-column.vim')
-      ; " call minpac#add('jeetsukumaran/vim-pythonsense')
-      ; " call minpac#add('bps/vim-textobj-python')
-      ; " call minpac#add('rbonvall/vim-textobj-latex')
-      ; " XXX: I like the 'next' object stuff, dunno about the rest
-      ; " call minpac#add('wellle/targets.vim')
+  ; {{{2 Warm and fuzzy
+  ; :junegunn/fzf
+  ; :junegunn/fzf.vim
+  ; :brettbuddin/fzf-quickfix
+  (:ibhagwan/fzf-lua
+   :requires [:kyazdani42/nvim-web-devicons])
 
-      ; {{{2 Warm and fuzzy
-      ; (use :junegunn/fzf)
-      ; (use :junegunn/fzf.vim)
-      ; (use :brettbuddin/fzf-quickfix)
-      (use {1 :ibhagwan/fzf-lua
-            :requires [:kyazdani42/nvim-web-devicons]})
+  ; {{{2 Alignment
+  ; :tommcdo/vim-lion
+  ; :godlygeek/tabular
+  ; :junegunn/vim-easy-align
 
-      ; {{{2 Alignment
-      ; " call minpac#add('tommcdo/vim-lion')
-      ; " call minpac#add('godlygeek/tabular')
-      ; " call minpac#add('junegunn/vim-easy-align')
+  ; {{{2 Org-mode-like/Wiki
+  (:nvim-neorg/neorg
+   :run ":Neorg sync-parsers"
+   :requires [:nvim-lua/plenary.nvim :nvim-treesitter/nvim-treesitter])
 
-      ; {{{2 Org-mode-like/Wiki
-      (use {1 :nvim-neorg/neorg
-            :run ":Neorg sync-parsers"
-            :requires [:nvim-lua/plenary.nvim
-                       :nvim-treesitter/nvim-treesitter]})
+  ; :fmoralesc/vim-pad
+  ; :vimoutliner/vimoutliner
 
-      ; " call minpac#add('fmoralesc/vim-pad')
-      ; " call minpac#add('vimoutliner/vimoutliner')
+  ; (:vimwiki/vimwiki
+  ;  :config (fn []
+  ;    (set vim.g.vimwiki_list [{:path "~/Documents/notes" :syntax :markdown :ext ".md"}])
+  ;    (set vim.g.vimwiki_global_ext 0)))
+  ; :tbabej/taskwiki
 
-      ; " call minpac#add('vimwiki/vimwiki')
-      ; " call minpac#add('tbabej/taskwiki')
-      ; " let g:vimwiki_list = [{'path': '~/Documens/notes', 'syntax': 'markdown', 'ext': '.md'}]
-      ; " let g:vimwiki_global_ext = 0
+  ; (:fcpg/vim-waikiki
+  ;  :config (fn []
+  ;    (set vim.g.waikiki_wiki_roots ["~/Documents/notes"])
+  ;    (set vim.g.waikiki_default_maps 1)
+  ;    (set vim.g.waikiki_conceal_markdown_url 0)
+  ;    (set vim.g.waikiki_space_replacement "-")
+  ;    (def-autocmd (:User :setup) "echomsg 'in a Waikiki buffer")))
 
-      ; call minpac#add('fcpg/vim-waikiki')
-      ; let g:waikiki_wiki_roots = ['~/Documents/notes']
-      ; let g:waikiki_default_maps = 1
-      ; let g:waikiki_conceal_markdown_url = 0
-      ; let g:waikiki_space_replacement = '-'
-      ; augroup Waikiki
-      ;     au!
-      ;     au User setup echomsg 'in a Waikiki buffer'
-      ; augroup end
+  ; :lervag/wiki-ft.vim
+  ; (:lervag/wiki.vim
+  ;  :config (fn []
+  ;    (set vim.g.wiki_root "~/Documents/notes")))
 
-      ; " call minpac#add('lervag/wiki.vim')
-      ; " call minpac#add('lervag/wiki-ft.vim')
-      ; let g:wiki_root = '~/Documents/notes'
+  ; {{{2 Autocompletion
+  ; :ajh17/VimCompletesMe
+  ; :lifepillar/vim-mucomplete
 
-      ; {{{2 Autocompletion
-      ; (use :ajh17/VimCompletesMe)
-      ; (use :lifepillar/vim-mucomplete)
+  :hrsh7th/nvim-cmp
+  :hrsh7th/cmp-buffer
+  :hrsh7th/cmp-nvim-lsp
+  ; :hrsh7th/cmp-path
+  ; :hrsh7th/cmp-cmdline
+  :hrsh7th/vim-vsnip
 
-      (use :hrsh7th/nvim-cmp)
-      (use :hrsh7th/cmp-buffer)
-      (use :hrsh7th/cmp-nvim-lsp)
-      ; (use :hrsh7th/cmp-path)
-      ; (use :hrsh7th/cmp-cmdline)
-      (use :hrsh7th/vim-vsnip)
+  ; {{{2 LSP
+  :neovim/nvim-lspconfig
+  ; :glepnir/lspsaga.nvim
+  :kosayoda/nvim-lightbulb
+  :ray-x/lsp_signature.nvim
+  ; :nvim-lua/lsp-status.nvim
+  :jose-elias-alvarez/null-ls.nvim
 
-      ; {{{2 LSP
-      (use :neovim/nvim-lspconfig)
-      ; (use :glepnir/lspsaga.nvim)
-      (use :kosayoda/nvim-lightbulb)
-      (use :ray-x/lsp_signature.nvim)
-      ; (use :weilbith/nvim-lsp-smag)
-      ; (use :nvim-lua/lsp-status.nvim)
-      (use :jose-elias-alvarez/null-ls.nvim)
+  :liuchengxu/vista.vim
 
-      (use :liuchengxu/vista.vim)
+  ; {{{2 Treesitter
+  (:nvim-treesitter/nvim-treesitter
+   :run ":TSUpdate")
+  :nvim-treesitter/playground
 
-      ; {{{2 Treesitter
-      (use {1 :nvim-treesitter/nvim-treesitter
-            :run ":TSUpdate"})
-      (use :nvim-treesitter/playground)
+  ; {{{2 Filetype specific
+  ; XXX: Needs to be after all the other syntax plugins
+  ; NeoViM, at least, as of February 2020, loads package plugins in the
+  ; reverse order that it finds them.  That's why I give it a weird name to
+  ; force it to the top when sorted lexicographically.
+  ; (:sheerun/vim-polyglot :as :00-vim-polyglot)
 
-      ; {{{2 Filetype specific
-      ; XXX: Needs to be after all the other syntax plugins
-      ; NeoViM, at least, as of February 2020, loads package plugins in the
-      ; reverse order that it finds them.  That's why I give it a weird name to
-      ; force it to the top when sorted lexicographically.
-      ; (use {1 :sheerun/vim-polyglot :as :00-vim-polyglot})
+  ; XML/HTML
+  :gregsexton/MatchTag
 
-      ; XML/HTML
-      (use :gregsexton/MatchTag)
+  ; Lisps
+  :guns/vim-sexp
+  :tpope/vim-sexp-mappings-for-regular-people
 
-      ; Lisps
-      (use :guns/vim-sexp)
-      (use :tpope/vim-sexp-mappings-for-regular-people)
-
-      ; Go
-      ; (use {1 :fatih/vim-go :ft :go})
-      ; (use {1 :arp242/gopher.vim :ft :go})
-      ; (use :rhysd/vim-goyacc)
-      )))
+  ; Go
+  ; (:fatih/vim-go :ft :go)
+  ; (:arp242/gopher.vim :ft :go)
+  ; :rhysd/vim-goyacc
+  )
 
 ; {{{1 Personal plugins
 ; {{{2 askmkdir

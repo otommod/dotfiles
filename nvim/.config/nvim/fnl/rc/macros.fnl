@@ -1,12 +1,16 @@
 (fn nil? [x] (= x nil))
 (fn string? [x] (= (type x) :string))
 
-(fn set-opt [name value]
-  `(tset vim.opt ,(tostring name) ,(if (nil? value) true value)))
-(fn set-opt-local [name value]
-  `(tset vim.opt_local ,(tostring name) ,(if (nil? value) true value)))
+(fn even? [x] (= (% x 2) 0))
+(fn odd? [x] (not (even? x)))
 
-(fn set-hl [name value] `(vim.api.nvim_set_hl 0 ,(tostring name) ,value))
+(fn set-opt [name ?value]
+  `(tset vim.opt ,(tostring name) ,(if (nil? ?value) true ?value)))
+(fn set-opt-local [name ?value]
+  `(tset vim.opt_local ,(tostring name) ,(if (nil? ?value) true ?value)))
+
+(fn set-hl [name value]
+  `(vim.api.nvim_set_hl 0 ,(tostring name) ,value))
 
 (fn create-autocmd [event-filter callback ?group-id]
   (var events event-filter)
@@ -20,19 +24,18 @@
   (if (string? callback)
       (set opts.command callback)
       (set opts.callback callback))
-  (when (not= ?group-id nil)
+  (when (not (nil? ?group-id))
     (set opts.group ?group-id))
   `(vim.api.nvim_create_autocmd ,events ,opts))
 
-(fn group-by [n seq]
+(fn group-by [n seq ?from]
   (fn f [seq i]
     (let [i (+ i n)
           j (+ i n -1)]
       (when (< i (length seq))
         (values i (unpack seq i j)))))
-  (values f seq (- 1 n)))
-
-(fn even? [x] (= (% x 2) 0))
+  (let [start-idx (if (nil? ?from) 1 ?from)]
+    (values f seq (- start-idx n))))
 
 (fn create-augroup [name opts ...]
   (assert (even? (select :# ...)) "augroup: an autocmd is missing its command/callback")
@@ -67,8 +70,25 @@
 (fn def-keymap-n [...] (def-keymap `(mode n) ...))
 (fn def-keymap-v [...] (def-keymap `(mode v) ...))
 
+(fn create-package [package-spec]
+  (if (string? package-spec) package-spec
+      (list? package-spec)
+      (do
+        (assert (odd? (length package-spec)) "a package specification is incomplete")
+        (let [package-name (. package-spec 1)
+              package-packer-spec
+              (collect [_ key value (group-by 2 package-spec 2)] (values key value))]
+          (tset package-packer-spec 1 package-name)
+          package-packer-spec))))
+
+(fn def-packer-plugins [packer ...]
+  `((. ,packer :startup)
+    (fn [use#]
+      (use# :wbthomason/packer.nvim)
+      (use# ,(icollect [_ pkg (ipairs [...])] (create-package pkg))))))
+
 {: set-opt : set-opt-local : set-hl
  : def-augroup : def-augroup* : def-autocmd
- : def-keymap : def-keymap-n : def-keymap-v
- : def-rec-keymap
+ : def-rec-keymap : def-keymap : def-keymap-n : def-keymap-v
+ : def-packer-plugins
  }
