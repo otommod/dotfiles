@@ -591,7 +591,9 @@
   (lsp-config.pyright.setup {: on_attach : capabilities : flags})
   (lsp-config.gopls.setup {: on_attach : capabilities : flags})
   (lsp-config.ocamllsp.setup {: on_attach : capabilities : flags})
+  (lsp-config.sumneko_lua.setup {: on_attach : capabilities : flags})
   (lsp-config.tsserver.setup {: on_attach : capabilities : flags})
+  (lsp-config.texlab.setup {: on_attach : capabilities : flags})
   )
 
 ; {{{1 Autocomplete
@@ -629,6 +631,13 @@
             ;                             }}
             ; :core.gtd.base {:config {:workspace :home}}
             }}))
+
+; {{{1 C / C++
+(fn ft-c-cpp []
+  (vim.opt.cinoptions:append ":0")
+  (vim.opt.cinoptions:append "(0"))
+
+(def-augroup rc-ft-c-cpp (:FileType [:c :cpp]) ft-c-cpp)
 
 ; {{{1 Python
 (fn ft-python []
