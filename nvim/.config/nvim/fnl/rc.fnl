@@ -7,10 +7,9 @@
                 : def-rec-keymap
                 } :rc.macros)
 
-(let [packer (require :packer)
-      use packer.use]
+(let [packer (require :packer)]
   (packer.startup
-    (fn []
+    (fn [use]
       (use :wbthomason/packer.nvim)
       (use :rktjmp/hotpot.nvim)
 
@@ -25,13 +24,6 @@
 
       ; " call minpac#add('simnalamburt/vim-mundo')
       (use :mbbill/undotree)
-
-      (use :folke/tokyonight.nvim)
-      (use :lifepillar/vim-solarized8)
-      ; low-color themes
-      ; https://github.com/mcchrish/vim-no-color-collections
-      (use :pbrisbin/vim-colors-off)
-      (use :jeffkreeftmeijer/vim-dim)
 
       ; (use :Olical/conjure)
       ; " call minpac#add('metakirby5/codi.vim')
@@ -70,11 +62,7 @@
 
       ; {{{2 Fixes
       (use :tpope/vim-rsi)
-      ; " call minpac#add('Konfekt/FastFold')
       (use :ap/vim-you-keep-using-that-word)
-
-      ; XXX: see https://github.com/neovim/neovim/issues/12587
-      (use :antoinemadec/FixCursorHold.nvim)
 
       ; {{{2 File explorers
       (use :tpope/vim-vinegar)
@@ -87,13 +75,18 @@
       (use :troydm/zoomwintab.vim)
 
       ; {{{2 Eye candy
-      ; " call minpac#add('Yggdroot/indentLine')
-      ; " call minpac#add('thaerkh/vim-indentguides')
-      ; (use :lukas-reineke/indent-blankline.nvim)
+      (use :ishan9299/nvim-solarized-lua)
 
-      ; " call minpac#add('chrisbra/Colorizer')
-      ; " call minpac#add('RRethy/vim-hexokinase')
-      (use :norcalli/nvim-colorizer.lua)
+      ; low-color themes
+      ; https://github.com/mcchrish/vim-no-color-collections
+      (use :pbrisbin/vim-colors-off)
+      (use :jeffkreeftmeijer/vim-dim)
+
+      ; (use {1 :NvChad/nvim-colorizer.lua
+      ;       :config #((. (require :colorizer) :setup))})
+      ; TODO: add mappings for the color picker
+      (use {1 :uga-rosa/ccc.nvim :config-module :ccc
+            :config #((. (require :ccc) :setup) {:highlighter {:auto_enable true}})})
 
       ; " TODO: I could write one of those (vim-illuminate, vim-cursorword, vim-matchmaker) and combine it with wordhl
       ; call minpac#add('RRethy/vim-illuminate')
@@ -106,15 +99,18 @@
 
       ; " call minpac#add('mhinz/vim-signify')
       (use {1 :lewis6991/gitsigns.nvim
-            :requires [:nvim-lua/plenary.nvim]
-            :config (fn [] ((. (require :gitsigns) :setup)))})
+            :config
+            (fn []
+              (let [gitsigns (require :gitsigns)]
+                (gitsigns.setup {:numhl true})
+                (vim.api.nvim_set_keymap :n "]c" "" {:callback gitsigns.next_hunk})
+                (vim.api.nvim_set_keymap :n "[c" "" {:callback gitsigns.prev_hunk})))})
 
       ; {{{2 Search enhancements
       ; " call minpac#add('wincent/ferret')
       ; " call minpac#add('mhinz/vim-grepper')
       ; " call minpac#add('pelodelfuego/vim-swoop')
       ; " call minpac#add('romainl/vim-cool')
-      ; " call minpac#add('junegunn/vim-slash')
 
       ; {{{2 Objects & Operators
       ; " call minpac#add('tpope/vim-surround')
@@ -218,6 +214,7 @@
 
       ; Lisps
       (use :guns/vim-sexp)
+      (use :tpope/vim-sexp-mappings-for-regular-people)
 
       ; Go
       ; (use {1 :fatih/vim-go :ft :go})
@@ -413,11 +410,11 @@
 
 ; {{{1 Appearance
 (fn highlights []
-  (vim.cmd.colorscheme :solarized8_flat)
+  (vim.cmd.colorscheme :solarized-flat)
 
   (set-hl WhitespaceEOL {:fg :White :bg :Firebrick :ctermbg :Red})
 
-  ; XXX: add cterm fallbacks
+  ; TODO: add cterm fallbacks
   ; https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=9
   (set-hl WordHL01 {:fg :Black :bg :#a6cee3 :bold 1})
   (set-hl WordHL02 {:fg :White :bg :#1f78b4 :bold 1})
@@ -427,14 +424,7 @@
   (set-hl WordHL06 {:fg :White :bg :#e31a1c :bold 1})
   (set-hl WordHL07 {:fg :Black :bg :#fdbf6f :bold 1})
   (set-hl WordHL08 {:fg :Black :bg :#ff7f00 :bold 1})
-  (set-hl WordHL09 {:fg :Black :bg :#cab2d6 :bold 1})
-
-  ; XXX: https://github.com/norcalli/nvim-colorizer.lua/issues/35#issuecomment-725850831
-  (set package.loaded.colorizer nil)
-  (let [colorizer (require :colorizer)]
-    (colorizer.setup)
-    (each [_ bufnr (ipairs (vim.api.nvim_list_bufs))]
-      (colorizer.attach_to_buffer bufnr))))
+  (set-hl WordHL09 {:fg :Black :bg :#cab2d6 :bold 1}))
 
 (def-augroup rc-highlights
              :VimEnter highlights
