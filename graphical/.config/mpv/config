@@ -15,19 +15,13 @@ icc-profile-auto  # automatically select the ICC profile set by the OS
 sub-auto=fuzzy      # autoload all external subs containing media filename
 sub-fix-timing=no   # do not try to fix gaps (which might make it worse in some cases)
 demuxer-mkv-subtitle-preroll  # try to correctly show embedded subs when seeking
-# sub-ass-force-style=Kerning=yes  # allows you to override style parameters of ASS scripts
 
 sub-use-margins         # enables placing subs in black borders
 sub-ass-force-margins   # like the above but for ASS subs
 
 # Languages
-slang=en,eng,gr,gre             # preferred audio languages (decreasing priority)
-alang=ja,jp,jpn,en,eng,gr,gre   # preferred subtitle languages (decreasing priority)
-
-# Audio
-audio-pitch-correction  # automatically insert scaletempo when playing with higher speed
-volume-max=200          # maximum volume in %, everything above 100 results in amplification
-volume=100              # default volume, 100 = unchanged
+slang=en,eng,gr,gre             # preferred subtitle languages (decreasing priority)
+alang=ja,jp,jpn,en,eng,gr,gre   # preferred audio languages (decreasing priority)
 
 # YouTube-DL
 # I don't need more than 1080p
