@@ -317,11 +317,11 @@
 (set-opt scrolloff 5)       ; always keep the cursor 5 lines from the end of the screen
 (set-opt sidescrolloff 8)   ; XXX: ???
 
-(vim.opt.nrformats:append :alpha)   ; incr/decr alphabetic characters
+(set-opt nrformats &append :alpha)  ; incr/decr alphabetic characters
 
 (set-opt undofile)     ; save undos (persistent undo)
 (set-opt backup)
-(vim.opt.backupdir:remove ".")
+(set-opt backupdir &remove ".")
 
 (set-opt shiftwidth 2)
 (set-opt tabstop 8)
@@ -633,11 +633,8 @@
             }}))
 
 ; {{{1 C / C++
-(fn ft-c-cpp []
-  (vim.opt.cinoptions:append ":0")
-  (vim.opt.cinoptions:append "(0"))
-
-(def-augroup rc-ft-c-cpp (:FileType [:c :cpp]) ft-c-cpp)
+(def-augroup rc-ft-c-cpp
+             (:FileType [:c :cpp]) #(set-opt-local cinoptions &append ":0"  "(0"))
 
 ; {{{1 Python
 (fn ft-python []

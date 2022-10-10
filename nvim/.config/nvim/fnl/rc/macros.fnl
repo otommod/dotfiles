@@ -4,10 +4,24 @@
 (fn even? [x] (= (% x 2) 0))
 (fn odd? [x] (not (even? x)))
 
-(fn set-opt [name ?value]
-  `(tset vim.opt ,(tostring name) ,(if (nil? ?value) true ?value)))
-(fn set-opt-local [name ?value]
-  `(tset vim.opt_local ,(tostring name) ,(if (nil? ?value) true ?value)))
+(fn error-compile [msg ast] (assert-compile false msg ast))
+
+(fn set-opt* [scope name ...]
+  (assert-compile (sym? name) "name must be a symbol" name)
+  (let [n (select :# ...)
+        opt (tostring name)]
+    (if (= n 0) `(tset ,scope ,opt ,(not= (opt:sub 1 2) :no))
+        (= n 1) `(tset ,scope ,opt ,...)
+        (= n 2)
+        (let [[meth & vals] [...]]
+          (icollect [_ v (ipairs vals) &into `(do)]
+            (if (= meth `&remove) `(: (. ,scope ,opt) :remove ,v)
+                (= meth `&append) `(: (. ,scope ,opt) :append ,v)
+                (= meth `&prepend) `(: (. ,scope ,opt) :prepend ,v)
+                (error-compile (: "unknown method '%s'" :format meth) meth)))))))
+
+(fn set-opt [name ...] (set-opt* `vim.opt name ...))
+(fn set-opt-local [name ...] (set-opt* `vim.opt_local name ...))
 
 (fn set-hl [name value]
   `(vim.api.nvim_set_hl 0 ,(tostring name) ,value))
