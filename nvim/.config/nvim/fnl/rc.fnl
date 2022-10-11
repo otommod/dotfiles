@@ -1,10 +1,8 @@
 ; vim:fdm=marker:
 
 ; {{{1 Prelude
-(import-macros {: set-opt : set-opt-local : set-hl
-                : def-augroup : def-autocmd
-                : def-rec-keymap : def-keymap : def-keymap-n : def-keymap-v
-                : def-packer-plugins
+(import-macros {: def-augroup : def-autocmd : def-keymap : def-keymap-rec
+                : def-packer-plugins : set-hl : set-opt : set-opt-local
                 } :rc.macros)
 
 ; {{{1 Plugins
@@ -451,49 +449,50 @@
 (def-keymap expr :j "(v:count ? 'j' : 'gj')")
 (def-keymap expr :k "(v:count ? 'k' : 'gk')")
 (def-keymap :gV "`[v`]")
-(def-keymap-n :<BS> :<C-^>)
+(def-keymap (mode n) :<BS> :<C-^>)
 
 ; fixes
-(def-keymap-v :> :>gv)
-(def-keymap-v :< :<gv)
+(def-keymap (mode v) :> :>gv)
+(def-keymap (mode v) :< :<gv)
 
 ; use :tjump instead of :tag
-(def-keymap-n "<C-]>" "g<C-]>")
-(def-keymap-v "<C-]>" "g<C-]>")
-(def-keymap-n "<C-W><C-]>" "<C-W>g<C-]>")
+(def-keymap (mode n) "<C-]>" "g<C-]>")
+(def-keymap (mode v) "<C-]>" "g<C-]>")
+(def-keymap (mode n) "<C-W><C-]>" "<C-W>g<C-]>")
 
 ; XXX: Neovim cannot handle this
 ; (set-keymap :c :w!! "w !sudo tee % >/dev/null")
 
 (set vim.g.mapleader " ")
 
-(def-keymap-n :<C-p> "<Cmd>FzfLua files<CR>")
-(def-keymap-n :gb "<Cmd>FzfLua buffers<CR>")
+(let [fzf (require :fzf-lua)]
+  (def-keymap (mode n) :<C-p> fzf.files)
+  (def-keymap (mode n) :gb fzf.buffers)
 
-(def-keymap-n :<leader>b "<Cmd>FzfLua buffers<CR>")
-(def-keymap-n :<leader>f "<Cmd>FzfLua files<CR>")
-(def-keymap-n :<leader>o "<Cmd>FzfLua oldfiles<CR>")
+  (def-keymap (mode n) :<leader>b fzf.buffers)
+  (def-keymap (mode n) :<leader>f fzf.files)
+  (def-keymap (mode n) :<leader>o fzf.oldfiles)
 
-; (def-keymap-n :<leader>q "<Cmd>lua ToggleQuickFix('c')<CR>")
-; (def-keymap-n :<leader>l "<Cmd>lua ToggleQuickFix('l')<CR>")
+  ; (def-keymap (mode n) :<leader>q (partial ToggleQuickFix :c))
+  ; (def-keymap (mode n) :<leader>l (partial ToggleQuickFix :l))
 
-(def-keymap-n :<leader>q "<Cmd>FzfLua quickfix<CR>")
-(def-keymap-n :<leader>l "<Cmd>FzfLua loclist<CR>")
+  (def-keymap (mode n) :<leader>q fzf.quickfix)
+  (def-keymap (mode n) :<leader>l fzf.loclist))
 
-(def-keymap-n :<leader>k "<Cmd>lua wordhl.highlight 'n'<CR>")
-(def-keymap-v :<leader>k "<Cmd>lua wordhl.highlight 'v'<CR>")
-(def-keymap-n :<leader>K "<Cmd>lua wordhl.unhighlight()<CR>")
+(def-keymap (mode n) :<leader>k (partial wordhl.highlight :n))
+(def-keymap (mode v) :<leader>k (partial wordhl.highlight :v))
+(def-keymap (mode n) :<leader>K wordhl.unhighlight)
 
 ; bookmarks
-(def-keymap-n :<leader>.v "<Cmd>e ~/.config/nvim/fnl/rc.fnl<CR>")
-(def-keymap-n :<leader>.b "<Cmd>e ~/.bashrc<CR>")
-(def-keymap-n :<leader>.z "<Cmd>e ~/.zshrc<CR>")
-(def-keymap-n :<leader>.t "<Cmd>e ~/.tmux.conf<CR>")
-(def-keymap-n :<leader>.g "<Cmd>e ~/.gitconfig<CR>")
+(def-keymap (mode n) :<leader>.v "<Cmd>e ~/.config/nvim/fnl/rc.fnl<CR>")
+(def-keymap (mode n) :<leader>.b "<Cmd>e ~/.bashrc<CR>")
+(def-keymap (mode n) :<leader>.z "<Cmd>e ~/.zshrc<CR>")
+(def-keymap (mode n) :<leader>.t "<Cmd>e ~/.tmux.conf<CR>")
+(def-keymap (mode n) :<leader>.g "<Cmd>e ~/.gitconfig<CR>")
 
-(def-rec-keymap :sa "<Plug>(operator-surround-append)")
-(def-rec-keymap :sd "<Plug>(operator-surround-delete)")
-(def-rec-keymap :sr "<Plug>(operator-surround-replace)")
+(def-keymap-rec :sa "<Plug>(operator-surround-append)")
+(def-keymap-rec :sd "<Plug>(operator-surround-delete)")
+(def-keymap-rec :sr "<Plug>(operator-surround-replace)")
 
 ; {{{1 Treesittter
 (let [ts-config (require :nvim-treesitter.configs)]
@@ -520,26 +519,27 @@
 
   (fn on_attach [client bufnr]
     (lsp-signature.on_attach)
+    (local fzf (require :fzf-lua))
 
-    (def-keymap-n (buffer bufnr) :K "<Cmd>lua vim.lsp.buf.hover()<CR>")
-    (def-keymap-n (buffer bufnr) :<C-k> "<Cmd>lua vim.lsp.buf.signature_help()<CR>")
-    (def-keymap-n (buffer bufnr) :gD "<Cmd>lua vim.lsp.buf.declaration()<CR>")
-    (def-keymap-n (buffer bufnr) :gd "<Cmd>lua vim.lsp.buf.definition()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>D "<Cmd>lua vim.lsp.buf.type_definition()<CR>")
-    (def-keymap-n (buffer bufnr) :gi "<Cmd>lua vim.lsp.buf.implementation()<CR>")
-    (def-keymap-n (buffer bufnr) :gr "<Cmd>lua vim.lsp.buf.references()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>wa "<Cmd>lua vim.lsp.buf.add_workspace_folder()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>wr "<Cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>wl "<Cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>")
-    (def-keymap-n (buffer bufnr) :<space>rn "<Cmd>lua vim.lsp.buf.rename()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>e "<Cmd>lua vim.diagnostic.open_float()<CR>")
-    (def-keymap-n (buffer bufnr) "[w" "<Cmd>lua vim.diagnostic.goto_prev()<CR>")
-    (def-keymap-n (buffer bufnr) "]w" "<Cmd>lua vim.diagnostic.goto_next()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>q "<Cmd>lua vim.diagnostic.setloclist()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>f "<Cmd>lua vim.lsp.buf.formatting()<CR>")
-    (def-keymap-n (buffer bufnr) :<space>ca "<Cmd>lua vim.lsp.buf.code_action()<CR>")
-    (def-keymap-n (buffer bufnr) :gA "<Cmd>lua vim.lsp.buf.code_action()<CR>")
-    (def-keymap (mode x) (buffer bufnr) :gA "<Cmd>lua vim.lsp.buf.range_code_action()<CR>")
+    (def-keymap (mode n) (buffer bufnr) "[w" vim.diagnostic.goto_prev)
+    (def-keymap (mode n) (buffer bufnr) "]w" vim.diagnostic.goto_next)
+    (def-keymap (mode n) (buffer bufnr) :K vim.lsp.buf.hover)
+    (def-keymap (mode n) (buffer bufnr) :<C-k> vim.lsp.buf.signature_help)
+    (def-keymap (mode n) (buffer bufnr) :gD vim.lsp.buf.declaration)
+    (def-keymap (mode n) (buffer bufnr) :gd vim.lsp.buf.definition)
+    (def-keymap (mode n) (buffer bufnr) :<leader>D vim.lsp.buf.type_definition)
+    (def-keymap (mode n) (buffer bufnr) :<leader>I vim.lsp.buf.implementation)
+    (def-keymap (mode n) (buffer bufnr) :<leader>R vim.lsp.buf.references)
+    (def-keymap (mode n) (buffer bufnr) :<leader>e vim.diagnostic.open_float)
+    (def-keymap (mode n) (buffer bufnr) :<leader>q vim.diagnostic.setloclist)
+    (def-keymap (mode n) (buffer bufnr) :<leader>r vim.lsp.buf.rename)
+    (def-keymap (mode n) (buffer bufnr) :<leader>a vim.lsp.buf.code_action)
+    (def-keymap (mode x) (buffer bufnr) :<leader>a vim.lsp.buf.range_code_action)
+    (def-keymap (mode n) (buffer bufnr) :<leader>wa vim.lsp.buf.add_workspace_folder)
+    (def-keymap (mode n) (buffer bufnr) :<leader>wr vim.lsp.buf.remove_workspace_folder)
+    (def-keymap (mode n) (buffer bufnr) :<leader>wl #(print (vim.inspect (vim.lsp.buf.list_workspace_folders))))
+    (def-keymap (mode n) (buffer bufnr) :<leader>s fzf.lsp_document_symbols)
+    (def-keymap (mode n) (buffer bufnr) :<leader>S fzf.lsp_live_workpace_symbols)
 
     (let [bulb (require :nvim-lightbulb)]
       (def-autocmd ([:CursorHold :CursorHoldI] (buffer bufnr)) bulb.update_lightbulb))
@@ -568,8 +568,6 @@
       (when caps.renameProvider
         (vim.cmd "command! -buffer -nargs=? LspRename lua vim.lsp.buf.rename(<f-args>)"))
       (when caps.documentSymbolProvider
-        (def-keymap-n :<leader>s "<Cmd>FzfLua lsp_document_symbols<CR>")
-        (def-keymap-n :<leader>S "<Cmd>FzfLua lsp_live_workpace_symbols<CR>")
         (vim.cmd "command! -buffer LspDocumentSymbol lua vim.lsp.buf.document_symbol()"))
       (when caps.workspaceSymbolProvider
         (vim.cmd "command! -buffer -nargs=? LspWorkspaceSymbol lua vim.lsp.buf.workspace_symbol(<f-args>)"))
@@ -781,14 +779,6 @@
 ; A simpler replacement would be just
 ;     nmap dsf ds)db
 ; This won't handle methods though, e.g. foo.bar(baz)
-;
-; {{{2 Do tags as git hooks
-;   * rafi/vim-tagabana
-; Does some weird 'hashing' that's supposed to be 'caching'.  I don't know.
-; Compared to gutentags that I'm using now it is Linux-only and also,
-; git-only.  Considering that I do not always tend to use git for my projects,
-; this could be a serious limitation.  I could either suck it up and use git
-; everywhere, or continue using guttentags.
 ;
 ; {{{2 Documentation viewer
 ;   * thinca/vim-ref
