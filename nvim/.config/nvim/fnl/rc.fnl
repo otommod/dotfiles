@@ -433,11 +433,9 @@
 (vim.fn.sign_define :DiagnosticSignInfo {:text "" :texthl :DiagnosticSignInfo :numhl :DiagnosticInfo})
 (vim.fn.sign_define :DiagnosticSignHint {:text "" :texthl :DiagnosticSignHint :numhl :DiagnosticHint})
 
-; set default diagnostics virtual text prefix
-(set vim.lsp.handlers.textDocument/publishDiagnostics
-     (vim.lsp.with
-       vim.lsp.diagnostic.on_publish_diagnostics
-       {:virtual_text {:prefix ""} :signs true :update_in_insert false}))
+(vim.diagnostic.config {:virtual_text {:prefix "" :source :if_many
+                                       :severity {:min vim.diagnostic.severity.WARN}}
+                        :severity_sort true :underline true})
 
 ; {{{1 Mappings
 (def-keymap expr :j "(v:count ? 'j' : 'gj')")
@@ -488,6 +486,12 @@
 (def-keymap-rec :sd "<Plug>(operator-surround-delete)")
 (def-keymap-rec :sr "<Plug>(operator-surround-replace)")
 
+; diagnostics
+(def-keymap (mode n) "[w" vim.diagnostic.goto_prev)
+(def-keymap (mode n) "]w" vim.diagnostic.goto_next)
+(def-keymap (mode n) :<leader>q vim.diagnostic.setloclist)
+; (def-keymap (mode n) :<leader>e vim.diagnostic.open_float)
+
 ; {{{1 Treesittter
 (let [ts-config (require :nvim-treesitter.configs)]
   (ts-config.setup {:ensure_installed
@@ -514,8 +518,6 @@
     (lsp-signature.on_attach)
     (local fzf (require :fzf-lua))
 
-    (def-keymap (mode n) (buffer bufnr) "[w" vim.diagnostic.goto_prev)
-    (def-keymap (mode n) (buffer bufnr) "]w" vim.diagnostic.goto_next)
     (def-keymap (mode n) (buffer bufnr) :K vim.lsp.buf.hover)
     (def-keymap (mode n) (buffer bufnr) :<C-k> vim.lsp.buf.signature_help)
     (def-keymap (mode n) (buffer bufnr) :gD vim.lsp.buf.declaration)
@@ -523,8 +525,6 @@
     (def-keymap (mode n) (buffer bufnr) :<leader>D vim.lsp.buf.type_definition)
     (def-keymap (mode n) (buffer bufnr) :<leader>I vim.lsp.buf.implementation)
     (def-keymap (mode n) (buffer bufnr) :<leader>R vim.lsp.buf.references)
-    (def-keymap (mode n) (buffer bufnr) :<leader>e vim.diagnostic.open_float)
-    (def-keymap (mode n) (buffer bufnr) :<leader>q vim.diagnostic.setloclist)
     (def-keymap (mode n) (buffer bufnr) :<leader>r vim.lsp.buf.rename)
     (def-keymap (mode n) (buffer bufnr) :<leader>a vim.lsp.buf.code_action)
     (def-keymap (mode x) (buffer bufnr) :<leader>a vim.lsp.buf.range_code_action)
