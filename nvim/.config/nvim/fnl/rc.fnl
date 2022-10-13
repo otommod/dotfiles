@@ -300,79 +300,67 @@
       (vim.fn.matchdelete m.id))))
 
 ; {{{1 Settings
-(set-opt number)   ; display line numbers
-; (set-opt relativenumber)
-
-(set-opt ignorecase)   ; ignores case when searching
-(set-opt smartcase)    ; only match case when it exists
-
-(set-opt list)     ; show nice little characters
-(set-opt listchars
-         {:eol "¬" :tab "» " :trail "·" :extends "❯" :precedes "❮" :nbsp "␣"})
-(set-opt showbreak "↪ ")    ; shows up on a wrapped line
-(set-opt breakindent)
-
-(set-opt scrolloff 5)       ; always keep the cursor 5 lines from the end of the screen
-(set-opt sidescrolloff 8)   ; XXX: ???
-
-(set-opt nrformats &append :alpha)  ; incr/decr alphabetic characters
-
-(set-opt undofile)     ; save undos (persistent undo)
-(set-opt backup)
-(set-opt backupdir &remove ".")
-
-(set-opt shiftwidth 2)
+;; Indentation
+(set-opt expandtab)
 (set-opt tabstop 8)
 (set-opt softtabstop 4)
 
-(set-opt smartindent)
-(set-opt expandtab)
-(set-opt shiftround)   ; use multiple of shiftwidth when indenting with < and >
+(set-opt shiftround)        ; < and > indent by multiples of shiftwidth
+(set-opt shiftwidth 2)
 
-; Wildcompltetion
-(set-opt wildmode [:longest:full :full])    ; command-line completion
+;; Editing
+(set-opt virtualedit :block)        ; virtual-block mode past the end-of-line
+(set-opt nrformats &append :alpha)  ; incr/decr alphabetic characters
+
+(set-opt undofile)          ; persistent undo
+(set-opt backup)            ; keep a backup
+(set-opt backupdir &remove ".")  ; but not in the same directory as the file
+
+;; Appearance
+(set-opt number)
+; (set-opt relativenumber)
+
+(set-opt list)
+(set-opt listchars
+         {:eol "¬" :tab "» " :trail "·" :extends "❯" :precedes "❮" :nbsp "␣"})
+
+(set-opt breakindent)       ; show wrapped lines at the same indentation level
+(set-opt showbreak "↪ ")    ; wrapped line indicator
+
+(set-opt cursorline)        ; highlight the cursor line
+(set-opt colorcolumn "80")  ; highlight the 80th column
+(set-opt concealcursor :nc) ; unconceal the cursor line in visual and insert mode
+
+(set-opt foldcolumn "2")      ; 2-char wide column for folds
+(set-opt signcolumn "auto:2") ; 2-char wide column for signs, only when they exist
+
+(set-opt splitright)        ; new vertical splits are put on the right
+(set-opt scrolloff 5)       ; keep the cursor 5 lines off the end-of-screen
+(set-opt sidescrolloff 8)   ; keep the cursor 8 columns off the end-of-screen
+
+(set-opt diffopt [:filler :closeoff :internal :indent-heuristic :algorithm:histogram])
+
+;; Completion
+(set-opt completeopt [:menuone :noinsert :noselect])
+
+(set-opt wildmode [:full:longest:lastused :full])
 (set-opt wildignore
-         [
-          "*/.git/*" "*/.hg/*" "*/.svn/*"     ; version control directories
-          "*.sw?"                             ; vim swap files
+         ["*.sw?"                       ; vim swap files
 
           ; Binary files
-          "*.o" "*.obj" "*.exe" "*.dll"       ; object files
-          "*.pyc" "*.pyo" "*/__pycache__/*"   ; Python bytecode
-          "*.class"                           ; Java bytecode
+          "*.o" "*.obj" "*.exe" "*.dll" ; object files
+          "*.pyc" "*.pyo"               ; Python
+          "*.class" ".jar"              ; Java
 
           ; Media files
-          "*.mp3" "*.flac"                    ; music files
-          "*.jp?g" "*.png" "*.gif" "*.bmp"    ; images
-          "*.mkv" "*.mp4" "*.avi"             ; videos
-
-          ; Archives
-          "*.tar"                             ; tar archives
-          "*.tar.gz" "*.tgz"                  ; gzip compresser archives
-          "*.tar.bz2" "*.tbz" "*.tbz2"        ; bzip2 compressed archives
-          "*.tar.xz" "*.txz"                  ; xz compressed archives
-          "*.zip" "*.rar" "*.7z"              ; other archives
+          "*.mp3" "*.flac"              ; music files
+          "*.jp?g" "*.png" "*.gif"      ; images
+          "*.mkv" "*.mp4" "*.webm"      ; videos
           ])
 
-; Terminal settings
-(set-opt title)       ; set the terminal title
-(set-opt lazyredraw)  ; do not redraw while executing commands
-(when (or (= vim.env.COLORTERM :truecolor)
-          (= vim.env.COLORTERM :24bit))
-  (set-opt termguicolors))
-
-(set-opt splitright)          ; new vertical splits are put on the right
-(set-opt virtualedit :block)  ; allow virtual-block past the line end
-(set-opt colorcolumn "80")    ; a highlighted column at the 80 char mark
-(set-opt cursorline)          ; highlights the screen line of the cursor
-(set-opt concealcursor :nc)   ; don't conceal the cursor line in visual and insert mode
-(set-opt foldcolumn "2")      ; a 2-char wide column indicating open and closed folds
-(set-opt signcolumn "auto:2") ; at most 2-char wide sign column only when there's signs
-
-; (set-opt completeopt [:menuone :longest])
-(set-opt completeopt [:noinsert :menuone :noselect])
-
-(set-opt diffopt [:filler :internal :algorithm:histogram :indent-heuristic])
+;; Searching
+(set-opt ignorecase)    ; ignore case when searching
+(set-opt smartcase)     ; but match case when it exists
 
 (if
   (= (vim.fn.executable :rg) 1)
@@ -386,6 +374,12 @@
   (do
     (set-opt grepprg "grep -nH -r")
     (set-opt grepformat "%f:%l:%m")))
+
+;; Terminal
+(set-opt title)         ; set the terminal title
+(when (or (= vim.env.COLORTERM :truecolor)
+          (= vim.env.COLORTERM :24bit))
+  (set-opt termguicolors))
 
 ; {{{1 Plugin options
 (set vim.g.cursorhold_updatetime 100)
@@ -503,8 +497,7 @@
                      :go :gomod :gowork
                      :ocaml :ocaml_interface :ocamllex
                      ]
-                    ; XXX: https://github.com/neovim/tree-sitter-vimdoc/issues/23
-                    :highlight {:enable true :disable [:help]}
+                    :highlight {:enable true}
                     ; :indent {:enable true}
                     }))
 
@@ -625,7 +618,7 @@
             :core.norg.concealer {}
             :core.norg.completion {:config {:engine :nvim-cmp}}
             ; :core.norg.dirman {:config {:workspaces
-            ;                             {:home "~/Documents/neorg"}
+            ;                             {:home "~/Documents/notes"}
             ;                             }}
             ; :core.gtd.base {:config {:workspace :home}}
             }}))
