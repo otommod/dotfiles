@@ -172,9 +172,9 @@
   ; :lifepillar/vim-mucomplete
 
   :hrsh7th/nvim-cmp
+  :hrsh7th/cmp-path
   :hrsh7th/cmp-buffer
   :hrsh7th/cmp-nvim-lsp
-  ; :hrsh7th/cmp-path
   ; :hrsh7th/cmp-cmdline
   :hrsh7th/vim-vsnip
 
@@ -588,28 +588,26 @@
   )
 
 ; {{{1 Autocomplete
-(let [cmp (require :cmp)]
-  (fn add-newline []
-    (let [[row column] (vim.api.nvim_win_get_cursor 0)]
-      (vim.api.nvim_buf_set_lines 0 row row true [""])
-      (vim.api.nvim_win_set_cursor 0 [(+ row 1) 0])))
-
-  (fn cmp-cr [fallback]
-    (when (not (cmp.confirm {:behavior cmp.ConfirmBehavior.Insert} add-newline))
-      (fallback)))
+; TODO: cmp.setup.cmdline
+(let [cmp (require :cmp)
+      sources [{:name :path}
+               {:name :nvim_lsp :keyword_length 2 :group_index 1}
+               {:name :buffer :keyword_length 2 :group_index 2
+                :option {:keyword_pattern "\\k\\+"}}
+               ]
+      maps {:<C-Space> #(if (cmp.visible) (cmp.select_next_item) (or (cmp.complete) ($)))
+            :<C-f> (cmp.mapping.scroll_docs 4)
+            :<C-b> (cmp.mapping.scroll_docs -4)
+            :<C-y> (cmp.mapping.confirm {:select true})
+            :<Tab> #(if (cmp.visible) (cmp.select_next_item) ($))
+            :<S-Tab> #(if (cmp.visible) (cmp.select_prev_item) ($))
+            }]
 
   (cmp.setup {:snippet {:expand #(vim.fn.vsnip#anonymous $.body)}
-              :mapping {:<CR> cmp-cr
-                        :<Tab> (cmp.mapping.select_next_item)
-                        :<S-Tab> (cmp.mapping.select_prev_item)}
-              :preselect cmp.PreselectMode.None
-              :sources (cmp.config.sources [{:name :nvim_lsp}]
-                                           [{:name :buffer}])})
+              : sources :mapping (-> maps
+                                     cmp.mapping.preset.insert)})
 
-  ; Set configuration for specific filetype.
-  (cmp.setup.filetype :norg
-                      {:sources (cmp.config.sources
-                                  [{:name :neorg}])}))
+  (cmp.setup.filetype :norg {:sources [{:name :neorg} (unpack sources)]}))
 
 ; {{{1 Neorg
 (let [neorg (require :neorg)]
