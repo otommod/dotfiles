@@ -92,13 +92,23 @@
   :tpope/vim-rhubarb
 
   ; :mhinz/vim-signify
-  (:lewis6991/gitsigns.nvim
-   :config
-   (fn []
-     (let [gitsigns (require :gitsigns)]
-       (gitsigns.setup {:numhl true})
-       (vim.api.nvim_set_keymap :n "]c" "" {:callback gitsigns.next_hunk})
-       (vim.api.nvim_set_keymap :n "[c" "" {:callback gitsigns.prev_hunk}))))
+  (:lewis6991/gitsigns.nvim :config
+   #(let [gs (require :gitsigns)]
+      (fn on_attach [bufnr]
+        (def-keymap (buffer bufnr) expr "]c" "&diff ? ']c' : '<Cmd>Gitsigns next_hunk<CR>'")
+        (def-keymap (buffer bufnr) expr "[c" "&diff ? '[c' : '<Cmd>Gitsigns prev_hunk<CR>'")
+
+        (def-keymap (buffer bufnr) (mode nx) "<leader>hs" "<Cmd>Gitsigns stage_hunk<CR>")
+        (def-keymap (buffer bufnr) (mode nx) "<leader>hr" "<Cmd>Gitsigns reset_hunk<CR>")
+        (def-keymap (buffer bufnr) (mode n) "<leader>hu" "<Cmd>Gitsigns undo_stage_hunk<CR>")
+        (def-keymap (buffer bufnr) (mode n) "<leader>hb" #(gs.blame_line {:full true}))
+        (def-keymap (buffer bufnr) (mode n) "<leader>dg" "<Cmd>Gitsigns diffthis<CR>")
+        (def-keymap (buffer bufnr) (mode n) "<leader>dG" "<Cmd>Gitsigns diffthis ~<CR>")
+        (def-keymap (buffer bufnr) (mode n) "<leader>dd" "<Cmd>Gitsigns toggle_deleted<CR>")
+
+        (def-keymap (buffer bufnr) (mode ox) :ih "<Cmd>Gitsigns select_hunk<CR>"))
+
+      (gs.setup {: on_attach :numhl true})))
 
   ; {{{2 Search enhancements
   ; :wincent/ferret
