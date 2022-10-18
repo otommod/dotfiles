@@ -552,31 +552,32 @@
         (def-autocmd (:CursorMoved (buffer bufnr)) vim.lsp.buf.clear_references))
       (when caps.codeLensProvider
         (def-autocmd ([:BufEnter :CursorHold :InsertLeave] (buffer bufnr)) vim.lsp.codelens.refresh))
+
       (when caps.definitionProvider
-        (vim.cmd "command! -buffer LspDefinition lua vim.lsp.buf.definition()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspDefinition #(vim.lsp.buf.definition) {}))
       (when caps.typeDefinitionProvider
-        (vim.cmd "command! -buffer LspTypeDefinition lua vim.lsp.buf.type_definition()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspTypeDefinition #(vim.lsp.buf.type_definition) {}))
       (when caps.declarationProvider
-        (vim.cmd "command! -buffer LspDeclaration lua vim.lsp.buf.declaration()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspDeclaration #(vim.lsp.buf.declaration) {}))
       (when caps.implementationProvider
-        (vim.cmd "command! -buffer LspImplementation lua vim.lsp.buf.implementation()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspImplementation #(vim.lsp.buf.implementation) {}))
       (when caps.referencesProvider
-        (vim.cmd "command! -buffer LspReferences lua vim.lsp.buf.references()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspReferences #(vim.lsp.buf.references) {}))
       (when caps.callHierarchyProvider
-        (vim.cmd "command! -buffer LspIncomingCalls lua vim.lsp.buf.incoming_calls()")
-        (vim.cmd "command! -buffer LspOutgoingCalls lua vim.lsp.buf.outgoing_calls()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspIncomingCalls #(vim.lsp.buf.incoming_calls) {})
+        (vim.api.nvim_buf_create_user_command bufnr :LspOutgoingCalls #(vim.lsp.buf.outgoing_calls) {}))
       (when caps.documentFormattingProvider
-        (vim.cmd "command! -buffer LspFormat lua vim.lsp.buf.formatting()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspFormat #(vim.lsp.buf.format) {}))
       (when caps.renameProvider
-        (vim.cmd "command! -buffer -nargs=? LspRename lua vim.lsp.buf.rename(<f-args>)"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspRename #(vim.lsp.buf.rename $.fargs) {:nargs :?}))
       (when caps.documentSymbolProvider
-        (vim.cmd "command! -buffer LspDocumentSymbol lua vim.lsp.buf.document_symbol()"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspDocumentSymbol vim.lsp.buf.document_symbol {}))
       (when caps.workspaceSymbolProvider
-        (vim.cmd "command! -buffer -nargs=? LspWorkspaceSymbol lua vim.lsp.buf.workspace_symbol(<f-args>)"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspWorkspaceSymbol #(vim.lsp.buf.workspace_symbol $.fargs) {:nargs :?}))
       (when (?. caps :workspace :workspaceFolders)
-        (vim.cmd "command! -buffer -nargs=? -complete=dir LspAddWorkspaceFolder lua vim.lsp.buf.add_workspace_folder(<f-args>)")
-        (vim.cmd "command! -buffer -nargs=? -complete=dir LspRemoveWorkspaceFolder lua vim.lsp.buf.remove_workspace_folder(<f-args>)")
-        (vim.cmd "command! -buffer LspListWorkspaceFolders lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))"))
+        (vim.api.nvim_buf_create_user_command bufnr :LspAddWorkspaceFolder #(vim.lsp.buf.add_workspace_folder $.fargs) {:nargs :? :complete :dir})
+        (vim.api.nvim_buf_create_user_command bufnr :LspRemoveWorkspaceFolder #(vim.lsp.buf.remove_workspace_folder $.fargs) {:nargs :? :complete :dir})
+        (vim.api.nvim_buf_create_user_command bufnr :LspListWorkspaceFolders #(print (vim.inspect (vim.lsp.buf.list_workspace_folders))) {}))
       ))
 
   (null-ls.setup {: on_attach
