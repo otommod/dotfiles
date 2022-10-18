@@ -511,8 +511,7 @@
       lsp-signature (require :lsp_signature)
       lsp-cmp (require :cmp_nvim_lsp)
       flags {:debounce_text_changes 150}
-      capabilities (-> (vim.lsp.protocol.make_client_capabilities)
-                       (lsp-cmp.update_capabilities))]
+      capabilities (lsp-cmp.default_capabilities)]
 
   (fn on_attach [client bufnr]
     (lsp-signature.on_attach)
@@ -579,12 +578,12 @@
                             ]})
 
   (lsp-config.clangd.setup {: on_attach : capabilities : flags})
-  (lsp-config.pyright.setup {: on_attach : capabilities : flags})
   (lsp-config.gopls.setup {: on_attach : capabilities : flags})
   (lsp-config.ocamllsp.setup {: on_attach : capabilities : flags})
+  (lsp-config.pyright.setup {: on_attach : capabilities : flags})
   (lsp-config.sumneko_lua.setup {: on_attach : capabilities : flags})
-  (lsp-config.tsserver.setup {: on_attach : capabilities : flags})
   (lsp-config.texlab.setup {: on_attach : capabilities : flags})
+  (lsp-config.tsserver.setup {: on_attach : capabilities : flags})
   )
 
 ; {{{1 Autocomplete
